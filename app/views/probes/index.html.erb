@@ -1,0 +1,358 @@
+<% provide(:title, 'Active Dynamic Instrumentation Probes') %>
+<h1>Active Dynamic Instrumentation Probes</h1>
+
+<div class="well well-sm">
+  <div class="row">
+    <div class="col-md-4">
+      <strong>Service:</strong>
+      <% if @service_name %>
+        <code><%= @service_name %></code>
+      <% else %>
+        <span class="text-muted">Not configured</span>
+      <% end %>
+    </div>
+    <div class="col-md-4">
+      <strong>Environment:</strong>
+      <% if @environment %>
+        <code><%= @environment %></code>
+      <% else %>
+        <span class="text-muted">Not configured</span>
+      <% end %>
+    </div>
+    <div class="col-md-4">
+      <strong>DI Enabled:</strong>
+      <% if @di_enabled %>
+        <span class="text-success"><strong>✓ Yes</strong></span>
+      <% else %>
+        <span class="text-danger"><strong>✗ No</strong></span>
+      <% end %>
+    </div>
+  </div>
+</div>
+
+<% if @error %>
+  <div class="alert alert-danger">
+    <h4><strong>Error Fetching Probes</strong></h4>
+    <p>An error occurred while trying to fetch active dynamic instrumentation probes:</p>
+    <pre><%= @error %></pre>
+    <p>Please check the application logs for more details.</p>
+  </div>
+<% end %>
+
+<div class="alert alert-info">
+  <strong>Debug Info:</strong> Active: <%= @probes.size %>, Disabled: <%= @disabled_probes.size %>, Pending: <%= @pending_probes.size %>, Failed: <%= @failed_probes.size %>
+</div>
+
+<% total_probes = @probes.size + @disabled_probes.size + @pending_probes.size + @failed_probes.size %>
+
+<div class="row">
+  <div class="col-md-12">
+    <% if @probes.empty? && @disabled_probes.empty? && @pending_probes.empty? && @failed_probes.empty? %>
+      <div class="alert alert-info">
+        <p><strong>No probes found.</strong></p>
+        <p>This could mean:</p>
+        <ul>
+          <li>Dynamic instrumentation is not enabled</li>
+          <li>No probes have been configured yet</li>
+          <li>The Datadog agent is not connected</li>
+        </ul>
+      </div>
+    <% end %>
+
+    <% unless @probes.empty? %>
+      <h2>Active Probes</h2>
+      <p class="lead"><%= pluralize(@probes.count, 'active probe') %></p>
+
+      <div class="panel-group" id="probes-accordion">
+        <% @probes.each_with_index do |(id, probe), index| %>
+          <div class="panel panel-default">
+            <div class="panel-heading">
+              <h4 class="panel-title">
+                <a data-toggle="collapse" data-parent="#probes-accordion" href="#probe-<%= index %>">
+                  <% if probe.file && probe.line_no %>
+                    <strong><%= probe.file %>:<%= probe.line_no %></strong>
+                  <% elsif probe.type_name && probe.method_name %>
+                    <strong><%= probe.type_name %>#<%= probe.method_name %></strong>
+                  <% else %>
+                    <strong>Probe ID:</strong> <%= id %>
+                  <% end %>
+                  <span class="badge pull-right"><%= probe.type %></span>
+                </a>
+              </h4>
+            </div>
+            <div id="probe-<%= index %>" class="panel-collapse collapse <%= 'in' if total_probes < 10 %>">
+              <div class="panel-body">
+                <dl class="dl-horizontal">
+                  <dt>Type:</dt>
+                  <dd><code><%= probe.type %></code></dd>
+
+                  <% if probe.file %>
+                    <dt>File:</dt>
+                    <dd><code><%= probe.file %></code></dd>
+                  <% end %>
+
+                  <% if probe.line_no %>
+                    <dt>Line Number:</dt>
+                    <dd><%= probe.line_no %></dd>
+                  <% end %>
+
+                  <% if probe.type_name %>
+                    <dt>Class/Module:</dt>
+                    <dd><code><%= probe.type_name %></code></dd>
+                  <% end %>
+
+                  <% if probe.method_name %>
+                    <dt>Method:</dt>
+                    <dd><code><%= probe.method_name %></code></dd>
+                  <% end %>
+
+                  <% if probe.template %>
+                    <dt>Template:</dt>
+                    <dd><pre><%= probe.template %></pre></dd>
+                  <% end %>
+
+                  <% if probe.condition %>
+                    <dt>Condition:</dt>
+                    <dd><code><%= probe.condition %></code></dd>
+                  <% end %>
+
+                  <dt>Rate Limit:</dt>
+                  <dd><%= probe.rate_limit %></dd>
+                </dl>
+
+                <div style="margin-top: 20px;">
+                  <strong>Send Status:</strong>
+                  <%= button_to 'Emitting', send_probe_status_path(id), method: :post, params: {status: 'emitting'}, class: 'btn btn-sm btn-info', form: {style: 'display: inline-block; margin-left: 10px;'} %>
+                  <%= button_to 'Disabled', send_probe_status_path(id), method: :post, params: {status: 'disabled'}, class: 'btn btn-sm btn-warning', form: {style: 'display: inline-block; margin-left: 5px;'} %>
+                  <%= button_to 'Error', send_probe_status_path(id), method: :post, params: {status: 'error'}, class: 'btn btn-sm btn-danger', form: {style: 'display: inline-block; margin-left: 5px;'} %>
+                  <%= button_to 'Error with Exception', send_probe_status_path(id), method: :post, params: {status: 'error_with_exception'}, class: 'btn btn-sm btn-danger', form: {style: 'display: inline-block; margin-left: 5px;'} %>
+                </div>
+
+              </div>
+            </div>
+          </div>
+        <% end %>
+      </div>
+    <% end %>
+
+    <% unless @disabled_probes.empty? %>
+      <h2 style="margin-top: 30px;">Disabled Probes</h2>
+      <p class="lead"><%= pluralize(@disabled_probes.count, 'disabled probe') %></p>
+
+      <div class="panel-group" id="disabled-probes-accordion">
+        <% @disabled_probes.each_with_index do |(id, probe), index| %>
+          <div class="panel panel-default" style="background-color: #f5f5f5; border-color: #ddd;">
+            <div class="panel-heading">
+              <h4 class="panel-title">
+                <a data-toggle="collapse" data-parent="#disabled-probes-accordion" href="#disabled-probe-<%= index %>">
+                  <% if probe.file && probe.line_no %>
+                    <strong><%= probe.file %>:<%= probe.line_no %></strong>
+                  <% elsif probe.type_name && probe.method_name %>
+                    <strong><%= probe.type_name %>#<%= probe.method_name %></strong>
+                  <% else %>
+                    <strong>Probe ID:</strong> <%= id %>
+                  <% end %>
+                  <span class="badge pull-right"><%= probe.type %></span>
+                </a>
+              </h4>
+            </div>
+            <div id="disabled-probe-<%= index %>" class="panel-collapse collapse <%= 'in' if total_probes < 10 %>">
+              <div class="panel-body">
+                <dl class="dl-horizontal">
+                  <dt>Type:</dt>
+                  <dd><code><%= probe.type %></code></dd>
+
+                  <% if probe.file %>
+                    <dt>File:</dt>
+                    <dd><code><%= probe.file %></code></dd>
+                  <% end %>
+
+                  <% if probe.line_no %>
+                    <dt>Line Number:</dt>
+                    <dd><%= probe.line_no %></dd>
+                  <% end %>
+
+                  <% if probe.type_name %>
+                    <dt>Class/Module:</dt>
+                    <dd><code><%= probe.type_name %></code></dd>
+                  <% end %>
+
+                  <% if probe.method_name %>
+                    <dt>Method:</dt>
+                    <dd><code><%= probe.method_name %></code></dd>
+                  <% end %>
+
+                  <% if probe.template %>
+                    <dt>Template:</dt>
+                    <dd><pre><%= probe.template %></pre></dd>
+                  <% end %>
+
+                  <% if probe.condition %>
+                    <dt>Condition:</dt>
+                    <dd><code><%= probe.condition %></code></dd>
+                  <% end %>
+
+                  <dt>Rate Limit:</dt>
+                  <dd><%= probe.rate_limit %></dd>
+                </dl>
+
+                <div style="margin-top: 20px;">
+                  <strong>Send Status:</strong>
+                  <%= button_to 'Error', send_probe_status_path(id), method: :post, params: {status: 'error'}, class: 'btn btn-sm btn-danger', form: {style: 'display: inline-block; margin-left: 10px;'} %>
+                  <%= button_to 'Error with Exception', send_probe_status_path(id), method: :post, params: {status: 'error_with_exception'}, class: 'btn btn-sm btn-danger', form: {style: 'display: inline-block; margin-left: 5px;'} %>
+                </div>
+
+              </div>
+            </div>
+          </div>
+        <% end %>
+      </div>
+    <% end %>
+
+    <% unless @pending_probes.empty? %>
+      <h2 style="margin-top: 30px;">Pending Probes</h2>
+      <p class="lead"><%= pluralize(@pending_probes.count, 'pending probe') %></p>
+      <p class="text-muted">These probes are waiting to be installed in the application.</p>
+
+      <div class="panel-group" id="pending-probes-accordion">
+        <% @pending_probes.each_with_index do |(id, probe), index| %>
+          <div class="panel panel-warning">
+            <div class="panel-heading">
+              <h4 class="panel-title">
+                <a data-toggle="collapse" data-parent="#pending-probes-accordion" href="#pending-probe-<%= index %>">
+                  <% if probe.file && probe.line_no %>
+                    <strong><%= probe.file %>:<%= probe.line_no %></strong>
+                  <% elsif probe.type_name && probe.method_name %>
+                    <strong><%= probe.type_name %>#<%= probe.method_name %></strong>
+                  <% else %>
+                    <strong>Probe ID:</strong> <%= id %>
+                  <% end %>
+                  <span class="badge pull-right"><%= probe.type %></span>
+                </a>
+              </h4>
+            </div>
+            <div id="pending-probe-<%= index %>" class="panel-collapse collapse <%= 'in' if total_probes < 10 %>">
+              <div class="panel-body">
+                <dl class="dl-horizontal">
+                  <dt>Type:</dt>
+                  <dd><code><%= probe.type %></code></dd>
+
+                  <% if probe.file %>
+                    <dt>File:</dt>
+                    <dd><code><%= probe.file %></code></dd>
+                  <% end %>
+
+                  <% if probe.line_no %>
+                    <dt>Line Number:</dt>
+                    <dd><%= probe.line_no %></dd>
+                  <% end %>
+
+                  <% if probe.type_name %>
+                    <dt>Class/Module:</dt>
+                    <dd><code><%= probe.type_name %></code></dd>
+                  <% end %>
+
+                  <% if probe.method_name %>
+                    <dt>Method:</dt>
+                    <dd><code><%= probe.method_name %></code></dd>
+                  <% end %>
+
+                  <% if probe.template %>
+                    <dt>Template:</dt>
+                    <dd><pre><%= probe.template %></pre></dd>
+                  <% end %>
+
+                  <% if probe.condition %>
+                    <dt>Condition:</dt>
+                    <dd><code><%= probe.condition %></code></dd>
+                  <% end %>
+
+                  <dt>Rate Limit:</dt>
+                  <dd><%= probe.rate_limit %></dd>
+                </dl>
+
+                <div style="margin-top: 20px;">
+                  <strong>Send Status:</strong>
+                  <%= button_to 'Installed', send_probe_status_path(id), method: :post, params: {status: 'installed'}, class: 'btn btn-sm btn-success', form: {style: 'display: inline-block; margin-left: 10px;'} %>
+                  <%= button_to 'Emitting', send_probe_status_path(id), method: :post, params: {status: 'emitting'}, class: 'btn btn-sm btn-info', form: {style: 'display: inline-block; margin-left: 5px;'} %>
+                  <%= button_to 'Error', send_probe_status_path(id), method: :post, params: {status: 'error'}, class: 'btn btn-sm btn-danger', form: {style: 'display: inline-block; margin-left: 5px;'} %>
+                  <%= button_to 'Error with Exception', send_probe_status_path(id), method: :post, params: {status: 'error_with_exception'}, class: 'btn btn-sm btn-danger', form: {style: 'display: inline-block; margin-left: 5px;'} %>
+                </div>
+
+              </div>
+            </div>
+          </div>
+        <% end %>
+      </div>
+    <% end %>
+
+    <% unless @failed_probes.empty? %>
+      <h2 style="margin-top: 30px;">Failed Probes</h2>
+      <p class="lead"><%= pluralize(@failed_probes.count, 'failed probe') %></p>
+      <p class="text-muted">These probes failed to install or encountered errors.</p>
+
+      <div class="panel-group" id="failed-probes-accordion">
+        <% @failed_probes.each_with_index do |(id, probe), index| %>
+          <div class="panel panel-danger">
+            <div class="panel-heading">
+              <h4 class="panel-title">
+                <a data-toggle="collapse" data-parent="#failed-probes-accordion" href="#failed-probe-<%= index %>">
+                  <% if probe.file && probe.line_no %>
+                    <strong><%= probe.file %>:<%= probe.line_no %></strong>
+                  <% elsif probe.type_name && probe.method_name %>
+                    <strong><%= probe.type_name %>#<%= probe.method_name %></strong>
+                  <% else %>
+                    <strong>Probe ID:</strong> <%= id %>
+                  <% end %>
+                  <span class="badge pull-right"><%= probe.type %></span>
+                </a>
+              </h4>
+            </div>
+            <div id="failed-probe-<%= index %>" class="panel-collapse collapse <%= 'in' if total_probes < 10 %>">
+              <div class="panel-body">
+                <dl class="dl-horizontal">
+                  <dt>Type:</dt>
+                  <dd><code><%= probe.type %></code></dd>
+
+                  <% if probe.file %>
+                    <dt>File:</dt>
+                    <dd><code><%= probe.file %></code></dd>
+                  <% end %>
+
+                  <% if probe.line_no %>
+                    <dt>Line Number:</dt>
+                    <dd><%= probe.line_no %></dd>
+                  <% end %>
+
+                  <% if probe.type_name %>
+                    <dt>Class/Module:</dt>
+                    <dd><code><%= probe.type_name %></code></dd>
+                  <% end %>
+
+                  <% if probe.method_name %>
+                    <dt>Method:</dt>
+                    <dd><code><%= probe.method_name %></code></dd>
+                  <% end %>
+
+                  <% if probe.template %>
+                    <dt>Template:</dt>
+                    <dd><pre><%= probe.template %></pre></dd>
+                  <% end %>
+
+                  <% if probe.condition %>
+                    <dt>Condition:</dt>
+                    <dd><code><%= probe.condition %></code></dd>
+                  <% end %>
+
+                  <dt>Rate Limit:</dt>
+                  <dd><%= probe.rate_limit %></dd>
+                </dl>
+
+              </div>
+            </div>
+          </div>
+        <% end %>
+      </div>
+    <% end %>
+  </div>
+</div>
