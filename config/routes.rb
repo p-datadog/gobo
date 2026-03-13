@@ -20,6 +20,7 @@ Rails.application.routes.draw do
   get '/microposts/:id/vote/:job_id', to: 'static_pages#vote'
   get '/debugger_test/calculate', to: 'debugger_test#calculate'
   get '/debugger_test/circuit_breaker', to: 'debugger_test#circuit_breaker'
+  get '/debugger_test/binary_data', to: 'debugger_test#binary_data'
   get '/probes', to: 'probes#index'
   post '/probes/:id/send_status', to: 'probes#send_status', as: 'send_probe_status'
 end

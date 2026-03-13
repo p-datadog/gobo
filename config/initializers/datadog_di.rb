@@ -33,4 +33,36 @@ Rails.application.config.to_prepare do
       },
     }
   end
+
+  # Register custom serializer for BinaryDataModel that returns binary data
+  # This serializer returns a binary string with all byte values 0-255, which
+  # cannot be JSON-encoded and will trigger JSON::GeneratorError
+  Datadog::DI::Serializer.register(
+    condition: lambda { |value|
+      value.is_a?(BinaryDataModel) && value.metadata[:trigger_json_error]
+    }
+  ) do |serializer, value, name:, depth:|
+    # Create binary string with all byte values from 0 to 255
+    # This matches the test pattern from spec/datadog/di/serializer_spec.rb
+    binary_string = (0..255).map { |b| b.chr(Encoding::ASCII_8BIT) }.join
+
+    {
+      type: 'BinaryDataModel',
+      data: binary_string,  # This will cause JSON::GeneratorError
+      note: 'This binary data cannot be JSON-encoded'
+    }
+  end
+
+  # Fallback serializer for BinaryDataModel when trigger_json_error is false
+  Datadog::DI::Serializer.register(
+    condition: ->(value) { value.is_a?(BinaryDataModel) }
+  ) do |serializer, value, name:, depth:|
+    {
+      type: 'BinaryDataModel',
+      fields: {
+        data: serializer.serialize_value(value.data, name: :data, depth: depth - 1),
+        metadata: serializer.serialize_value(value.metadata, name: :metadata, depth: depth - 1),
+      }
+    }
+  end
 end

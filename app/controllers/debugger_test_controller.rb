@@ -36,4 +36,27 @@ class DebuggerTestController < ApplicationController
     response_text = "ExpensiveModel processed with n=#{fibonacci_n}. Execution time: #{(execution_time * 1000).round(2)}ms"
     render plain: response_text
   end
+
+  def binary_data
+    # Get trigger_error from params, default to false
+    trigger_error = params[:trigger_error] == 'true'
+
+    execution_time = Benchmark.realtime do
+      # Create BinaryDataModel with metadata flag controlling serializer behavior
+      model = BinaryDataModel.new(
+        data: "Sample data for DI snapshot",
+        metadata: {
+          trigger_json_error: trigger_error,
+          timestamp: Time.now
+        }
+      )
+
+      # Call process method - good place to set a DI probe
+      result = model.process
+    end
+
+    status_text = trigger_error ? "triggered (probe will be disabled)" : "normal operation"
+    response_text = "BinaryDataModel processed with JSON error #{status_text}. Execution time: #{(execution_time * 1000).round(2)}ms"
+    render plain: response_text
+  end
 end
