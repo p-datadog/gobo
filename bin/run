@@ -1,0 +1,174 @@
+#!/bin/sh
+
+set -eu
+
+# Get the directory where this script is located
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+
+usage() {
+    echo "Usage: $0 [-r | -u] [-p PORT] [-w WORKERS] [-s SERVICE] [-e ENV] [-d] [-D]"
+    echo "  -r            Run Rails server in production mode"
+    echo "  -u            Run Puma server in production mode"
+    echo "  -p PORT       Override port number (default: 3000)"
+    echo "  -w WORKERS    Set number of Puma workers (only applies to -u)"
+    echo "  -s SERVICE    Set DD_SERVICE name"
+    echo "  -e ENV        Set DD_ENV environment"
+    echo "  -d            Enable DD_TRACE_DEBUG"
+    echo "  -D            Use development environment (default: production)"
+    exit 1
+}
+
+PORT=""
+WORKERS=""
+SERVICE=""
+DDENV=""
+DEBUG=""
+DEV_MODE=""
+
+# Parse options
+while getopts "rup:w:s:e:dD" opt; do
+    case $opt in
+        r)
+            MODE="rails"
+            ;;
+        u)
+            MODE="puma"
+            ;;
+        p)
+            PORT="$OPTARG"
+            ;;
+        w)
+            WORKERS="$OPTARG"
+            ;;
+        s)
+            SERVICE="$OPTARG"
+            ;;
+        e)
+            DDENV="$OPTARG"
+            ;;
+        d)
+            DEBUG="1"
+            ;;
+        D)
+            DEV_MODE="1"
+            ;;
+        *)
+            usage
+            ;;
+    esac
+done
+
+# Check if a mode was specified
+if [ -z "$MODE" ]; then
+    usage
+fi
+
+# Change to app directory and install dependencies
+cd "$SCRIPT_DIR/sample_app_6th_ed"
+bundle install
+yarn install
+
+# Set Rails environment
+if [ -n "$DEV_MODE" ]; then
+    export RAILS_ENV=development
+    echo "Running in development mode..."
+else
+    export RAILS_ENV=production
+    export RAILS_SERVE_STATIC_FILES=true
+
+    # Generate a new secret key base for this run
+    echo "Generating secret key base..."
+    export SECRET_KEY_BASE=$(bundle exec rails secret)
+fi
+
+# Run database migrations
+bundle exec rails db:migrate
+
+# Create admin user if it doesn't exist
+echo "Checking for admin user..."
+ADMIN_EXISTS=$(bundle exec rails runner "begin; result = User.exists?(email: 'admin@example.com'); STDOUT.puts '<<<RESULT>>>' + result.to_s + '<<<END>>>'; rescue => e; STDOUT.puts '<<<RESULT>>>false<<<END>>>'; end" 2>&1 | grep -o '<<<RESULT>>>.*<<<END>>>' | sed 's/<<<RESULT>>>//;s/<<<END>>>//')
+echo "Admin check result: '$ADMIN_EXISTS'"
+if [ "$ADMIN_EXISTS" != "true" ]; then
+  echo "Creating admin user..."
+  bundle exec rake create_user || echo "Warning: Failed to create admin user"
+else
+  echo "Admin user already exists"
+fi
+
+# Precompile assets if necessary (only in production)
+if [ -z "$DEV_MODE" ]; then
+  if ! ls public/assets/.sprockets-manifest-*.json >/dev/null 2>&1; then
+    echo "Precompiling assets..."
+    DD_TRACE_ENABLED=false WEBPACKER_DEBUG=true bundle exec rake assets:precompile --trace
+  fi
+
+  # Compile webpacker if necessary
+  if [ ! -f "public/packs/manifest.json" ]; then
+    echo "Compiling webpacker..."
+    # Set NODE_OPTIONS for Node 17+ compatibility
+    NODE_VERSION=$(node -v | cut -d'.' -f1 | sed 's/v//')
+    if [ "$NODE_VERSION" -ge 17 ]; then
+      export NODE_OPTIONS=--openssl-legacy-provider
+    fi
+    if ! DD_TRACE_ENABLED=false WEBPACKER_DEBUG=true bundle exec rails webpacker:compile 2>&1; then
+      echo "Warning: webpacker:compile failed, continuing anyway..."
+    fi
+  fi
+fi
+
+# Enable Datadog Dynamic Instrumentation
+export DD_DYNAMIC_INSTRUMENTATION_ENABLED=1
+if [ -n "$DEV_MODE" ]; then
+    # Remote Configuration and telemetry are enabled by default in production
+    # but not in development. Both are required for DI, so we enable them
+    # explicitly in development mode.
+    export DD_REMOTE_CONFIGURATION_ENABLED=1
+    export DD_INSTRUMENTATION_TELEMETRY_ENABLED=1
+fi
+
+# Set Datadog Git tracking variables
+export DD_GIT_REPOSITORY_URL=$(git config --get remote.origin.url)
+export DD_GIT_COMMIT_SHA=$(git rev-parse HEAD)
+
+# Set DD_SERVICE if provided
+if [ -n "$SERVICE" ]; then
+    export DD_SERVICE="$SERVICE"
+fi
+
+# Set DD_ENV if provided
+if [ -n "$DDENV" ]; then
+    export DD_ENV="$DDENV"
+fi
+
+# Set DD_TRACE_DEBUG if requested
+if [ -n "$DEBUG" ]; then
+    export DD_TRACE_DEBUG=1
+fi
+
+# Determine which Rails environment to use
+if [ -n "$DEV_MODE" ]; then
+    RAILS_ENV_ARG="development"
+else
+    RAILS_ENV_ARG="production"
+fi
+
+# Run the appropriate server in foreground
+case $MODE in
+    rails)
+        if [ -n "$PORT" ]; then
+            bin/rails server -e "$RAILS_ENV_ARG" -p "$PORT"
+        else
+            bin/rails server -e "$RAILS_ENV_ARG"
+        fi
+        ;;
+    puma)
+        PUMA_CMD="bundle exec puma -e $RAILS_ENV_ARG"
+        if [ -n "$PORT" ]; then
+            PUMA_CMD="$PUMA_CMD -p $PORT"
+        fi
+        if [ -n "$WORKERS" ]; then
+            PUMA_CMD="$PUMA_CMD -w $WORKERS"
+        fi
+        $PUMA_CMD
+        ;;
+esac
