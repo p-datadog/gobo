@@ -7,16 +7,16 @@ class DebuggerTestControllerTest < ActionDispatch::IntegrationTest
     assert_select "h1", "JSON Encoding Error Demo"
   end
 
-  test "binary_data returns plain text response" do
+  test "binary_data returns normal operation message" do
     get "/debugger_test/binary_data"
     assert_response :success
-    assert_match /BinaryDataModel processed/, response.body
+    assert_match /BinaryDataModel processed normally/, response.body
   end
 
-  test "binary_data with trigger_error returns plain text response" do
+  test "binary_data with trigger_error returns error triggered message" do
     get "/debugger_test/binary_data", params: { trigger_error: "true" }
     assert_response :success
-    assert_match /BinaryDataModel processed/, response.body
+    assert_match /custom serializer error triggered/, response.body
   end
 
   test "binary_data_param returns plain text response" do

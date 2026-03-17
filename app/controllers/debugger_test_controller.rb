@@ -72,8 +72,11 @@ class DebuggerTestController < ApplicationController
       result = model.process
     end
 
-    status_text = trigger_error ? "triggered (probe will be disabled)" : "normal operation"
-    response_text = "BinaryDataModel processed with JSON error #{status_text}. Execution time: #{(execution_time * 1000).round(2)}ms"
+    response_text = if trigger_error
+      "BinaryDataModel processed with custom serializer error triggered (probe will be disabled). Execution time: #{(execution_time * 1000).round(2)}ms"
+    else
+      "BinaryDataModel processed normally. Execution time: #{(execution_time * 1000).round(2)}ms"
+    end
     render plain: response_text
   end
 end
