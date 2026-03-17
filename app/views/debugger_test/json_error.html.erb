@@ -24,19 +24,47 @@
   <p class="text-muted" style="margin-bottom: 15px;">
     Cases 1 &amp; 3 use <code>BinaryDataModel#process</code>. Case 2 uses <code>RawBinaryModel#process</code> (no custom serializer).
   </p>
-  <a href="/debugger_test/binary_data" class="btn btn-success" target="_blank">
+  <a href="/debugger_test/binary_data" class="btn btn-success di-demo-btn">
     <strong>Normal Operation</strong><br>
     <small>Snapshot serializes correctly</small>
   </a>
-  <a href="/debugger_test/binary_data_param" class="btn btn-success" style="margin-left: 10px;" target="_blank">
+  <a href="/debugger_test/binary_data_param" class="btn btn-success di-demo-btn" style="margin-left: 10px;">
     <strong>Binary data</strong><br>
     <small>Binary string as method argument, DI serializes natively</small>
   </a>
-  <a href="/debugger_test/binary_data?trigger_error=true" class="btn btn-danger" style="margin-left: 10px;" target="_blank">
+  <a href="/debugger_test/binary_data?trigger_error=true" class="btn btn-danger di-demo-btn" style="margin-left: 10px;">
     <strong>Custom serializer returns binary data</strong><br>
     <small>Probe will be disabled with ERROR status</small>
   </a>
+
+  <div id="di-demo-result" style="display: none; margin-top: 15px;"></div>
 </div>
+
+<script>
+  document.querySelectorAll('.di-demo-btn').forEach(function(btn) {
+    btn.addEventListener('click', function(e) {
+      e.preventDefault();
+      var url = this.getAttribute('href');
+      var label = this.querySelector('strong').textContent;
+      var resultEl = document.getElementById('di-demo-result');
+
+      resultEl.style.display = 'none';
+
+      fetch(url)
+        .then(function(res) { return res.text(); })
+        .then(function(text) {
+          resultEl.className = 'alert alert-info';
+          resultEl.innerHTML = '<strong>' + label + ':</strong> ' + text;
+          resultEl.style.display = 'block';
+        })
+        .catch(function(err) {
+          resultEl.className = 'alert alert-danger';
+          resultEl.innerHTML = '<strong>Error:</strong> ' + err;
+          resultEl.style.display = 'block';
+        });
+    });
+  });
+</script>
 
 <div class="panel panel-default">
   <div class="panel-heading"><h4 class="panel-title">Background</h4></div>
