@@ -6,10 +6,10 @@ class BinaryDataModel
     @metadata = metadata
   end
 
-  def process
+  def process(data = @data)
     {
       timestamp: Time.now,
-      data: @data,
+      data: data,
       metadata: @metadata,
       status: "processed"
     }

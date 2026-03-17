@@ -9,7 +9,7 @@
   <div class="panel-heading"><h4 class="panel-title">How to Test</h4></div>
   <div class="panel-body">
     <ol>
-      <li>In Datadog, set a <strong>method probe</strong> on <code>BinaryDataModel#process</code> (cases 1 &amp; 3) or <code>RawBinaryModel#process</code> (case 2)</li>
+      <li>In Datadog, set a <strong>method probe</strong> on <code>BinaryDataModel#process</code></li>
       <li>Wait for the probe to appear as active on <%= link_to "DI Probes", probes_path %></li>
       <li>Click <strong>Normal Operation</strong> — snapshot captures and serializes successfully</li>
       <li>Click <strong>Binary data</strong> — binary string passed as method argument, DI serializes it natively without error</li>
@@ -22,7 +22,7 @@
 <div class="well">
   <h4>Run the Demo</h4>
   <p class="text-muted" style="margin-bottom: 15px;">
-    Cases 1 &amp; 3 use <code>BinaryDataModel#process</code>. Case 2 uses <code>RawBinaryModel#process</code> (no custom serializer).
+    All three cases use <code>BinaryDataModel#process</code> with a probe on it.
   </p>
   <a href="/debugger_test/binary_data" class="btn btn-success di-demo-btn">
     <strong>Normal Operation</strong><br>
