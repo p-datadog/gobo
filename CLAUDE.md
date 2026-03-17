@@ -32,4 +32,9 @@ The homepage should have UI elements and/or prose describing available features 
 
 ## Test Coverage
 
-All code changes must have test coverage. When adding or modifying models, controllers, or lib classes, write or update tests in the corresponding `test/` file. Tests must pass before committing.
+All code changes must have test coverage. When adding or modifying models, controllers, or lib classes, write or update specs in the corresponding `spec/` file. Specs must pass before committing.
+
+The test command is:
+```
+DD_TRACER=/real.home/claude-dtr-2/dtr bundle exec rspec
+```
