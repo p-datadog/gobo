@@ -8,7 +8,7 @@ gem 'image_processing',           '~> 1.9'
 gem 'mini_magick',                '~> 4.9.5'
 gem 'active_storage_validations', '~> 0.8.9'
 gem 'bcrypt',                     '~> 3.1.13'
-gem 'faker',                      '~> 2.11.0'
+gem 'faker',                      '~> 3.0'
 gem 'will_paginate',              '~> 3.3.0'
 gem 'bootstrap-will_paginate',    '~> 1.0.0'
 gem 'bootstrap-sass',             '~> 3.4.1'
@@ -31,6 +31,8 @@ group :development do
 end
 
 group :test do
+  gem 'matrix'  # required by capybara 3.35.3, removed from Ruby stdlib in 3.1
+  gem 'rexml'   # required by selenium-webdriver 3.142.7, removed from Ruby stdlib in 3.1
   gem 'capybara',                 '3.35.3'
   gem 'selenium-webdriver',       '3.142.7'
   gem 'webdrivers',               '4.6.0'

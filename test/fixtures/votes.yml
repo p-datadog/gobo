@@ -1,9 +1,7 @@
-# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
-
 one:
-  id: MyString
-  post_id: 1
+  job_id: job-1
+  micropost_id: 1
 
 two:
-  id: MyString
-  post_id: 1
+  job_id: job-2
+  micropost_id: 1

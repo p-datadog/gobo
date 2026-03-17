@@ -8,10 +8,10 @@ class ProbesControllerTest < ActionDispatch::IntegrationTest
     assert_select "title", "Active Dynamic Instrumentation Probes | Ruby Debugger Demo"
   end
 
-  test "should display message when no probes are active" do
+  test "should display probe counts when no probes are active" do
     get probes_path
     assert_response :success
-    assert_select "div.alert-info", text: /No active or pending probes found/
+    assert_select "div.alert-info", text: /Active: 0.*Disabled: 0.*Pending: 0.*Failed: 0/
   end
 
   test "should display datadog configuration" do

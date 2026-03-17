@@ -29,3 +29,7 @@ All UI should be navigable from the homepage via links or buttons. There should 
 ## Feature Discoverability
 
 The homepage should have UI elements and/or prose describing available features so that they are discoverable. Users should be able to understand what the app demonstrates without prior knowledge.
+
+## Test Coverage
+
+All code changes must have test coverage. When adding or modifying models, controllers, or lib classes, write or update tests in the corresponding `test/` file. Tests must pass before committing.

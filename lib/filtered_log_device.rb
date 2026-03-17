@@ -7,7 +7,7 @@
 # By filtering at the IO level (after all formatters have run), this cleanly
 # removes the prefix regardless of how Datadog wraps the formatter.
 class FilteredLogDevice
-  DD_TRACE_PREFIX = /\[dd(?:\.\w+=\S+)+ ddsource=ruby\] /
+  DD_TRACE_PREFIX = /\[dd\.\w+=\S+(?:\s+dd\.\w+=\S+)* ddsource=ruby\] /
 
   def initialize(io)
     @io = io
@@ -17,9 +17,23 @@ class FilteredLogDevice
     @io.write(msg.to_s.gsub(DD_TRACE_PREFIX, ''))
   end
 
-  def close = @io.close
-  def flush = @io.flush
-  def sync  = @io.sync
-  def sync=(val) = @io.sync = val
-  def fileno = @io.fileno
+  def close
+    @io.close
+  end
+
+  def flush
+    @io.flush
+  end
+
+  def sync
+    @io.sync
+  end
+
+  def sync=(val)
+    @io.sync = val
+  end
+
+  def fileno
+    @io.fileno
+  end
 end

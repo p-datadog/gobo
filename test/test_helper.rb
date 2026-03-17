@@ -7,6 +7,8 @@ Minitest::Reporters.use!
 class ActiveSupport::TestCase
   fixtures :all
 
+  setup { ActionMailer::Base.deliveries.clear }
+
   # Returns true if a test user is logged in.
   def is_logged_in?
     !session[:user_id].nil?
