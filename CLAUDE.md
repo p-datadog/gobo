@@ -1,5 +1,9 @@
 # Development Guidelines for Claude
 
+## Running Commands
+
+Always prefix Ruby/Rails commands with `bundle exec`. Never run `ruby`, `rails`, `rake`, `rspec`, or other gem-provided executables without `bundle exec`.
+
 ## Exception Reporting
 
 When logging exceptions, always use the pattern `#{e.class}: #{e}` to include both the exception class and message.

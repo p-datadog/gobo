@@ -1,0 +1,138 @@
+#!/usr/bin/env bash
+#
+# bin/capture_symbols
+#
+# Runs a mock agent that captures the symdb upload payload,
+# decompresses it, and pretty-prints the JSON.
+#
+# Usage:
+#   # Terminal 1: start the capture server
+#   bin/capture_symbols
+#
+#   # Terminal 2: run extract_symbols pointing at the capture server
+#   DD_TRACE_AGENT_PORT=8877 bin/extract_symbols
+
+set -euo pipefail
+
+CAPTURE_PORT="${CAPTURE_PORT:-8877}"
+CAPTURE_DIR="/tmp/symdb_captures"
+mkdir -p "$CAPTURE_DIR"
+
+echo "Starting symdb capture server on port $CAPTURE_PORT"
+echo "Captures saved to: $CAPTURE_DIR"
+echo ""
+echo "Run in another terminal:"
+echo "  cd $(pwd) && DD_TRACER=/real.home/claude-2/dtr DD_TRACE_AGENT_PORT=$CAPTURE_PORT bundle exec bin/extract_symbols"
+echo ""
+echo "Press Ctrl+C to stop."
+echo ""
+
+bundle exec ruby -e '
+require "webrick"
+require "json"
+require "zlib"
+require "fileutils"
+
+capture_dir = ENV.fetch("CAPTURE_DIR", "/tmp/symdb_captures")
+capture_port = ENV.fetch("CAPTURE_PORT", "8877").to_i
+request_count = 0
+
+server = WEBrick::HTTPServer.new(Port: capture_port, Logger: WEBrick::Log.new("/dev/null"), AccessLog: [])
+
+# Accept any request the tracer sends during init (info, telemetry, traces, etc.)
+server.mount_proc "/" do |req, res|
+  if req.path == "/symdb/v1/input" && req.request_method == "POST"
+    request_count += 1
+    timestamp = Time.now.strftime("%H%M%S")
+
+    # Parse multipart body
+    content_type = req["Content-Type"]
+    body = req.body
+
+    # Save raw request
+    raw_path = File.join(capture_dir, "#{timestamp}_#{request_count}_raw.bin")
+    File.binwrite(raw_path, body)
+
+    # Try to extract the gzip part from multipart
+    if content_type&.include?("multipart")
+      boundary = content_type[/boundary=(.+)/, 1]
+      if boundary
+        parts = body.split("--#{boundary}").reject { |p| p.strip.empty? || p.strip == "--" }
+
+        parts.each_with_index do |part, i|
+          # Split headers from body
+          header_body = part.split("\r\n\r\n", 2)
+          next unless header_body.size == 2
+
+          headers_str, part_body = header_body
+          part_body = part_body.chomp("\r\n")
+
+          if headers_str.include?("event")
+            # Event metadata part
+            event_path = File.join(capture_dir, "#{timestamp}_#{request_count}_event.json")
+            File.write(event_path, part_body)
+            parsed = JSON.parse(part_body) rescue part_body
+            puts "=== Upload ##{request_count} — Event metadata ==="
+            puts JSON.pretty_generate(parsed) rescue puts(part_body)
+            puts ""
+          elsif headers_str.include?("gzip") || headers_str.include?("symbols")
+            # Symbols gzip part — decompress
+            begin
+              json_data = Zlib.gunzip(part_body)
+              symbols_path = File.join(capture_dir, "#{timestamp}_#{request_count}_symbols.json")
+              File.write(symbols_path, json_data)
+              parsed = JSON.parse(json_data)
+
+              puts "=== Upload ##{request_count} — Symbols payload ==="
+              puts "  service:  #{parsed["service"]}"
+              puts "  env:      #{parsed["env"]}"
+              puts "  version:  #{parsed["version"]}"
+              puts "  language: #{parsed["language"]}"
+              puts "  scopes:   #{parsed["scopes"]&.size || 0}"
+              puts ""
+
+              parsed["scopes"]&.each do |scope|
+                puts "  [#{scope["scope_type"]}] #{scope["name"]}"
+                puts "    source: #{scope["source_file"]}:#{scope["start_line"]}-#{scope["end_line"]}"
+                scope["scopes"]&.each do |child|
+                  puts "    [#{child["scope_type"]}] #{child["name"]}"
+                  child["symbols"]&.each do |sym|
+                    puts "      #{sym["symbol_type"]}: #{sym["name"]} (line #{sym["line"]})"
+                  end
+                end
+                scope["symbols"]&.each do |sym|
+                  puts "    #{sym["symbol_type"]}: #{sym["name"]} (line #{sym["line"]})"
+                end
+                puts ""
+              end
+
+              # Also save pretty-printed version
+              pretty_path = File.join(capture_dir, "#{timestamp}_#{request_count}_symbols_pretty.json")
+              File.write(pretty_path, JSON.pretty_generate(parsed))
+            rescue Zlib::GzipFile::Error => e
+              puts "=== Upload ##{request_count} — Could not decompress: #{e} ==="
+            end
+          end
+        end
+      end
+    end
+
+    res.status = 200
+    res.body = "{}"
+  else
+    # Accept everything else (traces, telemetry, info, etc.)
+    res.status = 200
+    res.body = case req.path
+    when "/info"
+      "{\"endpoints\":[\"/symdb/v1/input\"],\"client_drop_p0s\":true}"
+    when %r{/v0\.\d+/traces}
+      "{}"
+    else
+      "{}"
+    end
+  end
+end
+
+trap("INT") { server.shutdown }
+server.start
+'

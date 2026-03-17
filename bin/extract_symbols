@@ -1,0 +1,54 @@
+#!/usr/bin/env bash
+#
+# bin/extract_symbols
+#
+# Boots the Rails app to extract and upload symbols from demo-ruby to Datadog.
+# Requires a Datadog agent running on localhost:8126.
+#
+# Usage:
+#   bin/extract_symbols
+#   DD_TRACER=/real.home/claude-2/dtr bin/extract_symbols   # local tracer build
+#   DD_TRACE_DEBUG=true bin/extract_symbols                 # verbose logging
+
+set -euo pipefail
+
+export DD_SYMBOL_DATABASE_UPLOAD_ENABLED=true
+export DD_SYMBOL_DATABASE_FORCE_UPLOAD=true
+export DD_DYNAMIC_INSTRUMENTATION_ENABLED=true
+export DD_TRACE_DEBUG="${DD_TRACE_DEBUG:-true}"
+
+export DD_SERVICE="${DD_SERVICE:-demo-ruby}"
+export DD_ENV="${DD_ENV:-development}"
+export DD_VERSION="${DD_VERSION:-1.0}"
+
+echo "Symbol extraction from demo-ruby"
+echo "  Tracer:  ${DD_TRACER:-datadog gem (release)}"
+echo "  Agent:   ${DD_AGENT_HOST:-localhost}:${DD_TRACE_AGENT_PORT:-8126}"
+echo "  Service: $DD_SERVICE ($DD_ENV)"
+echo ""
+
+bundle exec rails runner '
+  # Eagerly load all application classes (Zeitwerk lazy-loads in development)
+  Rails.application.eager_load!
+
+  puts "Rails loaded. Classes available for extraction:"
+  puts "  Models:      #{ApplicationRecord.descendants.map(&:name).compact.sort.join(", ")}"
+  puts "  Controllers: #{ApplicationController.descendants.map(&:name).compact.sort.join(", ")}"
+  puts ""
+
+  # Trigger extraction now that all classes are loaded.
+  # In production, eager_load happens during boot and the after_initialize
+  # callback handles this automatically. In development (rails runner),
+  # we need to trigger it explicitly after eager_load!.
+  symdb = Datadog.send(:components).symbol_database
+  if symdb
+    puts "Triggering symbol extraction..."
+    symdb.start_upload
+  else
+    puts "WARNING: symbol_database component is nil — check DD_SYMBOL_DATABASE_* env vars"
+  end
+
+  puts "Waiting for upload to complete..."
+  sleep 5
+  puts "Done."
+'
