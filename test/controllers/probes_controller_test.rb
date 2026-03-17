@@ -5,7 +5,7 @@ class ProbesControllerTest < ActionDispatch::IntegrationTest
   test "should get index" do
     get probes_path
     assert_response :success
-    assert_select "title", "Active Dynamic Instrumentation Probes | Ruby on Rails Tutorial Sample App"
+    assert_select "title", "Active Dynamic Instrumentation Probes | Ruby Debugger Demo"
   end
 
   test "should display message when no probes are active" do
