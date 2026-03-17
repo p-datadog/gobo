@@ -24,6 +24,7 @@ SERVICE=""
 DDENV=""
 DEBUG=""
 DEV_MODE=""
+MODE="rails"
 
 # Parse options
 while getopts "rup:w:s:e:dD" opt; do
@@ -57,11 +58,6 @@ while getopts "rup:w:s:e:dD" opt; do
             ;;
     esac
 done
-
-# Check if a mode was specified
-if [ -z "$MODE" ]; then
-    usage
-fi
 
 # Change to app directory and install dependencies
 cd "$SCRIPT_DIR/sample_app_6th_ed"
