@@ -1,7 +1,7 @@
 # Datadog Dynamic Instrumentation Configuration
 
 Datadog.configure do |c|
-  c.agent.port = 18126
+  c.agent.port = (ENV["DD_TRACE_AGENT_PORT"] || 18126).to_i
   c.dynamic_instrumentation.internal.development = true
 end
 
