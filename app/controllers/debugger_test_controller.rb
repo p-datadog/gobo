@@ -42,15 +42,15 @@ class DebuggerTestController < ApplicationController
   end
 
   def binary_data_param
-    # Pass a real binary string (all 256 byte values) as a method argument.
-    # When a DI probe fires on BinaryDataModel#process, the snapshot will contain
-    # this binary string as the value of @data, causing a JSON encoding error.
+    # Pass a real binary string (all 256 byte values) as a method argument to
+    # RawBinaryModel#process, which has no custom DI serializer registered.
+    # DI serializes the binary string natively without error.
     binary = (0..255).map { |b| b.chr(Encoding::ASCII_8BIT) }.join
 
-    model = BinaryDataModel.new(data: binary, metadata: {})
-    result = model.process
+    model = RawBinaryModel.new
+    result = model.process(binary)
 
-    render plain: "BinaryDataModel processed with binary data as argument. Data: #{binary.length} bytes, encoding: #{binary.encoding}"
+    render plain: "RawBinaryModel processed with binary data argument. Size: #{binary.length} bytes, encoding: #{binary.encoding}"
   end
 
   def binary_data

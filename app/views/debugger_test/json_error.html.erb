@@ -5,33 +5,14 @@
   Demonstrates how Ruby DI handles probes that capture binary data.
 </p>
 
-<div class="panel panel-default">
-  <div class="panel-heading"><h4 class="panel-title">Background</h4></div>
-  <div class="panel-body">
-    <p>
-      When a DI probe fires on a method, it captures a <strong>snapshot</strong> of local variables
-      and arguments. That snapshot is serialized to JSON and sent to Datadog.
-    </p>
-    <p>
-      If the captured data contains non-UTF-8 binary bytes (e.g. from a custom serializer that
-      returns raw binary strings), JSON encoding fails. Without error handling, this failure is
-      silent: snapshots are dropped, the probe appears healthy, and only telemetry tracks the issue.
-    </p>
-    <p>
-      With proper error handling (dd-trace-rb PR #5448), a JSON encoding failure
-      <strong>disables the probe and reports ERROR status</strong> to the Datadog UI.
-    </p>
-  </div>
-</div>
-
 <div class="panel panel-info">
   <div class="panel-heading"><h4 class="panel-title">How to Test</h4></div>
   <div class="panel-body">
     <ol>
-      <li>In Datadog, set a <strong>method probe</strong> on <code>BinaryDataModel#process</code></li>
+      <li>In Datadog, set a <strong>method probe</strong> on <code>BinaryDataModel#process</code> (cases 1 &amp; 3) or <code>RawBinaryModel#process</code> (case 2)</li>
       <li>Wait for the probe to appear as active on <%= link_to "DI Probes", probes_path %></li>
-      <li>Click <strong>Normal Operation</strong> below — snapshot captures and serializes successfully</li>
-      <li>Click <strong>Binary data</strong> — binary string passed as a method argument; snapshot contains raw binary data</li>
+      <li>Click <strong>Normal Operation</strong> — snapshot captures and serializes successfully</li>
+      <li>Click <strong>Binary data</strong> — binary string passed as method argument, DI serializes it natively without error</li>
       <li>Click <strong>Custom serializer returns binary data</strong> — custom serializer produces a non-UTF-8 binary string, JSON encoding fails, probe is automatically disabled with ERROR status</li>
       <li>Return to <%= link_to "DI Probes", probes_path %> to see the probe status change</li>
     </ol>
@@ -41,7 +22,7 @@
 <div class="well">
   <h4>Run the Demo</h4>
   <p class="text-muted" style="margin-bottom: 15px;">
-    All three buttons trigger <code>BinaryDataModel#process</code> with a probe set on it.
+    Cases 1 &amp; 3 use <code>BinaryDataModel#process</code>. Case 2 uses <code>RawBinaryModel#process</code> (no custom serializer).
   </p>
   <a href="/debugger_test/binary_data" class="btn btn-success" target="_blank">
     <strong>Normal Operation</strong><br>
@@ -49,10 +30,30 @@
   </a>
   <a href="/debugger_test/binary_data_param" class="btn btn-success" style="margin-left: 10px;" target="_blank">
     <strong>Binary data</strong><br>
-    <small>Binary string passed as method argument</small>
+    <small>Binary string as method argument, DI serializes natively</small>
   </a>
   <a href="/debugger_test/binary_data?trigger_error=true" class="btn btn-danger" style="margin-left: 10px;" target="_blank">
     <strong>Custom serializer returns binary data</strong><br>
     <small>Probe will be disabled with ERROR status</small>
   </a>
+</div>
+
+<div class="panel panel-default">
+  <div class="panel-heading"><h4 class="panel-title">Background</h4></div>
+  <div class="panel-body">
+    <p>
+      When a DI probe fires on a method, it captures a <strong>snapshot</strong> of local variables
+      and arguments. That snapshot is serialized to JSON and sent to Datadog.
+    </p>
+    <p>
+      If a custom serializer returns a raw binary string (non-UTF-8), JSON encoding fails.
+      Without error handling, this failure is silent: snapshots are dropped, the probe appears
+      healthy, and only telemetry tracks the issue.
+    </p>
+    <p>
+      With proper error handling (dd-trace-rb PR #5448), a JSON encoding failure
+      <strong>disables the probe and reports ERROR status</strong> to the Datadog UI.
+      DI's own serializer handles binary strings safely without this problem.
+    </p>
+  </div>
 </div>
