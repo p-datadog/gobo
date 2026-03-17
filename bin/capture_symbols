@@ -22,7 +22,7 @@ echo "Starting symdb capture server on port $CAPTURE_PORT"
 echo "Captures saved to: $CAPTURE_DIR"
 echo ""
 echo "Run in another terminal:"
-echo "  cd $(pwd) && DD_TRACER=/real.home/claude-2/dtr DD_TRACE_AGENT_PORT=$CAPTURE_PORT bundle exec bin/extract_symbols"
+echo "  cd $(pwd) && ${DD_TRACER:+DD_TRACER=$DD_TRACER }DD_TRACE_AGENT_PORT=$CAPTURE_PORT bin/extract_symbols"
 echo ""
 echo "Press Ctrl+C to stop."
 echo ""
@@ -45,75 +45,64 @@ server.mount_proc "/" do |req, res|
     request_count += 1
     timestamp = Time.now.strftime("%H%M%S")
 
-    # Parse multipart body
-    content_type = req["Content-Type"]
-    body = req.body
+    # Parse multipart body using WEBrick's built-in parser.
+    # Manual body.split parsing fails silently on binary gzip data due to encoding errors.
+    # req.query handles multipart/form-data correctly for both text and binary parts.
+    form_data = req.query
 
-    # Save raw request
+    # Save raw request body for debugging
+    raw_body = req.body || ""
     raw_path = File.join(capture_dir, "#{timestamp}_#{request_count}_raw.bin")
-    File.binwrite(raw_path, body)
+    File.binwrite(raw_path, raw_body)
 
-    # Try to extract the gzip part from multipart
-    if content_type&.include?("multipart")
-      boundary = content_type[/boundary=(.+)/, 1]
-      if boundary
-        parts = body.split("--#{boundary}").reject { |p| p.strip.empty? || p.strip == "--" }
+    # Event metadata part (field name: "event")
+    if (event_part = form_data["event"])
+      event_str = event_part.to_s
+      event_path = File.join(capture_dir, "#{timestamp}_#{request_count}_event.json")
+      File.write(event_path, event_str)
+      parsed = JSON.parse(event_str) rescue event_str
+      puts "=== Upload ##{request_count} — Event metadata ==="
+      puts JSON.pretty_generate(parsed) rescue puts(event_str)
+      puts ""
+    end
 
-        parts.each_with_index do |part, i|
-          # Split headers from body
-          header_body = part.split("\r\n\r\n", 2)
-          next unless header_body.size == 2
+    # Symbols gzip part (field name: "file")
+    if (file_part = form_data["file"])
+      begin
+        gzip_data = file_part.to_s.b  # force binary encoding for Zlib
+        json_data = Zlib.gunzip(gzip_data)
+        symbols_path = File.join(capture_dir, "#{timestamp}_#{request_count}_symbols.json")
+        File.write(symbols_path, json_data)
+        parsed = JSON.parse(json_data)
 
-          headers_str, part_body = header_body
-          part_body = part_body.chomp("\r\n")
+        puts "=== Upload ##{request_count} — Symbols payload ==="
+        puts "  service:  #{parsed["service"]}"
+        puts "  env:      #{parsed["env"]}"
+        puts "  version:  #{parsed["version"]}"
+        puts "  language: #{parsed["language"]}"
+        puts "  scopes:   #{parsed["scopes"]&.size || 0}"
+        puts ""
 
-          if headers_str.include?("event")
-            # Event metadata part
-            event_path = File.join(capture_dir, "#{timestamp}_#{request_count}_event.json")
-            File.write(event_path, part_body)
-            parsed = JSON.parse(part_body) rescue part_body
-            puts "=== Upload ##{request_count} — Event metadata ==="
-            puts JSON.pretty_generate(parsed) rescue puts(part_body)
-            puts ""
-          elsif headers_str.include?("gzip") || headers_str.include?("symbols")
-            # Symbols gzip part — decompress
-            begin
-              json_data = Zlib.gunzip(part_body)
-              symbols_path = File.join(capture_dir, "#{timestamp}_#{request_count}_symbols.json")
-              File.write(symbols_path, json_data)
-              parsed = JSON.parse(json_data)
-
-              puts "=== Upload ##{request_count} — Symbols payload ==="
-              puts "  service:  #{parsed["service"]}"
-              puts "  env:      #{parsed["env"]}"
-              puts "  version:  #{parsed["version"]}"
-              puts "  language: #{parsed["language"]}"
-              puts "  scopes:   #{parsed["scopes"]&.size || 0}"
-              puts ""
-
-              parsed["scopes"]&.each do |scope|
-                puts "  [#{scope["scope_type"]}] #{scope["name"]}"
-                puts "    source: #{scope["source_file"]}:#{scope["start_line"]}-#{scope["end_line"]}"
-                scope["scopes"]&.each do |child|
-                  puts "    [#{child["scope_type"]}] #{child["name"]}"
-                  child["symbols"]&.each do |sym|
-                    puts "      #{sym["symbol_type"]}: #{sym["name"]} (line #{sym["line"]})"
-                  end
-                end
-                scope["symbols"]&.each do |sym|
-                  puts "    #{sym["symbol_type"]}: #{sym["name"]} (line #{sym["line"]})"
-                end
-                puts ""
-              end
-
-              # Also save pretty-printed version
-              pretty_path = File.join(capture_dir, "#{timestamp}_#{request_count}_symbols_pretty.json")
-              File.write(pretty_path, JSON.pretty_generate(parsed))
-            rescue Zlib::GzipFile::Error => e
-              puts "=== Upload ##{request_count} — Could not decompress: #{e} ==="
+        parsed["scopes"]&.each do |scope|
+          puts "  [#{scope["scope_type"]}] #{scope["name"]}"
+          puts "    source: #{scope["source_file"]}:#{scope["start_line"]}-#{scope["end_line"]}"
+          scope["scopes"]&.each do |child|
+            puts "    [#{child["scope_type"]}] #{child["name"]}"
+            child["symbols"]&.each do |sym|
+              puts "      #{sym["symbol_type"]}: #{sym["name"]} (line #{sym["line"]})"
             end
           end
+          scope["symbols"]&.each do |sym|
+            puts "    #{sym["symbol_type"]}: #{sym["name"]} (line #{sym["line"]})"
+          end
+          puts ""
         end
+
+        # Also save pretty-printed version
+        pretty_path = File.join(capture_dir, "#{timestamp}_#{request_count}_symbols_pretty.json")
+        File.write(pretty_path, JSON.pretty_generate(parsed))
+      rescue Zlib::GzipFile::Error => e
+        puts "=== Upload ##{request_count} — Could not decompress: #{e} ==="
       end
     end
 
