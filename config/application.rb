@@ -13,5 +13,11 @@ module SampleApp
 
     # Include the authenticity token in remote forms.
     config.action_view.embed_authenticity_token_in_remote_forms = true
+
+    # Strip Datadog log injection prefixes ([dd.env=... ddsource=ruby]) from logs.
+    require_relative '../lib/filtered_log_device'
+    log_file = File.open(Rails.root.join('log', "#{Rails.env}.log"), 'a')
+    log_file.sync = true
+    config.logger = ActiveSupport::Logger.new(FilteredLogDevice.new(log_file))
   end
 end
