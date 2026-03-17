@@ -1,6 +1,7 @@
 # Datadog Dynamic Instrumentation Configuration
 
 Datadog.configure do |c|
+  c.agent.port = 18126
   c.dynamic_instrumentation.internal.development = true
 end
 
