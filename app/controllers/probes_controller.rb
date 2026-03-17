@@ -35,8 +35,7 @@ class ProbesController < ApplicationController
     component = Datadog::DI.component
     return {} unless component
 
-    probe_manager = component.probe_manager
-    probe_manager.installed_probes
+    probe_manager_installed_probes(component.probe_manager)
   rescue => e
     error_message = "#{e.class}: #{e}"
     Rails.logger.error "Error fetching dynamic instrumentation probes: #{error_message}"
@@ -50,8 +49,7 @@ class ProbesController < ApplicationController
     component = Datadog::DI.component
     return [] unless component
 
-    probe_manager = component.probe_manager
-    probe_manager.pending_probes
+    probe_manager_pending_probes(component.probe_manager)
   rescue => e
     Rails.logger.error "Error fetching pending probes: #{e.class}: #{e}"
     []
@@ -63,11 +61,31 @@ class ProbesController < ApplicationController
     component = Datadog::DI.component
     return [] unless component
 
-    probe_manager = component.probe_manager
-    probe_manager.failed_probes
+    probe_manager_failed_probes(component.probe_manager)
   rescue => e
     Rails.logger.error "Error fetching failed probes: #{e.class}: #{e}"
     []
+  end
+
+  # Post-PR #5448: probe storage moved to ProbeRepository; access via probe_manager.probe_repository
+  # Pre-PR #5448: methods exist directly on ProbeManager
+  def probe_store(probe_manager)
+    probe_manager.respond_to?(:probe_repository) ? probe_manager.probe_repository : probe_manager
+  end
+
+  def probe_manager_installed_probes(probe_manager)
+    store = probe_store(probe_manager)
+    store.respond_to?(:installed_probes) ? store.installed_probes : {}
+  end
+
+  def probe_manager_pending_probes(probe_manager)
+    store = probe_store(probe_manager)
+    store.respond_to?(:pending_probes) ? store.pending_probes : {}
+  end
+
+  def probe_manager_failed_probes(probe_manager)
+    store = probe_store(probe_manager)
+    store.respond_to?(:failed_probes) ? store.failed_probes : {}
   end
 
   def fetch_datadog_service
@@ -105,7 +123,7 @@ class ProbesController < ApplicationController
     return {success: false, error: "DI component not initialized"} unless component
 
     probe_manager = component.probe_manager
-    all_probes = probe_manager.pending_probes.merge(probe_manager.installed_probes)
+    all_probes = probe_manager_pending_probes(probe_manager).merge(probe_manager_installed_probes(probe_manager))
     probe = all_probes[probe_id]
 
     return {success: false, error: "Probe not found"} unless probe
