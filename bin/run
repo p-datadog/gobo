@@ -139,6 +139,23 @@ if [ -n "$DEBUG" ]; then
     export DD_TRACE_DEBUG=1
 fi
 
+# Determine the port to use for health checks
+CHECK_PORT=${PORT:-3000}
+
+# Start background process to wait for server and trigger remote config
+(
+  # dd-trace-rb only starts remote config workers in Rack middleware.
+  # We need to make a request to the application to trigger this.
+  echo "Waiting for server to be ready on port $CHECK_PORT..."
+  while true; do
+    if curl -so /dev/null localhost:$CHECK_PORT; then
+      echo "Server is ready!"
+      break
+    fi
+    sleep 3
+  done
+) &
+
 # Determine which Rails environment to use
 if [ -n "$DEV_MODE" ]; then
     RAILS_ENV_ARG="development"
