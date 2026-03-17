@@ -24,13 +24,8 @@
         <% end %>
       </section>
       <section style="margin-top: 20px;">
-        <h4>DI Demo Features</h4>
-        <p style="font-size: 0.9em;">
-          View active probes, trigger the JSON encoding error demo (set a probe on
-          <code>BinaryDataModel#process</code> to see error handling), and send
-          probe status notifications.
-        </p>
         <%= link_to "DI Probes", probes_path, class: "btn btn-default btn-block" %>
+        <%= link_to "JSON Encoding Error Demo", debugger_test_json_error_path, class: "btn btn-default btn-block", style: "margin-top: 5px;" %>
       </section>
     </aside>
     <div class="col-md-8">
@@ -41,6 +36,10 @@
 <% else %>
   <div class="row">
     <div class="col-md-6 col-md-offset-3">
+      <p style="margin-bottom: 15px;">
+        <%= link_to "DI Probes", probes_path %> &middot;
+        <%= link_to "JSON Encoding Error Demo", debugger_test_json_error_path %>
+      </p>
       <%= form_with(url: login_path, scope: :session, local: true) do |f| %>
 
         <%= f.label :email %>
@@ -81,36 +80,6 @@
     <div class="col-md-8 col-md-offset-2">
       <h3>Micropost Feed</h3>
       <%= render 'shared/feed' %>
-    </div>
-  </div>
-
-  <div class="center" style="margin-top: 40px;">
-    <div class="col-md-8 col-md-offset-2">
-      <h3>DI Demo Features</h3>
-      <p>
-        This app demonstrates Datadog Dynamic Instrumentation features. Use the links below
-        to explore available demos.
-      </p>
-      <ul class="list-unstyled" style="text-align: left; display: inline-block;">
-        <li style="margin-bottom: 8px;">
-          <%= link_to "DI Probes", probes_path %> &mdash;
-          View active probes and their status.
-        </li>
-        <li style="margin-bottom: 8px;">
-          <%= link_to "JSON Encoding Error Demo", debugger_test_json_error_path %> &mdash;
-          How DI handles probes that capture non-JSON-encodable binary data. Sets a probe to ERROR
-          status instead of silently dropping snapshots.
-        </li>
-        <li style="margin-bottom: 8px;">
-          <strong>Circuit Breaker Test</strong> (form above) &mdash;
-          Demonstrates the DI circuit breaker disabling a probe when serialization exceeds
-          the time threshold.
-        </li>
-        <li>
-          <strong>Fibonacci Calculator</strong> (form above) &mdash;
-          Plain function execution with a DI probe on <code>ExpensiveModel.fibonacci</code>.
-        </li>
-      </ul>
     </div>
   </div>
 
