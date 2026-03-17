@@ -60,7 +60,7 @@ while getopts "rup:w:s:e:dD" opt; do
 done
 
 # Change to app directory and install dependencies
-cd "$SCRIPT_DIR/sample_app_6th_ed"
+cd "$SCRIPT_DIR/.."
 bundle install
 yarn install
 
@@ -106,9 +106,7 @@ if [ -z "$DEV_MODE" ]; then
     if [ "$NODE_VERSION" -ge 17 ]; then
       export NODE_OPTIONS=--openssl-legacy-provider
     fi
-    if ! DD_TRACE_ENABLED=false WEBPACKER_DEBUG=true bundle exec rails webpacker:compile 2>&1; then
-      echo "Warning: webpacker:compile failed, continuing anyway..."
-    fi
+    DD_TRACE_ENABLED=false WEBPACKER_DEBUG=true WEBPACK_VERBOSE=true bundle exec rails webpacker:compile
   fi
 fi
 

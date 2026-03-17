@@ -18,16 +18,16 @@ WORKDIR /app/
 
 RUN ln -s yarnpkg /usr/bin/yarn
 
-COPY sample_app_6th_ed/package.json .
-COPY sample_app_6th_ed/yarn.lock .
+COPY package.json .
+COPY yarn.lock .
 
 # If running on new nodes:
 #ENV NODE_OPTIONS=--openssl-legacy-provider
 
 RUN yarn install && yarn cache clean
 
-COPY sample_app_6th_ed/Gemfile .
-COPY sample_app_6th_ed/Gemfile.lock .
+COPY Gemfile .
+COPY Gemfile.lock .
 
 # We have a Gemfile.lock for the application to keep dependencies other than
 # datadog at known working versions.
@@ -40,7 +40,7 @@ ENV DD_TRACER=$DD_TRACER
 
 RUN bundle update datadog
 
-COPY sample_app_6th_ed .
+COPY . .
 
 # The environment in docker is different from the host.
 # When bundle install runs it can change the lock file.
