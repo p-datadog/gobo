@@ -4,6 +4,10 @@
 
 Always prefix Ruby/Rails commands with `bundle exec`. Never run `ruby`, `rails`, `rake`, `rspec`, or other gem-provided executables without `bundle exec`.
 
+## Scripts
+
+All script logic must live in files under `lib/` so it can be unit tested. `bin/` scripts are thin wrappers that parse CLI options and call into `lib/`. Add specs in `spec/lib/` for all lib code.
+
 ## Exception Reporting
 
 When logging exceptions, always use the pattern `#{e.class}: #{e}` to include both the exception class and message.
