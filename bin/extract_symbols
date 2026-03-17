@@ -40,6 +40,13 @@ bundle exec rails runner '
   # In production, eager_load happens during boot and the after_initialize
   # callback handles this automatically. In development (rails runner),
   # we need to trigger it explicitly after eager_load!.
+  #
+  # NOTE: This script causes two uploads per run:
+  #   1. The after_initialize callback fires during Rails boot (before eager_load!
+  #      runs here), uploading only the few classes loaded so far (1-2 scopes).
+  #   2. This explicit start_upload call uploads the full set after eager_load!.
+  # This is harmless — the RFC explicitly supports incremental uploads and the
+  # backend merges both into the same service/version tree. Not a bug to fix.
   symdb = Datadog.send(:components).symbol_database
   if symdb
     puts "Triggering symbol extraction..."
