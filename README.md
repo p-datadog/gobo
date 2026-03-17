@@ -12,9 +12,9 @@ See also the [7th edition README](https://github.com/learnenough/rails_tutorial_
 
 ## License
 
-All source code in the [Ruby on Rails Tutorial](https://www.railstutorial.org/)
-is available jointly under the MIT License and the Beerware License. See
-[LICENSE.md](LICENSE.md) for details.
+This project is available under the MIT License. See [LICENSE.md](LICENSE.md) for details.
+
+The base project ([rails_tutorial_sample_app_7th_ed](https://github.com/learnenough/rails_tutorial_sample_app_7th_ed)) is available jointly under the MIT License and the Beerware License.
 
 ## Getting started
 

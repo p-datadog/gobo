@@ -1,4 +1,6 @@
-All source code in the [Ruby on Rails Tutorial](http://railstutorial.org/) is available jointly under the MIT License and the Beerware License.
+This project is available under the MIT License.
+
+The base project ([rails_tutorial_sample_app_7th_ed](https://github.com/learnenough/rails_tutorial_sample_app_7th_ed)) is available jointly under the MIT License and the Beerware License.
 
 ```
 The MIT License
@@ -22,12 +24,4 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
-```
-
-```
-THE BEERWARE LICENSE (Revision 42)
-
-Michael Hartl wrote this code. As long as you retain this notice you can do
-whatever you want with this stuff. If we meet some day, and you think this
-stuff is worth it, you can buy me a beer in return.
 ```
