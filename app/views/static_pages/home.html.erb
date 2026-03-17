@@ -108,8 +108,12 @@
       <ul class="list-unstyled" style="text-align: left; display: inline-block;">
         <li style="margin-bottom: 8px;">
           <%= link_to "DI Probes", probes_path %> &mdash;
-          View active probes and their status. Trigger the JSON encoding error demo
-          (set a probe on <code>BinaryDataModel#process</code> to see snapshot error handling).
+          View active probes and their status.
+        </li>
+        <li style="margin-bottom: 8px;">
+          <%= link_to "JSON Encoding Error Demo", debugger_test_json_error_path %> &mdash;
+          How DI handles probes that capture non-JSON-encodable binary data. Sets a probe to ERROR
+          status instead of silently dropping snapshots.
         </li>
         <li style="margin-bottom: 8px;">
           <strong>Circuit Breaker Test</strong> (form above) &mdash;

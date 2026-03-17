@@ -36,38 +36,9 @@
   </div>
 </div>
 
-<div class="panel panel-info">
-  <div class="panel-heading">
-    <h4 class="panel-title">
-      <strong>Test JSON Encoding Error Handling</strong>
-    </h4>
-  </div>
-  <div class="panel-body">
-    <p>These buttons trigger endpoint that demonstrates the snapshot JSON encoding error handling. Set a DI probe on <code>BinaryDataModel#process</code> to see the error flow.</p>
-
-    <div style="margin-top: 15px;">
-      <a href="/debugger_test/binary_data" class="btn btn-success" target="_blank">
-        <strong>Normal Operation</strong><br>
-        <small>Snapshot serializes correctly</small>
-      </a>
-
-      <a href="/debugger_test/binary_data?trigger_error=true" class="btn btn-danger" style="margin-left: 10px;" target="_blank">
-        <strong>Trigger JSON Error</strong><br>
-        <small>Probe will be disabled with ERROR status</small>
-      </a>
-    </div>
-
-    <div class="alert alert-warning" style="margin-top: 15px; margin-bottom: 0;">
-      <strong>How to test:</strong>
-      <ol style="margin-bottom: 0;">
-        <li>Set a DI method probe on <code>BinaryDataModel#process</code></li>
-        <li>Click "Normal Operation" - probe should capture snapshot successfully</li>
-        <li>Click "Trigger JSON Error" - probe should be automatically disabled with ERROR status</li>
-        <li>Check probe status changes and error message in the sections below</li>
-      </ol>
-    </div>
-  </div>
-</div>
+<p>
+  <%= link_to "JSON Encoding Error Demo &rarr;".html_safe, debugger_test_json_error_path, class: "btn btn-default" %>
+</p>
 
 <% if @error %>
   <div class="alert alert-danger">

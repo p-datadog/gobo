@@ -37,6 +37,10 @@ class DebuggerTestController < ApplicationController
     render plain: response_text
   end
 
+  def json_error
+    # Render the JSON encoding error demo page
+  end
+
   def binary_data
     # Get trigger_error from params, default to false
     trigger_error = params[:trigger_error] == 'true'
