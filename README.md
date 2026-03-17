@@ -91,21 +91,3 @@ The `DD_TRACER` environment variable controls which version of dd-trace-rb to us
   export DD_TRACER="/home/user/dd-trace-rb"
   ```
 
-## Deploying
-
-To deploy the sample app to production, you’ll need a Heroku account as discussed [Section 1.4 Deploying](https://www.railstutorial.org/book/beginning#sec-deploying).
-
-The full production app includes several advanced features, including sending email with [SendGrid](https://sendgrid.com/) and storing uploaded images with [AWS S3](https://aws.amazon.com/s3/). As a result, deploying the full sample app can be rather challenging. The suggested method for testing a deployment is to use the branch for Chapter 10 (“Updating users”), which doesn’t require more advanced settings but still includes sample users.
-
-To deploy this version of the app, you’ll need to create a new Heroku application, switch to the right branch, push up the source, run the migrations, and seed the database with sample users:
-
-```
-$ heroku create
-$ git checkout updating-users
-$ git push heroku updating-users:main
-$ heroku run rails db:migrate
-$ heroku run rails db:seed
-```
-
-Visiting the URL returned by the original `heroku create` should now show you the sample app running in production. As with the local version, you can then register a new user or log in as the sample administrative user with the email `example@railstutorial.org` and password `foobar`.
-
