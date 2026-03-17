@@ -2,12 +2,6 @@
 
 A Ruby live debugger demo based on the [Rails Tutorial sample app](https://github.com/learnenough/rails_tutorial_sample_app_7th_ed).
 
-## License
-
-This project is available under the MIT License. See [LICENSE.md](LICENSE.md) for details.
-
-The base project ([rails_tutorial_sample_app_7th_ed](https://github.com/learnenough/rails_tutorial_sample_app_7th_ed)) is available jointly under the MIT License and the Beerware License.
-
 ## Getting started
 
 To get started with the app, first follow the setup steps in [Section 1.1 Up and running](https://www.railstutorial.org/book#sec-up_and_running).
@@ -83,3 +77,8 @@ The `DD_TRACER` environment variable controls which version of dd-trace-rb to us
   export DD_TRACER="/home/user/dd-trace-rb"
   ```
 
+## License
+
+This project is available under the MIT License. See [LICENSE.md](LICENSE.md) for details.
+
+The base project ([rails_tutorial_sample_app_7th_ed](https://github.com/learnenough/rails_tutorial_sample_app_7th_ed)) is available jointly under the MIT License and the Beerware License.
