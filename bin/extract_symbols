@@ -12,6 +12,11 @@
 
 set -euo pipefail
 
+if [[ "${1:-}" == "-h" || "${1:-}" == "--help" ]]; then
+  sed -n '2,12p' "$0" | sed 's/^# \?//'
+  exit 0
+fi
+
 export DD_SYMBOL_DATABASE_UPLOAD_ENABLED=true
 export DD_SYMBOL_DATABASE_FORCE_UPLOAD=true
 export DD_DYNAMIC_INSTRUMENTATION_ENABLED=true

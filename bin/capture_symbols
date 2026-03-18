@@ -14,6 +14,11 @@
 
 set -euo pipefail
 
+if [[ "${1:-}" == "-h" || "${1:-}" == "--help" ]]; then
+  sed -n '2,13p' "$0" | sed 's/^# \?//'
+  exit 0
+fi
+
 CAPTURE_PORT="${CAPTURE_PORT:-8877}"
 CAPTURE_DIR="/tmp/symdb_captures"
 mkdir -p "$CAPTURE_DIR"
