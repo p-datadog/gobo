@@ -1,0 +1,131 @@
+#!/usr/bin/env bash
+#
+# bin/verify_symbols
+#
+# Uploads symbols from demo-ruby then queries the Datadog symdb API to verify
+# that all expected model and controller classes were indexed.
+#
+# Usage:
+#   DD_API_KEY=<key> DD_APP_KEY=<key> bin/verify_symbols
+#   DD_TRACER=/real.home/claude-2/dtr DD_API_KEY=<key> DD_APP_KEY=<key> bin/verify_symbols
+#   DD_SKIP_UPLOAD=true DD_API_KEY=<key> DD_APP_KEY=<key> bin/verify_symbols   # skip upload, query only
+#
+# Required environment variables:
+#   DD_API_KEY   - Datadog API key (also used by the tracer for upload auth)
+#   DD_APP_KEY   - Datadog application key (for querying the symdb API)
+#
+# Optional:
+#   DD_SERVICE          - Service name to query (default: demo-ruby)
+#   DD_SKIP_UPLOAD      - Set to "true" to skip upload and query only
+#   DD_TRACER           - Path to local tracer (passed through to extract_symbols)
+#   DD_TRACE_DEBUG      - Set to "true" for verbose tracer logging
+
+set -euo pipefail
+
+if [[ "${1:-}" == "-h" || "${1:-}" == "--help" ]]; then
+  sed -n '2,17p' "$0" | sed 's/^# \?//'
+  exit 0
+fi
+
+SERVICE="${DD_SERVICE:-ruby-symdb-test}"
+BASE_URL="https://app.datadoghq.com/api/unstable/symdb-api"
+
+# Check required env vars
+if [[ -z "${DD_API_KEY:-}" ]]; then
+  echo "ERROR: DD_API_KEY is required"
+  exit 1
+fi
+if [[ -z "${DD_APP_KEY:-}" ]]; then
+  echo "ERROR: DD_APP_KEY is required"
+  exit 1
+fi
+
+# --- Step 1: Upload symbols ---
+
+if [[ "${DD_SKIP_UPLOAD:-}" != "true" ]]; then
+  echo "=== Step 1: Uploading symbols ==="
+  echo ""
+  bin/extract_symbols
+  echo ""
+else
+  echo "=== Step 1: Skipping upload (DD_SKIP_UPLOAD=true) ==="
+  echo ""
+fi
+
+# --- Step 2: Query and verify ---
+
+echo "=== Step 2: Verifying symbols in API ==="
+echo "  Service: $SERVICE"
+echo "  Base URL: $BASE_URL"
+echo ""
+
+EXPECTED_SYMBOLS=(
+  # Models (classes with user-defined methods)
+  "User"
+  "Micropost"
+  "ExpensiveModel"
+  "BinaryDataModel"
+  # Not included: Relationship, Vote, ApplicationRecord — no user-defined methods (only ActiveRecord DSL
+  #   calls like belongs_to/validates), so the tracer has no method symbols to extract and upload.
+
+  # Controllers (concrete controllers with public methods)
+  "AccountActivationsController"
+  "DebuggerTestController"
+  "MicropostsController"
+  "PasswordResetsController"
+  "ProbesController"
+  "RelationshipsController"
+  "SessionsController"
+  "StaticPagesController"
+  "UsersController"
+  # Not included: ApplicationController — only defines private methods; the tracer does not extract
+  #   private methods, so no symbols are uploaded for this class.
+)
+
+PASS=0
+FAIL=0
+ERRORS=()
+
+check_symbol() {
+  local name="$1"
+  local response
+
+  response=$(curl -sf \
+    -H "DD-API-KEY: $DD_API_KEY" \
+    -H "DD-APPLICATION-KEY: $DD_APP_KEY" \
+    "$BASE_URL/scopes/search?service=$SERVICE&query=$name&exact_match=true&allow_partial=true" \
+    2>&1) || {
+    echo "  [ FAIL ] $name  (curl error)"
+    FAIL=$((FAIL + 1))
+    ERRORS+=("$name")
+    return
+  }
+
+  # Check if any scope in the response has the expected name
+  if echo "$response" | jq -e \
+    '[.. | objects | select(.name == "'"$name"'")] | length > 0' \
+    > /dev/null 2>&1; then
+    echo "  [ PASS ] $name"
+    PASS=$((PASS + 1))
+  else
+    echo "  [ FAIL ] $name"
+    FAIL=$((FAIL + 1))
+    ERRORS+=("$name")
+  fi
+}
+
+for symbol in "${EXPECTED_SYMBOLS[@]}"; do
+  check_symbol "$symbol"
+done
+
+echo ""
+echo "=== Results: $PASS passed, $FAIL failed ==="
+
+if [[ ${#ERRORS[@]} -gt 0 ]]; then
+  echo ""
+  echo "Missing symbols:"
+  for name in "${ERRORS[@]}"; do
+    echo "  - $name"
+  done
+  exit 1
+fi
