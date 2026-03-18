@@ -1,0 +1,95 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+$LOAD_PATH.unshift File.expand_path('../lib', __dir__)
+
+# bin/simulate_service
+#
+# Simulates a functional Datadog-instrumented service to the Datadog backend.
+# Useful for testing Dynamic Instrumentation and Symbol Database features without
+# running a full service in the target language.
+#
+# What this script does:
+#   1. TELEMETRY    — Sends app-started event declaring DI enabled, then periodic
+#                     app-heartbeat every 60s so the backend sees a live instance.
+#   2. REMOTE CONFIG — Polls the agent every 5s with LIVE_DEBUGGING +
+#                      LIVE_DEBUGGING_SYMBOL_DB products declared. When the backend
+#                      sends upload_symbols: true, prints a notification.
+#   3. TRACES       — Sends a minimal synthetic trace to register the service in APM
+#                     and carry git metadata tags (repo URL, commit SHA).
+#   4. GIT METADATA — Included automatically in telemetry and traces when
+#                     DD_GIT_REPOSITORY_URL and DD_GIT_COMMIT_SHA are set.
+#
+# Each component can be disabled individually with --no-telemetry, --no-rc, --no-traces.
+#
+# Usage:
+#   bundle exec bin/simulate_service --language java --service demo-ruby
+#   bundle exec bin/simulate_service --language python --no-traces
+#   bundle exec bin/simulate_service --language java --service demo-ruby --no-rc
+#
+# Supported languages: java, python, ruby, dotnet, go, node, php
+#
+# Requirements for the service to appear alive in the DI UI
+# (from debugger-backend/debugger-common/src/main/kotlin/.../Heartbeat.kt
+#  and TracerVersionChecker.kt):
+#
+#   1. RC request must declare LIVE_DEBUGGING or LIVE_DEBUGGING_SYMBOL_DB in products.
+#
+#   2. RC request capabilities must be non-empty — an empty/zero bitmask causes the
+#      backend to return "targets: {}" on every poll (no configs delivered). Must
+#      include APM_TRACING capability bits (bits 12,13,14,29).
+#
+#   3. Tracer version must be valid semver and meet minimum per language:
+#      DI:    java>=1.5.0, dotnet>=2.23.0, python>=1.8.0, go>=1.64.0,
+#             ruby>=2.9.0, node>=5.39.0, php>=1.5.0
+#      SymDB: java>=1.34.0, dotnet>=2.57.0, python>=2.9.0, ruby>=2.11.0
+#
+#   4. Agent version must also meet DI requirements — sent automatically
+#      by the agent in the Kafka heartbeat message; not something we control.
+#
+#   5. The RC client id and runtime_id must remain stable across polls
+#      so the backend can identify this as the same instance.
+
+
+require 'logger'
+require 'optparse'
+require 'securerandom'
+require 'datadog_sim/runner'
+
+options = {
+  language:   ENV.fetch('DD_SIM_LANGUAGE', 'java'),
+  service:    ENV.fetch('DD_SERVICE', 'demo-ruby'),
+  env:        ENV.fetch('DD_ENV', 'development'),
+  version:    ENV.fetch('DD_VERSION', '1.0'),
+  components: { telemetry: true, remote_config: true, traces: true },
+}
+
+OptionParser.new do |opts|
+  opts.banner = "Usage: bin/simulate_service [options]"
+
+  opts.on('--language LANG', "Tracer language to impersonate (default: java)") { |v| options[:language] = v }
+  opts.on('--service NAME',  "Service name (default: demo-ruby)")               { |v| options[:service]  = v }
+  opts.on('--env ENV',       "Environment (default: development)")              { |v| options[:env]      = v }
+  opts.on('--version VER',   "Service version (default: 1.0)")                 { |v| options[:version]  = v }
+
+  opts.on('--agent-port PORT', Integer, "Agent port (default: 8126)")           { |v| options[:agent_port] = v }
+  opts.on('--dogfood-agent',  "Use dogfood agent on port 18126")               { options[:agent_port] = 18126 }
+
+  opts.on('--git-repo URL',  "GitHub repo URL — fetch latest commit on main branch via API\n" \
+                             "                                     (e.g. https://github.com/p-datadog/demo-ruby)\n" \
+                             "                                     Omit to auto-detect from local git repo")         { |v| options[:git_repo_url] = v }
+  opts.on('--git-branch BR', "Branch to use with --git-repo (default: main)")  { |v| options[:git_branch] = v }
+
+  opts.on('--no-telemetry',  "Disable telemetry (app-started + heartbeats)")   { options[:components][:telemetry]     = false }
+  opts.on('--no-rc',         "Disable remote config polling")                  { options[:components][:remote_config] = false }
+  opts.on('--no-traces',     "Disable trace submission")                        { options[:components][:traces]        = false }
+
+  opts.on('--runtime-id ID', "Use a specific runtime ID (default: random UUID)") { |v| options[:runtime_id] = v }
+  opts.on('-h', '--help',    "Show this help")                                  { puts opts; exit }
+end.parse!
+
+logger = Logger.new($stdout)
+logger.formatter = proc { |_sev, _dt, _prog, msg| "#{msg}\n" }
+options[:logger] = logger
+
+runner = DatadogSim::Runner.new(options)
+runner.run

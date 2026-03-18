@@ -42,6 +42,8 @@ The homepage should have UI elements and/or prose describing available features 
 
 All code changes must have test coverage. When adding or modifying models, controllers, or lib classes, write or update specs in the corresponding `spec/` file. Specs must pass before committing.
 
+When fixing a bug, the fix must be accompanied by a test that would have caught the bug. The test should describe the specific scenario that triggered it (e.g. "does not raise when targets is a base64-encoded string").
+
 The test command is:
 ```
 DD_TRACER=/real.home/claude-dtr-2/dtr bundle exec rspec
