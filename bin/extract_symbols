@@ -18,6 +18,7 @@ if [[ "${1:-}" == "-h" || "${1:-}" == "--help" ]]; then
 fi
 
 export DD_SYMBOL_DATABASE_UPLOAD_ENABLED=true
+export DD_INTERNAL_FORCE_SYMBOL_DATABASE_UPLOAD=true
 export DD_DYNAMIC_INSTRUMENTATION_ENABLED=true
 export DD_TRACE_DEBUG="${DD_TRACE_DEBUG:-true}"
 
@@ -32,10 +33,6 @@ echo "  Service: $DD_SERVICE ($DD_ENV)"
 echo ""
 
 bundle exec rails runner '
-  # Enable force_upload so Component.build succeeds without remote config.
-  # This is an internal setting (no DD_* env var) matching Java/Python behavior.
-  Datadog.configure { |c| c.symbol_database.internal.force_upload = true }
-
   # Eagerly load all application classes (Zeitwerk lazy-loads in development)
   Rails.application.eager_load!
 
