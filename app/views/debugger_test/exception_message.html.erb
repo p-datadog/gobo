@@ -1,0 +1,142 @@
+<% provide(:title, 'Exception Message Demo') %>
+<h1>Exception Message Demo</h1>
+
+<p class="lead">
+  Tests the <code>exception_message</code> C extension, which retrieves exception
+  messages without invoking customer-defined <code>message</code> methods.
+</p>
+
+<div class="panel panel-info">
+  <div class="panel-heading"><h4 class="panel-title">How to Test</h4></div>
+  <div class="panel-body">
+    <ol>
+      <li>
+        In Datadog, set three <strong>method probes</strong> with <strong>capture snapshot</strong> enabled:
+        <table class="table table-condensed" style="margin-top: 10px; margin-bottom: 10px;">
+          <thead><tr><th>Type</th><th>Method</th></tr></thead>
+          <tbody>
+            <tr><td><code>ExceptionDemo</code></td><td><code>standard_error</code></td></tr>
+            <tr><td><code>ExceptionDemo</code></td><td><code>overridden_message</code></td></tr>
+            <tr><td><code>ExceptionDemo</code></td><td><code>non_string_message</code></td></tr>
+          </tbody>
+        </table>
+      </li>
+      <li>Wait for the probes to appear as active on <%= link_to "DI Probes", probes_path %></li>
+      <li>Click each button below to trigger the corresponding method</li>
+      <li>
+        In Datadog, open the snapshot for each probe and check the
+        <strong>Return &rarr; throwable</strong> field:
+        <table class="table table-condensed" style="margin-top: 10px; margin-bottom: 10px;">
+          <thead><tr><th>Method</th><th>Expected throwable.type</th><th>Expected throwable.message</th></tr></thead>
+          <tbody>
+            <tr>
+              <td><code>standard_error</code></td>
+              <td><code>ActiveRecord::RecordNotFound</code></td>
+              <td><code>Record not found: id=42</code></td>
+            </tr>
+            <tr>
+              <td><code>overridden_message</code></td>
+              <td><code>ExceptionDemo::InputValidationError</code></td>
+              <td>
+                <code>lookup failed</code>
+                <br><small class="text-muted">
+                  NOT <code>Custom: lookup failed</code> &mdash;
+                  the C extension bypasses the overridden <code>message</code> method
+                </small>
+              </td>
+            </tr>
+            <tr>
+              <td><code>non_string_message</code></td>
+              <td><code>ExceptionDemo::ContextError</code></td>
+              <td>
+                <code>Hash</code>
+                <br><small class="text-muted">
+                  The constructor received a Hash, not a string.
+                  DI reports the class name to avoid calling <code>.to_s</code>
+                  (which could be customer code).
+                </small>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </li>
+    </ol>
+  </div>
+</div>
+
+<div class="well">
+  <h4>Run the Demo</h4>
+  <p class="text-muted" style="margin-bottom: 15px;">
+    Each button calls one <code>ExceptionDemo</code> method that raises an exception.
+    DI's method probe captures the exception before re-raising it, and serializes it
+    into the snapshot's <code>throwable</code> field.
+  </p>
+  <a href="/debugger_test/exception_standard" class="btn btn-success di-demo-btn">
+    <strong>Standard Error</strong><br>
+    <small>String message, no override</small>
+  </a>
+  <a href="/debugger_test/exception_overridden" class="btn btn-warning di-demo-btn" style="margin-left: 10px;">
+    <strong>Overridden Message</strong><br>
+    <small>Custom message method bypassed</small>
+  </a>
+  <a href="/debugger_test/exception_non_string" class="btn btn-danger di-demo-btn" style="margin-left: 10px;">
+    <strong>Non-String Argument</strong><br>
+    <small>Hash passed to constructor</small>
+  </a>
+
+  <div id="di-demo-result" style="display: none; margin-top: 15px;"></div>
+</div>
+
+<script>
+  document.querySelectorAll('.di-demo-btn').forEach(function(btn) {
+    btn.addEventListener('click', function(e) {
+      e.preventDefault();
+      var url = this.getAttribute('href');
+      var label = this.querySelector('strong').textContent;
+      var resultEl = document.getElementById('di-demo-result');
+
+      resultEl.style.display = 'none';
+
+      fetch(url)
+        .then(function(res) { return res.text(); })
+        .then(function(text) {
+          resultEl.className = 'alert alert-info';
+          resultEl.innerHTML = '<strong>' + label + ':</strong> ' + text;
+          resultEl.style.display = 'block';
+        })
+        .catch(function(err) {
+          resultEl.className = 'alert alert-danger';
+          resultEl.innerHTML = '<strong>Error:</strong> ' + err;
+          resultEl.style.display = 'block';
+        });
+    });
+  });
+</script>
+
+<div class="panel panel-default">
+  <div class="panel-heading"><h4 class="panel-title">Background</h4></div>
+  <div class="panel-body">
+    <p>
+      DI must never invoke customer code during instrumentation. Exception messages
+      are useful to report, but Ruby's <code>Exception#message</code> can be overridden
+      by application code. The <code>exception_message</code> C extension reads the raw
+      constructor argument from the exception's internal <code>mesg</code> attribute,
+      bypassing any Ruby-level override.
+    </p>
+    <p>
+      <strong>Caveats:</strong>
+    </p>
+    <ul>
+      <li>The constructor argument is not guaranteed to be a string. When it isn't,
+          DI reports the object's class name instead of calling <code>.to_s</code>.</li>
+      <li>Custom exceptions that compute messages in an overridden <code>message</code>
+          method (without passing them to <code>super</code>) will have a less useful
+          message reported. This is an acceptable trade-off for safety.</li>
+    </ul>
+    <p>
+      See dd-trace-rb PR
+      <a href="https://github.com/DataDog/dd-trace-rb/pull/5111">#5111</a>
+      for the C extension implementation.
+    </p>
+  </div>
+</div>

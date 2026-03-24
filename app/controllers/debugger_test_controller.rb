@@ -37,6 +37,35 @@ class DebuggerTestController < ApplicationController
     render plain: response_text
   end
 
+  def exception_message
+    # Render the exception_message demo page
+  end
+
+  # Each of these actions calls an ExceptionDemo method that raises and
+  # rescues an exception internally, then returns the exception object.
+  # DI method probes capture the returned exception in the throwable field.
+
+  def exception_standard
+    demo = ExceptionDemo.new
+    demo.standard_error
+  rescue => exc
+    render plain: "ExceptionDemo#standard_error raised: #{exc.class}: #{exc.message}"
+  end
+
+  def exception_overridden
+    demo = ExceptionDemo.new
+    demo.overridden_message
+  rescue => exc
+    render plain: "ExceptionDemo#overridden_message raised: #{exc.class}: #{exc.message}"
+  end
+
+  def exception_non_string
+    demo = ExceptionDemo.new
+    demo.non_string_message
+  rescue => exc
+    render plain: "ExceptionDemo#non_string_message raised: #{exc.class}: #{exc.message}"
+  end
+
   def json_error
     # Render the JSON encoding error demo page
   end
