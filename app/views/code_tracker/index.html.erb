@@ -78,6 +78,29 @@
         </tbody>
       </table>
     <% end %>
+    <% if @audit[:test_targets]&.any? %>
+      <p style="margin-top: 10px;"><strong>Suggested line probes for testing:</strong></p>
+      <table class="table table-condensed" style="margin-top: 5px;">
+        <thead><tr><th>Tier</th><th>File</th><th>Line</th><th>Method</th></tr></thead>
+        <tbody>
+          <% @audit[:test_targets].each do |target| %>
+            <tr>
+              <td>
+                <% case target[:tier] %>
+                <% when :fully_covered %>
+                  <span class="label label-success">fully covered</span>
+                <% when :partially_covered %>
+                  <span class="label label-warning">partially covered</span>
+                <% end %>
+              </td>
+              <td><code style="font-size: 0.85em;"><%= target[:path] %></code></td>
+              <td><%= target[:line] %></td>
+              <td><%= target[:method] || '—' %></td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    <% end %>
   </div>
 </div>
 <% end %>
