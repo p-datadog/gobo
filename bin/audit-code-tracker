@@ -1,0 +1,27 @@
+#!/usr/bin/env ruby
+
+require_relative '../config/environment'
+require_relative '../lib/code_tracker_audit'
+
+results = CodeTrackerAudit.run
+
+if ARGV.include?("--stdlib")
+  # Show only stdlib files
+  stdlib_loaded = results[:loaded].select { |p| CodeTrackerAudit.categorize(p) == :stdlib }
+  stdlib_tracked = results[:tracked].select { |p| CodeTrackerAudit.categorize(p) == :stdlib }
+  stdlib_missing = stdlib_loaded - results[:tracked]
+
+  puts "Stdlib .rb files loaded: #{stdlib_loaded.size}"
+  puts "Stdlib files tracked:    #{stdlib_tracked.size}"
+  puts "Stdlib files missing:    #{stdlib_missing.size}"
+  puts ""
+  puts "--- Tracked ---"
+  stdlib_tracked.each { |f| puts "  #{f}" }
+  if stdlib_missing.any?
+    puts ""
+    puts "--- Missing ---"
+    stdlib_missing.each { |f| puts "  #{f}" }
+  end
+else
+  puts CodeTrackerAudit.format_report(results)
+end

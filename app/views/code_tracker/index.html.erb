@@ -29,6 +29,37 @@
   </div>
 </div>
 
+<% if @audit %>
+<div class="panel panel-warning">
+  <div class="panel-heading"><h4 class="panel-title">Audit: Registry vs $LOADED_FEATURES</h4></div>
+  <div class="panel-body">
+    <p><strong>Loaded .rb files:</strong> <%= @audit[:loaded_rb] %></p>
+    <p><strong>C extensions:</strong> <%= @audit[:c_extensions] %> (not trackable)</p>
+    <p><strong>Tracked in registry:</strong> <%= @audit[:tracked] %></p>
+    <p><strong>Missing from registry:</strong> <%= @audit[:missing] %>
+      <% if @audit[:missing] > 0 %>
+        (line probes won't work on these files)
+      <% end %>
+    </p>
+    <% if @audit[:missing_by_category]&.any? %>
+      <table class="table table-condensed table-striped" style="margin-top: 10px;">
+        <thead><tr><th>Category</th><th>Missing</th></tr></thead>
+        <tbody>
+          <% [:app, :gem, :stdlib, :other].each do |cat| %>
+            <% files = @audit[:missing_by_category][cat] %>
+            <% next unless files&.any? %>
+            <tr>
+              <td><span class="label label-<%= {app: 'primary', gem: 'warning', stdlib: 'default', other: 'info'}[cat] %>"><%= cat %></span></td>
+              <td><%= files.size %></td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    <% end %>
+  </div>
+</div>
+<% end %>
+
 <div class="form-group">
   <input type="text" id="path-filter" class="form-control" placeholder="Filter by path (e.g. activerecord, puma, app/models)">
 </div>

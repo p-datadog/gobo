@@ -3,6 +3,7 @@ class CodeTrackerController < ApplicationController
     @tracking_active = false
     @entries = []
     @counts = {app: 0, gem: 0, stdlib: 0, other: 0}
+    @audit = nil
 
     return unless defined?(Datadog::DI)
 
@@ -26,6 +27,24 @@ class CodeTrackerController < ApplicationController
     end
 
     @entries.sort_by! { |e| [e[:category].to_s, e[:path]] }
+
+    # Audit: compare registry against $LOADED_FEATURES
+    tracked_paths = registry.keys.to_set
+    loaded_rb = $LOADED_FEATURES
+      .select { |f| f.end_with?(".rb") }
+      .map { |f| File.expand_path(f) }
+      .uniq
+
+    missing = loaded_rb.reject { |f| tracked_paths.include?(f) }
+    missing_by_category = missing.group_by { |f| categorize_path(f, app_root, gem_dirs) }
+
+    @audit = {
+      loaded_rb: loaded_rb.size,
+      tracked: tracked_paths.size,
+      c_extensions: $LOADED_FEATURES.count { |f| f.end_with?(".so", ".bundle", ".dll") },
+      missing: missing.size,
+      missing_by_category: missing_by_category,
+    }
   rescue => e
     Rails.logger.error "Error reading code tracker registry: #{e.class}: #{e}"
     @error = "#{e.class}: #{e}"
