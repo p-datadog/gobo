@@ -129,10 +129,8 @@ if [ -n "$SERVICE" ]; then
     export DD_SERVICE="$SERVICE"
 fi
 
-# Set DD_ENV if provided
-if [ -n "$DDENV" ]; then
-    export DD_ENV="$DDENV"
-fi
+# Set DD_ENV (default to development; DI requires an environment to be set)
+export DD_ENV="${DDENV:-developmestuction}"
 
 # Set DD_TRACE_DEBUG if requested
 if [ -n "$DEBUG" ]; then
