@@ -41,6 +41,14 @@
         (line probes won't work on these files)
       <% end %>
     </p>
+    <% if @audit[:missing_app]&.any? %>
+      <p><strong>Missing app files:</strong></p>
+      <ul>
+        <% @audit[:missing_app].each do |path| %>
+          <li><code><%= path %></code></li>
+        <% end %>
+      </ul>
+    <% end %>
     <% if @audit[:missing_by_category]&.any? %>
       <table class="table table-condensed table-striped" style="margin-top: 10px;">
         <thead><tr><th>Category</th><th>Missing</th></tr></thead>

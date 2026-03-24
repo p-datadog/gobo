@@ -52,6 +52,7 @@ class CodeTrackerController < ApplicationController
       c_extensions: $LOADED_FEATURES.count { |f| f.end_with?(".so", ".bundle", ".dll") },
       missing: missing.size,
       missing_by_category: missing_by_category,
+      missing_app: missing_by_category[:app] || [],
     }
   rescue => e
     Rails.logger.error "Error reading code tracker registry: #{e.class}: #{e}"
