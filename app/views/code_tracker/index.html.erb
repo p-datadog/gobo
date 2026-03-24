@@ -50,8 +50,18 @@
       </ul>
     <% end %>
     <% if @audit[:missing_by_category]&.any? %>
+      <% coverage = @audit[:method_iseq_coverage] %>
       <table class="table table-condensed table-striped" style="margin-top: 10px;">
-        <thead><tr><th>Category</th><th>Missing</th></tr></thead>
+        <thead>
+          <tr>
+            <th>Category</th>
+            <th>Missing</th>
+            <% if coverage %>
+              <th>Have method iseqs</th>
+              <th>No iseqs at all</th>
+            <% end %>
+          </tr>
+        </thead>
         <tbody>
           <% [:app, :gem, :stdlib, :other].each do |cat| %>
             <% files = @audit[:missing_by_category][cat] %>
@@ -59,10 +69,27 @@
             <tr>
               <td><span class="label label-<%= {app: 'primary', gem: 'warning', stdlib: 'default', other: 'info'}[cat] %>"><%= cat %></span></td>
               <td><%= files.size %></td>
+              <% if coverage %>
+                <% cat_cov = coverage[:by_category][cat] %>
+                <td><%= cat_cov[:with_method_iseqs] %></td>
+                <td><%= cat_cov[:total] - cat_cov[:with_method_iseqs] %></td>
+              <% end %>
             </tr>
           <% end %>
         </tbody>
       </table>
+    <% end %>
+    <% if @audit[:method_iseq_coverage] %>
+      <% coverage = @audit[:method_iseq_coverage] %>
+      <p style="margin-top: 10px;">
+        <strong>Per-method iseq summary:</strong>
+        <%= coverage[:missing_with_method_iseqs] %> of <%= @audit[:missing] %> missing files
+        have surviving method iseqs (<%= coverage[:total_method_iseqs] %> iseqs total).
+        <%= coverage[:missing_without_any_iseqs] %> files have no iseqs at all (GC'd completely).
+      </p>
+      <p class="text-muted">
+        Files with method iseqs could be supported by per-method iseq line probe targeting (follow-up to PR #5496).
+      </p>
     <% end %>
   </div>
 </div>

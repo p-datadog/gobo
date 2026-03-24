@@ -45,6 +45,34 @@ class CodeTrackerController < ApplicationController
     missing = loaded_rb.reject { |f| tracked_paths.include?(f) }
     missing_by_category = missing.group_by { |f| categorize_path(f, app_root, gem_dirs) }
 
+    # Per-method iseq coverage: how many missing files have surviving
+    # per-method iseqs that could be used for line probes?
+    method_iseq_coverage = if Datadog::DI.respond_to?(:all_iseqs) && have_iseq_type
+      missing_set = missing.to_set
+      files_with_method_iseqs = Set.new
+      method_iseq_count_by_file = Hash.new(0)
+
+      Datadog::DI.all_iseqs.each do |iseq|
+        path = iseq.absolute_path
+        next unless path && missing_set.include?(path)
+        type = Datadog::DI.iseq_type(iseq)
+        next if type == :top || type == :main
+        files_with_method_iseqs << path
+        method_iseq_count_by_file[path] += 1
+      end
+
+      {
+        missing_with_method_iseqs: files_with_method_iseqs.size,
+        missing_without_any_iseqs: missing.size - files_with_method_iseqs.size,
+        total_method_iseqs: method_iseq_count_by_file.values.sum,
+        by_category: [:app, :gem, :stdlib, :other].map { |cat|
+          cat_files = (missing_by_category[cat] || [])
+          covered = cat_files.count { |f| files_with_method_iseqs.include?(f) }
+          [cat, {total: cat_files.size, with_method_iseqs: covered}]
+        }.to_h,
+      }
+    end
+
     @audit = {
       loaded_rb: loaded_rb.size,
       tracked: tracked_paths.size,
@@ -52,6 +80,7 @@ class CodeTrackerController < ApplicationController
       missing: missing.size,
       missing_by_category: missing_by_category,
       missing_app: missing_by_category[:app] || [],
+      method_iseq_coverage: method_iseq_coverage,
     }
   rescue => e
     Rails.logger.error "Error reading code tracker registry: #{e.class}: #{e}"
