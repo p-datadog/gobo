@@ -18,6 +18,10 @@ class CodeTrackerController < ApplicationController
 
     have_iseq_type = defined?(Datadog::DI) && Datadog::DI.respond_to?(:iseq_type)
 
+    # For linking stdlib files to Ruby source on GitHub.
+    @ruby_github_tag = "v#{RUBY_VERSION.tr('.', '_')}"
+    @stdlib_prefix = RbConfig::CONFIG["rubylibdir"] + "/"
+
     registry.each do |path, iseq|
       category = categorize_path(path, app_root, gem_dirs)
       @counts[category] += 1

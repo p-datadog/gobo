@@ -93,7 +93,16 @@
                   <span class="label label-warning">partially covered</span>
                 <% end %>
               </td>
-              <td><code style="font-size: 0.85em;"><%= target[:path] %></code></td>
+              <td>
+                <% if target[:path].start_with?(@stdlib_prefix) %>
+                  <% rel_path = target[:path].delete_prefix(@stdlib_prefix) %>
+                  <a href="https://github.com/ruby/ruby/blob/<%= @ruby_github_tag %>/lib/<%= rel_path %>#L<%= target[:line] %>" target="_blank">
+                    <code style="font-size: 0.85em;"><%= target[:path] %></code>
+                  </a>
+                <% else %>
+                  <code style="font-size: 0.85em;"><%= target[:path] %></code>
+                <% end %>
+              </td>
               <td><%= target[:line] %></td>
               <td><%= target[:method] || '—' %></td>
             </tr>
@@ -132,7 +141,16 @@
             <span class="label label-info">other</span>
           <% end %>
         </td>
-        <td><code style="font-size: 0.85em;"><%= entry[:path] %></code></td>
+        <td>
+          <% if entry[:category] == :stdlib && entry[:path].start_with?(@stdlib_prefix) %>
+            <% rel_path = entry[:path].delete_prefix(@stdlib_prefix) %>
+            <a href="https://github.com/ruby/ruby/blob/<%= @ruby_github_tag %>/lib/<%= rel_path %>" target="_blank">
+              <code style="font-size: 0.85em;"><%= entry[:path] %></code>
+            </a>
+          <% else %>
+            <code style="font-size: 0.85em;"><%= entry[:path] %></code>
+          <% end %>
+        </td>
         <td>
           <% if entry[:iseq_type] %>
             <% case entry[:iseq_type] %>
