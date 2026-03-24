@@ -63,39 +63,6 @@ class CodeTrackerController < ApplicationController
 
     total_method_iseqs = per_method.values.sum(&:size)
 
-    # Suggest line probe targets for testing each tier.
-    test_targets = []
-
-    # Fully covered: pick an app file from the main registry.
-    registry.each do |path, iseq|
-      next unless categorize_path(path, app_root, gem_dirs) == :app
-      tps = iseq.trace_points.select { |_, ev| ev == :line }
-      if tps.any?
-        test_targets << {tier: :fully_covered, path: path, line: tps.first[0]}
-        break
-      end
-    end
-
-    # Partially covered: pick a gem file with per-method iseqs.
-    if per_method.any?
-      per_method.each do |path, iseqs|
-        next unless categorize_path(path, app_root, gem_dirs) == :gem
-        iseqs.each do |iseq|
-          tps = iseq.trace_points.select { |_, ev| ev == :line }
-          if tps.any?
-            test_targets << {
-              tier: :partially_covered,
-              path: path,
-              line: tps.first[0],
-              method: iseq.label,
-            }
-            break
-          end
-        end
-        break if test_targets.any? { |t| t[:tier] == :partially_covered }
-      end
-    end
-
     @audit = {
       loaded_rb: loaded_rb.size,
       fully_covered: tracked_paths.size,
@@ -106,7 +73,6 @@ class CodeTrackerController < ApplicationController
       not_covered_by_category: not_covered_by_category,
       partially_by_category: partially_by_category,
       missing_app: not_covered_by_category[:app] || [],
-      test_targets: test_targets,
     }
   rescue => e
     Rails.logger.error "Error reading code tracker registry: #{e.class}: #{e}"
