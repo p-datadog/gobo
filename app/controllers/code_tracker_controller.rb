@@ -42,6 +42,7 @@ class CodeTrackerController < ApplicationController
       .select { |f| f.end_with?(".rb") }
       .map { |f| File.expand_path(f) }
       .uniq
+      .select { |f| File.exist?(f) }
 
     missing = loaded_rb.reject { |f| tracked_paths.include?(f) }
     missing_by_category = missing.group_by { |f| categorize_path(f, app_root, gem_dirs) }
