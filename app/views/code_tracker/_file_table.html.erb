@@ -28,7 +28,15 @@
             <span class="label label-warning">partial (<%= entry[:iseq_count] %> iseqs)</span>
           <% end %>
         </td>
-        <td><code style="font-size: 0.85em;"><%= entry[:path] %></code></td>
+        <td>
+          <code style="font-size: 0.85em;"><%= entry[:path] %></code>
+          <% if entry[:category] == :stdlib && defined?(@stdlib_prefix) && entry[:path].start_with?(@stdlib_prefix) %>
+            <% rel_path = entry[:path].delete_prefix(@stdlib_prefix) %>
+            <a href="https://github.com/ruby/ruby/blob/<%= @ruby_github_tag %>/lib/<%= rel_path %>"
+               target="_blank" style="margin-left: 6px; font-size: 0.8em;"
+               title="View source on GitHub (may 404 for extracted gems)">[src]</a>
+          <% end %>
+        </td>
       </tr>
     <% end %>
   </tbody>
