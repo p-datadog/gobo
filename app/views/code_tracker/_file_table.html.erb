@@ -1,0 +1,35 @@
+<table class="table table-condensed table-striped" id="registry-table">
+  <thead>
+    <tr>
+      <th>Category</th>
+      <th>Coverage</th>
+      <th>Path</th>
+    </tr>
+  </thead>
+  <tbody>
+    <% entries.each do |entry| %>
+      <tr data-path="<%= entry[:path].downcase %>">
+        <td>
+          <% case entry[:category] %>
+          <% when :app %>
+            <span class="label label-primary">app</span>
+          <% when :gem %>
+            <span class="label label-warning">gem</span>
+          <% when :stdlib %>
+            <span class="label label-default">stdlib</span>
+          <% else %>
+            <span class="label label-info">other</span>
+          <% end %>
+        </td>
+        <td>
+          <% if entry[:coverage] == :full %>
+            <span class="label label-success">full</span>
+          <% else %>
+            <span class="label label-warning">partial (<%= entry[:iseq_count] %> iseqs)</span>
+          <% end %>
+        </td>
+        <td><code style="font-size: 0.85em;"><%= entry[:path] %></code></td>
+      </tr>
+    <% end %>
+  </tbody>
+</table>

@@ -1,0 +1,29 @@
+<% provide(:title, 'Code Tracker - Full List') %>
+<h1>Code Tracker — Full List (<%= @entries.size %> files)</h1>
+
+<p><%= link_to "← Back to summary", code_tracker_path %></p>
+
+<div class="form-group">
+  <input type="text" id="path-filter" class="form-control" placeholder="Filter by path...">
+</div>
+
+<%= render partial: 'file_table', locals: { entries: @entries } %>
+
+<p id="filter-count" class="text-muted"></p>
+
+<script>
+  var filterInput = document.getElementById('path-filter');
+  var rows = document.querySelectorAll('#registry-table tbody tr');
+  var countEl = document.getElementById('filter-count');
+
+  filterInput.addEventListener('input', function() {
+    var query = this.value.toLowerCase();
+    var shown = 0;
+    rows.forEach(function(row) {
+      var match = !query || row.getAttribute('data-path').indexOf(query) !== -1;
+      row.style.display = match ? '' : 'none';
+      if (match) shown++;
+    });
+    countEl.textContent = query ? 'Showing ' + shown + ' of ' + rows.length + ' files' : '';
+  });
+</script>

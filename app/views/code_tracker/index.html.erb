@@ -3,7 +3,6 @@
 
 <p class="lead">
   Files known to DI's CodeTracker. Line probes can only target files in this registry.
-  The backfill (PR #5496) populates it with files loaded before DI started.
 </p>
 
 <div class="panel panel-info">
@@ -16,13 +15,6 @@
         <span class="label label-danger">No</span>
       <% end %>
     </p>
-    <p><strong>Total files:</strong> <%= @entries.size %></p>
-    <p>
-      <span class="label label-primary">App: <%= @counts[:app] %></span>
-      <span class="label label-warning">Gem: <%= @counts[:gem] %></span>
-      <span class="label label-default">Stdlib: <%= @counts[:stdlib] %></span>
-      <span class="label label-info">Other: <%= @counts[:other] %></span>
-    </p>
     <% if @error %>
       <div class="alert alert-danger"><%= @error %></div>
     <% end %>
@@ -31,13 +23,13 @@
 
 <% if @audit %>
 <div class="panel panel-warning">
-  <div class="panel-heading"><h4 class="panel-title">Audit: Line Probe Coverage</h4></div>
+  <div class="panel-heading"><h4 class="panel-title">Line Probe Coverage</h4></div>
   <div class="panel-body">
     <p><strong>Loaded .rb files:</strong> <%= @audit[:loaded_rb] %></p>
     <p><strong>C extensions:</strong> <%= @audit[:c_extensions] %> (not trackable)</p>
     <p>
       <span class="label label-success">Fully covered: <%= @audit[:fully_covered] %></span>
-      &mdash; whole-file iseq in registry, line probes work on any line
+      &mdash; whole-file iseq, line probes work on any line
     </p>
     <p>
       <span class="label label-warning">Partially covered: <%= @audit[:partially_covered] %></span>
@@ -47,22 +39,10 @@
       <span class="label label-danger">Not covered: <%= @audit[:not_covered] %></span>
       &mdash; no surviving iseqs, line probes cannot target these files
     </p>
-    <% if @audit[:missing_app]&.any? %>
-      <p style="margin-top: 10px;"><strong>Uncovered app files:</strong></p>
-      <ul>
-        <% @audit[:missing_app].each do |path| %>
-          <li><code><%= path %></code></li>
-        <% end %>
-      </ul>
-    <% end %>
     <% if @audit[:not_covered_by_category]&.any? || @audit[:partially_by_category]&.any? %>
       <table class="table table-condensed table-striped" style="margin-top: 10px;">
         <thead>
-          <tr>
-            <th>Category</th>
-            <th>Partially covered</th>
-            <th>Not covered</th>
-          </tr>
+          <tr><th>Category</th><th>Partially covered</th><th>Not covered</th></tr>
         </thead>
         <tbody>
           <% [:app, :gem, :stdlib, :other].each do |cat| %>
@@ -78,65 +58,20 @@
         </tbody>
       </table>
     <% end %>
+    <p style="margin-top: 10px;">
+      <%= link_to "View full list (all #{@all_entries.size} files)", code_tracker_full_path %>
+    </p>
   </div>
 </div>
 <% end %>
 
+<h3>App &amp; Stdlib Files (<%= @entries.size %>)</h3>
+
 <div class="form-group">
-  <input type="text" id="path-filter" class="form-control" placeholder="Filter by path (e.g. activerecord, puma, app/models)">
+  <input type="text" id="path-filter" class="form-control" placeholder="Filter by path...">
 </div>
 
-<table class="table table-condensed table-striped" id="registry-table">
-  <thead>
-    <tr>
-      <th>Category</th>
-      <th>Path</th>
-      <th>Type</th>
-    </tr>
-  </thead>
-  <tbody>
-    <% @entries.each do |entry| %>
-      <tr data-path="<%= entry[:path].downcase %>">
-        <td>
-          <% case entry[:category] %>
-          <% when :app %>
-            <span class="label label-primary">app</span>
-          <% when :gem %>
-            <span class="label label-warning">gem</span>
-          <% when :stdlib %>
-            <span class="label label-default">stdlib</span>
-          <% else %>
-            <span class="label label-info">other</span>
-          <% end %>
-        </td>
-        <td>
-          <% if entry[:category] == :stdlib && entry[:path].start_with?(@stdlib_prefix) %>
-            <% rel_path = entry[:path].delete_prefix(@stdlib_prefix) %>
-            <a href="https://github.com/ruby/ruby/blob/<%= @ruby_github_tag %>/lib/<%= rel_path %>" target="_blank">
-              <code style="font-size: 0.85em;"><%= entry[:path] %></code>
-            </a>
-          <% else %>
-            <code style="font-size: 0.85em;"><%= entry[:path] %></code>
-          <% end %>
-        </td>
-        <td>
-          <% if entry[:iseq_type] %>
-            <% case entry[:iseq_type] %>
-            <% when :top, :main %>
-              <span class="label label-success"><%= entry[:iseq_type] %></span>
-            <% else %>
-              <span class="label label-warning"><%= entry[:iseq_type] %> (line <%= entry[:first_lineno] %>)</span>
-            <% end %>
-          <% elsif entry[:first_lineno] == 0 %>
-            <span class="label label-success">whole-file</span>
-          <% else %>
-            <span class="label label-warning">line <%= entry[:first_lineno] %></span>
-          <% end %>
-        </td>
-      </tr>
-    <% end %>
-  </tbody>
-</table>
+<%= render partial: 'file_table', locals: { entries: @entries } %>
 
 <p id="filter-count" class="text-muted"></p>
 
