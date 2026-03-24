@@ -1,0 +1,43 @@
+#!/usr/bin/env ruby
+
+require_relative '../lib/tracer_resolver'
+
+TRACER_FILE = File.join(__dir__, '..', '.dd-tracer')
+
+if ARGV.empty?
+  if File.exist?(TRACER_FILE)
+    puts "Current: #{File.read(TRACER_FILE).strip}"
+  else
+    puts "No tracer override set (using latest release)"
+  end
+  puts
+  puts "Usage: bin/use-tracer SPEC"
+  puts
+  puts "Shorthand formats:"
+  puts "  pr:NUMBER        - Use a dd-trace-rb PR's branch"
+  puts "  branch:NAME      - Use a branch from DataDog/dd-trace-rb"
+  puts "  sha:HASH         - Use a commit from DataDog/dd-trace-rb"
+  puts "  fork:USER/BRANCH - Use a branch from a fork"
+  puts "  /path/to/local   - Use a local checkout"
+  puts "  1.2.3            - Use a specific version"
+  puts "  --reset          - Clear override (use latest release)"
+  exit
+end
+
+spec = ARGV[0]
+
+begin
+  resolved = TracerResolver.resolve(spec)
+rescue TracerResolver::Error => e
+  $stderr.puts "Error: #{e.class}: #{e}"
+  exit 1
+end
+
+if resolved.nil?
+  File.delete(TRACER_FILE) if File.exist?(TRACER_FILE)
+  puts "Cleared tracer override (will use latest release)"
+else
+  File.write(TRACER_FILE, resolved)
+  puts "Resolved: #{spec} -> #{resolved}"
+  puts "Saved to .dd-tracer"
+end

@@ -64,7 +64,12 @@ end
 # traces in the UI and 2) virtually all DI customers have tracing enabled
 # therefore demonstrating DI in a tracing-enabled environment is probably
 # what is actually desired most of the time.
-case tracer_version = ENV['DD_TRACER']
+tracer_file = File.join(__dir__, '.dd-tracer')
+tracer_version = ENV['DD_TRACER']
+if tracer_version.nil? || tracer_version.empty?
+  tracer_version = File.read(tracer_file).strip if File.exist?(tracer_file)
+end
+case tracer_version
 when nil, ''
   puts "Using datadog most recent release"
   gem 'datadog', require: 'datadog/auto_instrument'
