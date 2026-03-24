@@ -11,8 +11,7 @@ module CodeTrackerAudit
   #   :c_extensions - .so/.bundle files from $LOADED_FEATURES (can't be tracked)
   def self.run
     loaded_rb = $LOADED_FEATURES
-      .select { |f| f.end_with?(".rb") }
-      .map { |f| File.expand_path(f) }
+      .select { |f| f.end_with?(".rb") && f.start_with?("/") }
       .uniq
       .sort
 
