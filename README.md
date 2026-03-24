@@ -51,31 +51,29 @@ $ rails server
 
 Follow the instructions in [Section 1.2.2 `rails server`](https://www.railstutorial.org/book#sec-rails_server) to view the app. You can then register a new user or log in as the sample administrative user with the email `example@railstutorial.org` and password `foobar`.
 
+## DD_ENV Configuration
+
+`DD_ENV` is defaulted to `developmestuction` because Dynamic Instrumentation requires an environment to be set. Without it, DI probes will not be delivered to the application. You can override this by passing `-e <env>` to `bin/run` or by setting the `DD_ENV` environment variable directly.
+
 ## DD_TRACER Configuration
 
-The `DD_TRACER` environment variable controls which version of dd-trace-rb to use:
+Use `bin/use-tracer` to select which version of dd-trace-rb to use. It resolves shorthand specs and saves the result to `.dd-tracer`, so resolution only happens once. The `DD_TRACER` environment variable takes priority over the file if set.
 
-- **Unset or empty** - Uses the latest release from RubyGems
-  ```bash
-  export DD_TRACER=""
-  ```
+```bash
+bin/use-tracer pr:5111              # Use a PR's branch
+bin/use-tracer branch:my-feature    # Use a branch from DataDog/dd-trace-rb
+bin/use-tracer sha:abc1234          # Use a specific commit
+bin/use-tracer fork:user/branch     # Use a branch from a fork
+bin/use-tracer /path/to/local/copy  # Use a local checkout
+bin/use-tracer 2.12.0               # Use a specific version
+bin/use-tracer --reset              # Clear override (use latest release)
+```
 
-- **Version constraint** - Uses the specified version or range
-  ```bash
-  export DD_TRACER="~> 1.0.0"
-  export DD_TRACER="1.15.0"
-  ```
+You can also set `DD_TRACER` directly with any of the above formats or a full git URL:
 
-- **Git URL** - Uses the specified branch, tag, or commit from a git repository
-  ```bash
-  export DD_TRACER="git+https://github.com/DataDog/dd-trace-rb@branch-name"
-  export DD_TRACER="git+https://github.com/DataDog/dd-trace-rb@abc1234"
-  ```
-
-- **Absolute path** - Uses a local copy from the filesystem
-  ```bash
-  export DD_TRACER="/home/user/dd-trace-rb"
-  ```
+```bash
+export DD_TRACER="git+https://github.com/DataDog/dd-trace-rb@branch-name"
+```
 
 ## License
 
