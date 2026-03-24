@@ -89,10 +89,17 @@
         </td>
         <td><code style="font-size: 0.85em;"><%= entry[:path] %></code></td>
         <td>
-          <% if entry[:first_lineno] == 0 %>
+          <% if entry[:iseq_type] %>
+            <% case entry[:iseq_type] %>
+            <% when :top, :main %>
+              <span class="label label-success"><%= entry[:iseq_type] %></span>
+            <% else %>
+              <span class="label label-warning"><%= entry[:iseq_type] %> (line <%= entry[:first_lineno] %>)</span>
+            <% end %>
+          <% elsif entry[:first_lineno] == 0 %>
             <span class="label label-success">whole-file</span>
           <% else %>
-            <span class="label label-warning">method (line <%= entry[:first_lineno] %>)</span>
+            <span class="label label-warning">line <%= entry[:first_lineno] %></span>
           <% end %>
         </td>
       </tr>

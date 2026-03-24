@@ -16,12 +16,20 @@ class CodeTrackerController < ApplicationController
     app_root = Rails.root.to_s
     gem_dirs = Gem.path
 
+    have_iseq_type = defined?(Datadog::DI) && Datadog::DI.respond_to?(:iseq_type)
+
     registry.each do |path, iseq|
       category = categorize_path(path, app_root, gem_dirs)
       @counts[category] += 1
+
+      iseq_type = if have_iseq_type
+        Datadog::DI.iseq_type(iseq)
+      end
+
       @entries << {
         path: path,
         category: category,
+        iseq_type: iseq_type,
         first_lineno: iseq.first_lineno,
       }
     end
