@@ -41,29 +41,29 @@ class DebuggerTestController < ApplicationController
     # Render the exception_message demo page
   end
 
-  # Each of these actions calls an ExceptionDemo method that raises and
-  # rescues an exception internally, then returns the exception object.
-  # DI method probes capture the returned exception in the throwable field.
+  # Each action calls ExceptionDemo#raise_exception with a different kind.
+  # A single method probe on raise_exception captures all three cases.
+  # Exceptions are always rescued so the UI works with or without DI.
 
   def exception_standard
     demo = ExceptionDemo.new
-    demo.standard_error
+    demo.raise_exception(:standard)
   rescue => exc
-    render plain: "ExceptionDemo#standard_error raised: #{exc.class}: #{exc.message}"
+    render plain: "#{exc.class}: #{exc.message}"
   end
 
   def exception_overridden
     demo = ExceptionDemo.new
-    demo.overridden_message
+    demo.raise_exception(:overridden)
   rescue => exc
-    render plain: "ExceptionDemo#overridden_message raised: #{exc.class}: #{exc.message}"
+    render plain: "#{exc.class}: #{exc.message}"
   end
 
   def exception_non_string
     demo = ExceptionDemo.new
-    demo.non_string_message
+    demo.raise_exception(:non_string)
   rescue => exc
-    render plain: "ExceptionDemo#non_string_message raised: #{exc.class}: #{exc.message}"
+    render plain: "#{exc.class}: #{exc.message}"
   end
 
   def json_error

@@ -11,31 +11,24 @@
   <div class="panel-body">
     <ol>
       <li>
-        In Datadog, set three <strong>method probes</strong> with <strong>capture snapshot</strong> enabled:
-        <table class="table table-condensed" style="margin-top: 10px; margin-bottom: 10px;">
-          <thead><tr><th>Type</th><th>Method</th></tr></thead>
-          <tbody>
-            <tr><td><code>ExceptionDemo</code></td><td><code>standard_error</code></td></tr>
-            <tr><td><code>ExceptionDemo</code></td><td><code>overridden_message</code></td></tr>
-            <tr><td><code>ExceptionDemo</code></td><td><code>non_string_message</code></td></tr>
-          </tbody>
-        </table>
+        In Datadog, set a <strong>method probe</strong> on <code>ExceptionDemo#raise_exception</code>
+        with <strong>capture snapshot</strong> enabled.
       </li>
-      <li>Wait for the probes to appear as active on <%= link_to "DI Probes", probes_path %></li>
-      <li>Click each button below to trigger the corresponding method</li>
+      <li>Wait for the probe to appear as active on <%= link_to "DI Probes", probes_path %></li>
+      <li>Click each button below &mdash; all three call the same method with a different parameter</li>
       <li>
-        In Datadog, open the snapshot for each probe and check the
+        In Datadog, open the snapshot for each invocation and check the
         <strong>Return &rarr; throwable</strong> field:
         <table class="table table-condensed" style="margin-top: 10px; margin-bottom: 10px;">
-          <thead><tr><th>Method</th><th>Expected throwable.type</th><th>Expected throwable.message</th></tr></thead>
+          <thead><tr><th>Button</th><th>Expected throwable.type</th><th>Expected throwable.message</th></tr></thead>
           <tbody>
             <tr>
-              <td><code>standard_error</code></td>
+              <td>Standard Error</td>
               <td><code>ActiveRecord::RecordNotFound</code></td>
               <td><code>Record not found: id=42</code></td>
             </tr>
             <tr>
-              <td><code>overridden_message</code></td>
+              <td>Overridden Message</td>
               <td><code>ExceptionDemo::InputValidationError</code></td>
               <td>
                 <code>lookup failed</code>
@@ -46,7 +39,7 @@
               </td>
             </tr>
             <tr>
-              <td><code>non_string_message</code></td>
+              <td>Non-String Argument</td>
               <td><code>ExceptionDemo::ContextError</code></td>
               <td>
                 <code>Hash</code>
@@ -67,9 +60,8 @@
 <div class="well">
   <h4>Run the Demo</h4>
   <p class="text-muted" style="margin-bottom: 15px;">
-    Each button calls one <code>ExceptionDemo</code> method that raises an exception.
-    DI's method probe captures the exception before re-raising it, and serializes it
-    into the snapshot's <code>throwable</code> field.
+    Each button calls <code>ExceptionDemo#raise_exception</code> with a different kind.
+    The exception is rescued and displayed below. DI captures the throwable in the snapshot.
   </p>
   <a href="/debugger_test/exception_standard" class="btn btn-success di-demo-btn">
     <strong>Standard Error</strong><br>
@@ -84,7 +76,7 @@
     <small>Hash passed to constructor</small>
   </a>
 
-  <div id="di-demo-result" style="display: none; margin-top: 15px;"></div>
+  <div id="di-demo-result" class="alert alert-info" style="margin-top: 15px;">Click a button above to trigger an exception demo.</div>
 </div>
 
 <script>
@@ -97,10 +89,16 @@
 
       resultEl.className = 'alert alert-info';
       resultEl.innerHTML = '<strong>' + label + ':</strong> Loading...';
-      resultEl.style.display = 'block';
 
       fetch(url)
-        .then(function(res) { return res.text(); })
+        .then(function(res) {
+          if (!res.ok) {
+            return res.text().then(function(text) {
+              throw new Error('HTTP ' + res.status + ': ' + text.substring(0, 200));
+            });
+          }
+          return res.text();
+        })
         .then(function(text) {
           resultEl.className = 'alert alert-info';
           resultEl.innerHTML = '<strong>' + label + ':</strong> ' + text;

@@ -38,6 +38,12 @@ All UI should be navigable from the homepage via links or buttons. There should 
 
 The homepage should have UI elements and/or prose describing available features so that they are discoverable. Users should be able to understand what the app demonstrates without prior knowledge.
 
+## DI Demo Design
+
+Each DI feature demo should require exactly ONE probe to demonstrate all cases. Design a single method that exercises every variation of the feature, called multiple times with different parameters. This minimizes user setup and maximizes what a single probe captures.
+
+Controller actions that trigger DI-instrumented code MUST rescue all exceptions. The UI must work whether or not DI probes are set — DI observes silently, it does not control the user experience. Never design a demo where the UI breaks if DI is absent or misconfigured.
+
 ## Test Coverage
 
 All code changes must have test coverage. When adding or modifying models, controllers, or lib classes, write or update specs in the corresponding `spec/` file. Specs must pass before committing.

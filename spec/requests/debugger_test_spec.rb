@@ -38,4 +38,30 @@ RSpec.describe "DebuggerTest", type: :request do
     expect(response).to have_http_status(:success)
     expect(response.body).to match(/ExpensiveModel processed/)
   end
+
+  it "exception_message page loads" do
+    get debugger_test_exception_message_path
+    expect(response).to have_http_status(:success)
+    expect(response.body).to include("Exception Message Demo")
+    expect(response.body).to include("ExceptionDemo#raise_exception")
+  end
+
+  it "exception_standard rescues and returns exception info" do
+    get "/debugger_test/exception_standard"
+    expect(response).to have_http_status(:success)
+    expect(response.body).to include("ActiveRecord::RecordNotFound")
+    expect(response.body).to include("Record not found: id=42")
+  end
+
+  it "exception_overridden rescues and returns exception info" do
+    get "/debugger_test/exception_overridden"
+    expect(response).to have_http_status(:success)
+    expect(response.body).to include("ExceptionDemo::InputValidationError")
+  end
+
+  it "exception_non_string rescues and returns exception info" do
+    get "/debugger_test/exception_non_string"
+    expect(response).to have_http_status(:success)
+    expect(response.body).to include("ExceptionDemo::ContextError")
+  end
 end
