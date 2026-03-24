@@ -35,6 +35,20 @@ class CodeTrackerController < ApplicationController
     @ruby_github_tag = "v#{RUBY_VERSION.tr('.', '_')}"
     @stdlib_prefix = RbConfig::CONFIG["rubylibdir"] + "/"
 
+    # Map stdlib relative paths to their GitHub repo + tag.
+    # Default gems have their own repos (ruby/<gem_name>), other files
+    # are in ruby/ruby.
+    @stdlib_github = {}
+    Gem::Specification.each do |spec|
+      next unless spec.default_gem?
+      tag = "v#{spec.version}"
+      spec.files.each do |f|
+        next unless f.start_with?("lib/") && f.end_with?(".rb")
+        rel = f.delete_prefix("lib/")
+        @stdlib_github[rel] = {repo: "ruby/#{spec.name}", tag: tag}
+      end
+    end
+
     # Fully covered entries from main registry.
     registry.each do |path, iseq|
       category = categorize_path(path, app_root, gem_dirs)
