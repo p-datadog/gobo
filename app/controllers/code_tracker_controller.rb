@@ -39,10 +39,8 @@ class CodeTrackerController < ApplicationController
     # Audit: compare registry against $LOADED_FEATURES
     tracked_paths = registry.keys.to_set
     loaded_rb = $LOADED_FEATURES
-      .select { |f| f.end_with?(".rb") }
-      .map { |f| File.expand_path(f) }
+      .select { |f| f.end_with?(".rb") && f.start_with?("/") }
       .uniq
-      .select { |f| File.exist?(f) }
 
     missing = loaded_rb.reject { |f| tracked_paths.include?(f) }
     missing_by_category = missing.group_by { |f| categorize_path(f, app_root, gem_dirs) }
