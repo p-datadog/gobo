@@ -26,9 +26,12 @@ rescue => e
 end
 ```
 
-## UI Elements
+## UI Usability
 
-Never collapse UI elements by default. Always use `open` attribute on `<details>` tags and `in` class on Bootstrap collapse elements.
+- Links must wrap the full visible element (the entire path, the entire label), not a small annotation like `[src]` next to it.
+- Never use `display: none` on content the user will need. Show a default state instead (e.g. "Click to trigger" instead of hiding).
+- AJAX error responses must always be shown to the user, never swallowed.
+- Never collapse UI elements by default. Always use `open` attribute on `<details>` tags and `in` class on Bootstrap collapse elements.
 
 ## UI Navigation
 
