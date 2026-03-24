@@ -29,17 +29,18 @@
           <% end %>
         </td>
         <td>
-          <code style="font-size: 0.85em;"><%= entry[:path] %></code>
           <% if entry[:category] == :stdlib && defined?(@stdlib_prefix) && entry[:path].start_with?(@stdlib_prefix) %>
             <% rel_path = entry[:path].delete_prefix(@stdlib_prefix) %>
             <% gem_info = @stdlib_github&.[](rel_path) %>
             <% if gem_info %>
               <a href="https://github.com/<%= gem_info[:repo] %>/blob/<%= gem_info[:tag] %>/lib/<%= rel_path %>"
-                 target="_blank" style="margin-left: 6px; font-size: 0.8em;">[src]</a>
+                 target="_blank"><code style="font-size: 0.85em;"><%= entry[:path] %></code></a>
             <% else %>
               <a href="https://github.com/ruby/ruby/blob/<%= @ruby_github_tag %>/lib/<%= rel_path %>"
-                 target="_blank" style="margin-left: 6px; font-size: 0.8em;">[src]</a>
+                 target="_blank"><code style="font-size: 0.85em;"><%= entry[:path] %></code></a>
             <% end %>
+          <% else %>
+            <code style="font-size: 0.85em;"><%= entry[:path] %></code>
           <% end %>
         </td>
       </tr>
