@@ -2,8 +2,8 @@
 <h1>Exception Message Demo</h1>
 
 <p class="lead">
-  Tests the <code>exception_message</code> C extension, which retrieves exception
-  messages without invoking customer-defined <code>message</code> methods.
+  Tests the <code>exception_message</code> method from the <code>libdatadog_api</code> C extension,
+  which retrieves exception messages without invoking customer-defined <code>message</code> methods.
 </p>
 
 <div class="panel panel-info">
@@ -119,7 +119,7 @@
     <p>
       DI must never invoke customer code during instrumentation. Exception messages
       are useful to report, but Ruby's <code>Exception#message</code> can be overridden
-      by application code. The <code>exception_message</code> C extension reads the raw
+      by application code. The <code>exception_message</code> method from the <code>libdatadog_api</code> C extension reads the raw
       constructor argument from the exception's internal <code>mesg</code> attribute,
       bypassing any Ruby-level override.
     </p>
@@ -136,7 +136,7 @@
     <p>
       See dd-trace-rb PR
       <a href="https://github.com/DataDog/dd-trace-rb/pull/5111">#5111</a>
-      for the C extension implementation.
+      for the <code>libdatadog_api</code> C extension implementation.
     </p>
   </div>
 </div>
