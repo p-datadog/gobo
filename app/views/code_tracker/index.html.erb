@@ -1,0 +1,89 @@
+<% provide(:title, 'DI Code Tracker') %>
+<h1>DI Code Tracker Registry</h1>
+
+<p class="lead">
+  Files known to DI's CodeTracker. Line probes can only target files in this registry.
+  The backfill (PR #5496) populates it with files loaded before DI started.
+</p>
+
+<div class="panel panel-info">
+  <div class="panel-heading"><h4 class="panel-title">Status</h4></div>
+  <div class="panel-body">
+    <p><strong>Code tracking active:</strong>
+      <% if @tracking_active %>
+        <span class="label label-success">Yes</span>
+      <% else %>
+        <span class="label label-danger">No</span>
+      <% end %>
+    </p>
+    <p><strong>Total files:</strong> <%= @entries.size %></p>
+    <p>
+      <span class="label label-primary">App: <%= @counts[:app] %></span>
+      <span class="label label-warning">Gem: <%= @counts[:gem] %></span>
+      <span class="label label-default">Stdlib: <%= @counts[:stdlib] %></span>
+      <span class="label label-info">Other: <%= @counts[:other] %></span>
+    </p>
+    <% if @error %>
+      <div class="alert alert-danger"><%= @error %></div>
+    <% end %>
+  </div>
+</div>
+
+<div class="form-group">
+  <input type="text" id="path-filter" class="form-control" placeholder="Filter by path (e.g. activerecord, puma, app/models)">
+</div>
+
+<table class="table table-condensed table-striped" id="registry-table">
+  <thead>
+    <tr>
+      <th>Category</th>
+      <th>Path</th>
+      <th>Type</th>
+    </tr>
+  </thead>
+  <tbody>
+    <% @entries.each do |entry| %>
+      <tr data-path="<%= entry[:path].downcase %>">
+        <td>
+          <% case entry[:category] %>
+          <% when :app %>
+            <span class="label label-primary">app</span>
+          <% when :gem %>
+            <span class="label label-warning">gem</span>
+          <% when :stdlib %>
+            <span class="label label-default">stdlib</span>
+          <% else %>
+            <span class="label label-info">other</span>
+          <% end %>
+        </td>
+        <td><code style="font-size: 0.85em;"><%= entry[:path] %></code></td>
+        <td>
+          <% if entry[:first_lineno] == 0 %>
+            <span class="label label-success">whole-file</span>
+          <% else %>
+            <span class="label label-warning">method (line <%= entry[:first_lineno] %>)</span>
+          <% end %>
+        </td>
+      </tr>
+    <% end %>
+  </tbody>
+</table>
+
+<p id="filter-count" class="text-muted"></p>
+
+<script>
+  var filterInput = document.getElementById('path-filter');
+  var rows = document.querySelectorAll('#registry-table tbody tr');
+  var countEl = document.getElementById('filter-count');
+
+  filterInput.addEventListener('input', function() {
+    var query = this.value.toLowerCase();
+    var shown = 0;
+    rows.forEach(function(row) {
+      var match = !query || row.getAttribute('data-path').indexOf(query) !== -1;
+      row.style.display = match ? '' : 'none';
+      if (match) shown++;
+    });
+    countEl.textContent = query ? 'Showing ' + shown + ' of ' + rows.length + ' files' : '';
+  });
+</script>

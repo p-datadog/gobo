@@ -27,6 +27,7 @@
         <%= link_to "DI Probes", probes_path, class: "btn btn-default btn-block" %>
         <%= link_to "JSON Encoding Error Demo", debugger_test_json_error_path, class: "btn btn-default btn-block", style: "margin-top: 5px;" %>
         <%= link_to "Exception Message Demo", debugger_test_exception_message_path, class: "btn btn-default btn-block", style: "margin-top: 5px;" %>
+        <%= link_to "Code Tracker Registry", code_tracker_path, class: "btn btn-default btn-block", style: "margin-top: 5px;" %>
       </section>
     </aside>
     <div class="col-md-8">
@@ -40,7 +41,8 @@
       <p style="margin-bottom: 15px;">
         <%= link_to "DI Probes", probes_path %> &middot;
         <%= link_to "JSON Encoding Error Demo", debugger_test_json_error_path %> &middot;
-        <%= link_to "Exception Message Demo", debugger_test_exception_message_path %>
+        <%= link_to "Exception Message Demo", debugger_test_exception_message_path %> &middot;
+        <%= link_to "Code Tracker", code_tracker_path %>
       </p>
       <%= form_with(url: login_path, scope: :session, local: true) do |f| %>
 

@@ -28,5 +28,6 @@ Rails.application.routes.draw do
   get '/debugger_test/exception_non_string', to: 'debugger_test#exception_non_string'
   get '/debugger_test/json_error', to: 'debugger_test#json_error', as: 'debugger_test_json_error'
   get '/probes', to: 'probes#index'
+  get '/code_tracker', to: 'code_tracker#index'
   post '/probes/:id/send_status', to: 'probes#send_status', as: 'send_probe_status'
 end
