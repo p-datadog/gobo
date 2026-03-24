@@ -38,49 +38,37 @@ class CodeTrackerController < ApplicationController
 
     # Audit: compare registry against $LOADED_FEATURES
     tracked_paths = registry.keys.to_set
+    has_per_method = code_tracker.send(:instance_variable_defined?, :@per_method_registry)
+    per_method = has_per_method ? code_tracker.send(:per_method_registry) : {}
+    per_method_paths = per_method.keys.to_set
+
     loaded_rb = $LOADED_FEATURES
       .select { |f| f.end_with?(".rb") && f.start_with?("/") }
       .uniq
 
-    missing = loaded_rb.reject { |f| tracked_paths.include?(f) }
-    missing_by_category = missing.group_by { |f| categorize_path(f, app_root, gem_dirs) }
+    # Three categories:
+    # - fully covered: in main registry (whole-file iseq)
+    # - partially covered: not in main registry but has per-method iseqs
+    # - not covered: no iseqs at all
+    not_in_registry = loaded_rb.reject { |f| tracked_paths.include?(f) }
+    partially_covered = not_in_registry.select { |f| per_method_paths.include?(f) }
+    not_covered = not_in_registry.reject { |f| per_method_paths.include?(f) }
 
-    # Per-method iseq coverage: how many missing files have surviving
-    # per-method iseqs that could be used for line probes?
-    method_iseq_coverage = if Datadog::DI.respond_to?(:all_iseqs) && have_iseq_type
-      missing_set = missing.to_set
-      files_with_method_iseqs = Set.new
-      method_iseq_count_by_file = Hash.new(0)
+    not_covered_by_category = not_covered.group_by { |f| categorize_path(f, app_root, gem_dirs) }
+    partially_by_category = partially_covered.group_by { |f| categorize_path(f, app_root, gem_dirs) }
 
-      Datadog::DI.all_iseqs.each do |iseq|
-        path = iseq.absolute_path
-        next unless path && missing_set.include?(path)
-        type = Datadog::DI.iseq_type(iseq)
-        next if type == :top || type == :main
-        files_with_method_iseqs << path
-        method_iseq_count_by_file[path] += 1
-      end
-
-      {
-        missing_with_method_iseqs: files_with_method_iseqs.size,
-        missing_without_any_iseqs: missing.size - files_with_method_iseqs.size,
-        total_method_iseqs: method_iseq_count_by_file.values.sum,
-        by_category: [:app, :gem, :stdlib, :other].map { |cat|
-          cat_files = (missing_by_category[cat] || [])
-          covered = cat_files.count { |f| files_with_method_iseqs.include?(f) }
-          [cat, {total: cat_files.size, with_method_iseqs: covered}]
-        }.to_h,
-      }
-    end
+    total_method_iseqs = per_method.values.sum(&:size)
 
     @audit = {
       loaded_rb: loaded_rb.size,
-      tracked: tracked_paths.size,
+      fully_covered: tracked_paths.size,
+      partially_covered: partially_covered.size,
+      not_covered: not_covered.size,
       c_extensions: $LOADED_FEATURES.count { |f| f.end_with?(".so", ".bundle", ".dll") },
-      missing: missing.size,
-      missing_by_category: missing_by_category,
-      missing_app: missing_by_category[:app] || [],
-      method_iseq_coverage: method_iseq_coverage,
+      total_method_iseqs: total_method_iseqs,
+      not_covered_by_category: not_covered_by_category,
+      partially_by_category: partially_by_category,
+      missing_app: not_covered_by_category[:app] || [],
     }
   rescue => e
     Rails.logger.error "Error reading code tracker registry: #{e.class}: #{e}"
