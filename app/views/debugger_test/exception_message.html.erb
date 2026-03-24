@@ -95,19 +95,19 @@
       var label = this.querySelector('strong').textContent;
       var resultEl = document.getElementById('di-demo-result');
 
-      resultEl.style.display = 'none';
+      resultEl.className = 'alert alert-info';
+      resultEl.innerHTML = '<strong>' + label + ':</strong> Loading...';
+      resultEl.style.display = 'block';
 
       fetch(url)
         .then(function(res) { return res.text(); })
         .then(function(text) {
           resultEl.className = 'alert alert-info';
           resultEl.innerHTML = '<strong>' + label + ':</strong> ' + text;
-          resultEl.style.display = 'block';
         })
         .catch(function(err) {
           resultEl.className = 'alert alert-danger';
           resultEl.innerHTML = '<strong>Error:</strong> ' + err;
-          resultEl.style.display = 'block';
         });
     });
   });
