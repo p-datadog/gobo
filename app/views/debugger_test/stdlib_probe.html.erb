@@ -12,27 +12,21 @@
     <ol>
       <li>In Datadog, set a <strong>line probe</strong> on one of these targets:</li>
     </ol>
+    <p class="text-warning" style="margin-top: 10px;">
+      Use the <strong>full absolute path</strong> below. Relative paths like <code>pathname.rb</code>
+      may match vendored copies (e.g. bundler) and fail with MultiplePathsMatch.
+    </p>
     <table class="table table-condensed" style="margin-top: 5px; margin-bottom: 15px;">
-      <thead><tr><th>Button</th><th>File</th><th>Line</th><th>What it does</th></tr></thead>
+      <thead><tr><th>Button</th><th>File (use this exact path)</th><th>Line</th><th>What it does</th></tr></thead>
       <tbody>
-        <tr>
-          <td>URI.parse</td>
-          <td><code>uri/common.rb</code></td>
-          <td>912</td>
-          <td>Parses a URL string into components</td>
-        </tr>
-        <tr>
-          <td>Pathname#join</td>
-          <td><code>pathname.rb</code></td>
-          <td>415</td>
-          <td>Joins path segments</td>
-        </tr>
-        <tr>
-          <td>Digest::SHA256</td>
-          <td><code>digest.rb</code></td>
-          <td>56</td>
-          <td>Computes a SHA256 hash (Ruby wrapper)</td>
-        </tr>
+        <% @probe_targets.each do |target| %>
+          <tr>
+            <td><%= target[:label] %></td>
+            <td><code style="font-size: 0.85em;"><%= target[:path] %></code></td>
+            <td><%= target[:line] %></td>
+            <td><%= target[:description] %></td>
+          </tr>
+        <% end %>
       </tbody>
     </table>
     <ol start="2">

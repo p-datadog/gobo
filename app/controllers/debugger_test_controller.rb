@@ -67,7 +67,29 @@ class DebuggerTestController < ApplicationController
   end
 
   def stdlib_probe
-    # Render the stdlib line probe demo page
+    # Resolve actual absolute paths for probe targets.
+    # Relative paths like "uri/common.rb" can match vendored copies
+    # (e.g. bundler/vendor/uri), so we show absolute paths.
+    @probe_targets = [
+      {
+        label: "URI.parse",
+        path: resolve_stdlib_path("uri/common.rb"),
+        line: 912,
+        description: "Parses a URL string into components",
+      },
+      {
+        label: "Pathname#join",
+        path: resolve_stdlib_path("pathname.rb"),
+        line: 415,
+        description: "Joins path segments",
+      },
+      {
+        label: "Digest::SHA256",
+        path: resolve_stdlib_path("digest.rb"),
+        line: 56,
+        description: "Computes a SHA256 hash (Ruby wrapper)",
+      },
+    ]
   end
 
   def stdlib_probe_run
@@ -109,6 +131,14 @@ class DebuggerTestController < ApplicationController
 
     render plain: "BinaryDataModel#process called with binary data argument. Size: #{binary.length} bytes, encoding: #{binary.encoding}"
   end
+
+  private
+
+  def resolve_stdlib_path(relative)
+    File.join(RbConfig::CONFIG["rubylibdir"], relative)
+  end
+
+  public
 
   def binary_data
     # Get trigger_error from params, default to false
