@@ -71,11 +71,10 @@ RSpec.describe "DebuggerTest", type: :request do
     expect(response.body).to include("Stdlib Line Probe Demo")
   end
 
-  it "stdlib_probe_run uri_parse returns parsed URL" do
-    get "/debugger_test/stdlib_probe_run", params: {kind: "uri_parse"}
+  it "stdlib_probe_run set_add returns set result" do
+    get "/debugger_test/stdlib_probe_run", params: {kind: "set_add"}
     expect(response).to have_http_status(:success)
-    expect(response.body).to include("URI.parse")
-    expect(response.body).to include("example.com")
+    expect(response.body).to include("Set#add")
   end
 
   it "stdlib_probe_run pathname_join returns joined path" do

@@ -72,10 +72,10 @@ class DebuggerTestController < ApplicationController
     # (e.g. bundler/vendor/uri), so we show absolute paths.
     @probe_targets = [
       {
-        label: "URI.parse",
-        path: resolve_stdlib_path("uri/common.rb"),
-        line: 912,
-        description: "Parses a URL string into components",
+        label: "Set#add",
+        path: resolve_stdlib_path("set.rb"),
+        line: 522,
+        description: "Adds an element to a Set",
       },
       {
         label: "Pathname#join",
@@ -95,10 +95,11 @@ class DebuggerTestController < ApplicationController
   def stdlib_probe_run
     kind = params[:kind]
     result = case kind
-    when "uri_parse"
-      url = "https://example.com/users/42?lang=en&debug=true"
-      parsed = URI.parse(url)
-      "URI.parse(#{url.inspect}) => host=#{parsed.host}, path=#{parsed.path}, query=#{parsed.query}"
+    when "set_add"
+      s = Set.new([1, 2, 3])
+      s.add(4)
+      s.add(2) # duplicate, ignored
+      "Set#add: started with {1,2,3}, added 4 and 2 => #{s.to_a.sort.inspect}"
     when "pathname_join"
       base = Pathname.new("/var/log")
       joined = base.join("app", "production.log")
