@@ -22,6 +22,8 @@ Rails.application.routes.draw do
   get '/debugger_test/circuit_breaker', to: 'debugger_test#circuit_breaker'
   get '/debugger_test/binary_data_param', to: 'debugger_test#binary_data_param'
   get '/debugger_test/binary_data', to: 'debugger_test#binary_data'
+  get '/debugger_test/stdlib_probe', to: 'debugger_test#stdlib_probe', as: 'debugger_test_stdlib_probe'
+  get '/debugger_test/stdlib_probe_run', to: 'debugger_test#stdlib_probe_run'
   get '/debugger_test/exception_message', to: 'debugger_test#exception_message', as: 'debugger_test_exception_message'
   get '/debugger_test/exception_standard', to: 'debugger_test#exception_standard'
   get '/debugger_test/exception_overridden', to: 'debugger_test#exception_overridden'

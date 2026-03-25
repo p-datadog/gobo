@@ -66,6 +66,33 @@ class DebuggerTestController < ApplicationController
     render plain: "#{exc.class}: #{exc.message}"
   end
 
+  def stdlib_probe
+    # Render the stdlib line probe demo page
+  end
+
+  def stdlib_probe_run
+    kind = params[:kind]
+    result = case kind
+    when "uri_parse"
+      url = "https://example.com/users/42?lang=en&debug=true"
+      parsed = URI.parse(url)
+      "URI.parse(#{url.inspect}) => host=#{parsed.host}, path=#{parsed.path}, query=#{parsed.query}"
+    when "pathname_join"
+      base = Pathname.new("/var/log")
+      joined = base.join("app", "production.log")
+      "Pathname#join(/var/log, app, production.log) => #{joined}"
+    when "digest_sha256"
+      input = "hello world #{Time.now.to_i}"
+      hash = Digest::SHA256.hexdigest(input)
+      "Digest::SHA256.hexdigest(#{input.inspect}) => #{hash}"
+    else
+      "Unknown kind: #{kind}"
+    end
+    render plain: result
+  rescue => e
+    render plain: "#{e.class}: #{e}"
+  end
+
   def json_error
     # Render the JSON encoding error demo page
   end

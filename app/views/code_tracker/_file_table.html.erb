@@ -34,10 +34,10 @@
             <% gem_info = @stdlib_github&.[](rel_path) %>
             <% if gem_info %>
               <a href="https://github.com/<%= gem_info[:repo] %>/blob/<%= gem_info[:tag] %>/lib/<%= rel_path %>"
-                 target="_blank"><code style="font-size: 0.85em;"><%= entry[:path] %></code></a>
+                 target="_blank"><code style="font-size: 0.85em; color: #337ab7; text-decoration: underline;"><%= entry[:path] %></code></a>
             <% else %>
               <a href="https://github.com/ruby/ruby/blob/<%= @ruby_github_tag %>/lib/<%= rel_path %>"
-                 target="_blank"><code style="font-size: 0.85em;"><%= entry[:path] %></code></a>
+                 target="_blank"><code style="font-size: 0.85em; color: #337ab7; text-decoration: underline;"><%= entry[:path] %></code></a>
             <% end %>
           <% else %>
             <code style="font-size: 0.85em;"><%= entry[:path] %></code>

@@ -1,0 +1,110 @@
+<% provide(:title, 'Stdlib Line Probe Demo') %>
+<h1>Stdlib Line Probe Demo</h1>
+
+<p class="lead">
+  Tests line probes on Ruby stdlib code loaded before DI started.
+  Requires per-method iseq support (PR #5501).
+</p>
+
+<div class="panel panel-info">
+  <div class="panel-heading"><h4 class="panel-title">How to Test</h4></div>
+  <div class="panel-body">
+    <ol>
+      <li>In Datadog, set a <strong>line probe</strong> on one of these targets:</li>
+    </ol>
+    <table class="table table-condensed" style="margin-top: 5px; margin-bottom: 15px;">
+      <thead><tr><th>Button</th><th>File</th><th>Line</th><th>What it does</th></tr></thead>
+      <tbody>
+        <tr>
+          <td>URI.parse</td>
+          <td><code>uri/common.rb</code></td>
+          <td>912</td>
+          <td>Parses a URL string into components</td>
+        </tr>
+        <tr>
+          <td>Pathname#join</td>
+          <td><code>pathname.rb</code></td>
+          <td>415</td>
+          <td>Joins path segments</td>
+        </tr>
+        <tr>
+          <td>Digest::SHA256</td>
+          <td><code>digest.rb</code></td>
+          <td>56</td>
+          <td>Computes a SHA256 hash (Ruby wrapper)</td>
+        </tr>
+      </tbody>
+    </table>
+    <ol start="2">
+      <li>Wait for the probe to appear as active on <%= link_to "DI Probes", probes_path %></li>
+      <li>Click the corresponding button below</li>
+      <li>Check the snapshot in Datadog — you should see the method arguments and local variables</li>
+    </ol>
+  </div>
+</div>
+
+<div class="well">
+  <h4>Run the Demo</h4>
+  <a href="/debugger_test/stdlib_probe_run?kind=uri_parse" class="btn btn-success di-demo-btn">
+    <strong>URI.parse</strong><br>
+    <small>Parse a URL string</small>
+  </a>
+  <a href="/debugger_test/stdlib_probe_run?kind=pathname_join" class="btn btn-info di-demo-btn" style="margin-left: 10px;">
+    <strong>Pathname#join</strong><br>
+    <small>Join path segments</small>
+  </a>
+  <a href="/debugger_test/stdlib_probe_run?kind=digest_sha256" class="btn btn-warning di-demo-btn" style="margin-left: 10px;">
+    <strong>Digest::SHA256</strong><br>
+    <small>Hash a string</small>
+  </a>
+
+  <div id="di-demo-result" class="alert alert-info" style="margin-top: 15px;">Click a button above to invoke a stdlib method.</div>
+</div>
+
+<script>
+  document.querySelectorAll('.di-demo-btn').forEach(function(btn) {
+    btn.addEventListener('click', function(e) {
+      e.preventDefault();
+      var url = this.getAttribute('href');
+      var label = this.querySelector('strong').textContent;
+      var resultEl = document.getElementById('di-demo-result');
+
+      resultEl.className = 'alert alert-info';
+      resultEl.innerHTML = '<strong>' + label + ':</strong> Loading...';
+
+      fetch(url)
+        .then(function(res) {
+          if (!res.ok) {
+            return res.text().then(function(text) {
+              throw new Error('HTTP ' + res.status + ': ' + text.substring(0, 200));
+            });
+          }
+          return res.text();
+        })
+        .then(function(text) {
+          resultEl.className = 'alert alert-success';
+          resultEl.innerHTML = '<strong>' + label + ':</strong> ' + text;
+        })
+        .catch(function(err) {
+          resultEl.className = 'alert alert-danger';
+          resultEl.innerHTML = '<strong>Error:</strong> ' + err;
+        });
+    });
+  });
+</script>
+
+<div class="panel panel-default">
+  <div class="panel-heading"><h4 class="panel-title">Background</h4></div>
+  <div class="panel-body">
+    <p>
+      Most stdlib and gem code is loaded at boot time, before DI's code tracker starts.
+      The whole-file iseqs for these files are garbage collected, but per-method iseqs survive
+      because they're referenced by their class/module. DI's backfill collects these per-method
+      iseqs and uses them to target line probes on specific methods.
+    </p>
+    <p>
+      This works for any line that falls within a surviving method iseq. Lines in file-level
+      setup code (outside any method) are not targetable because those iseqs don't survive GC.
+    </p>
+  </div>
+</div>

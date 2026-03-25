@@ -64,4 +64,30 @@ RSpec.describe "DebuggerTest", type: :request do
     expect(response).to have_http_status(:success)
     expect(response.body).to include("ExceptionDemo::ContextError")
   end
+
+  it "stdlib_probe page loads" do
+    get debugger_test_stdlib_probe_path
+    expect(response).to have_http_status(:success)
+    expect(response.body).to include("Stdlib Line Probe Demo")
+  end
+
+  it "stdlib_probe_run uri_parse returns parsed URL" do
+    get "/debugger_test/stdlib_probe_run", params: {kind: "uri_parse"}
+    expect(response).to have_http_status(:success)
+    expect(response.body).to include("URI.parse")
+    expect(response.body).to include("example.com")
+  end
+
+  it "stdlib_probe_run pathname_join returns joined path" do
+    get "/debugger_test/stdlib_probe_run", params: {kind: "pathname_join"}
+    expect(response).to have_http_status(:success)
+    expect(response.body).to include("Pathname#join")
+    expect(response.body).to include("production.log")
+  end
+
+  it "stdlib_probe_run digest_sha256 returns hash" do
+    get "/debugger_test/stdlib_probe_run", params: {kind: "digest_sha256"}
+    expect(response).to have_http_status(:success)
+    expect(response.body).to include("Digest::SHA256")
+  end
 end
