@@ -17,13 +17,27 @@
       may match vendored copies (e.g. bundler) and fail with MultiplePathsMatch.
     </p>
     <table class="table table-condensed" style="margin-top: 5px; margin-bottom: 15px;">
-      <thead><tr><th>Button</th><th>File (use this exact path)</th><th>Line</th><th>What it does</th></tr></thead>
+      <thead><tr><th>Button</th><th>File (use this exact path)</th><th>Line</th><th>Coverage</th><th>What it does</th></tr></thead>
       <tbody>
         <% @probe_targets.each do |target| %>
           <tr>
             <td><%= target[:label] %></td>
             <td><code style="font-size: 0.85em;"><%= target[:path] %></code></td>
             <td><%= target[:line] %></td>
+            <td>
+              <% case target[:coverage] %>
+              <% when :full %>
+                <span class="label label-success">full</span>
+              <% when :partial %>
+                <span class="label label-warning">partial</span>
+              <% when :partial_no_line %>
+                <span class="label label-danger">partial (line not covered)</span>
+              <% when :none %>
+                <span class="label label-danger">not targetable</span>
+              <% else %>
+                <span class="label label-default">unknown</span>
+              <% end %>
+            </td>
             <td><%= target[:description] %></td>
           </tr>
         <% end %>
@@ -39,18 +53,15 @@
 
 <div class="well">
   <h4>Run the Demo</h4>
-  <a href="/debugger_test/stdlib_probe_run?kind=set_add" class="btn btn-success di-demo-btn">
-    <strong>Set#add</strong><br>
-    <small>Add elements to a Set</small>
-  </a>
-  <a href="/debugger_test/stdlib_probe_run?kind=pathname_join" class="btn btn-info di-demo-btn" style="margin-left: 10px;">
-    <strong>Pathname#join</strong><br>
-    <small>Join path segments</small>
-  </a>
-  <a href="/debugger_test/stdlib_probe_run?kind=digest_sha256" class="btn btn-warning di-demo-btn" style="margin-left: 10px;">
-    <strong>Digest::SHA256</strong><br>
-    <small>Hash a string</small>
-  </a>
+  <% btn_styles = %w[btn-success btn-info btn-warning btn-primary btn-danger] %>
+  <% @probe_targets.each_with_index do |target, i| %>
+    <a href="/debugger_test/stdlib_probe_run?kind=<%= target[:kind] %>"
+       class="btn <%= btn_styles[i % btn_styles.size] %> di-demo-btn"
+       <%= 'style="margin-left: 10px;"'.html_safe if i > 0 %>>
+      <strong><%= target[:label] %></strong><br>
+      <small><%= target[:description] %></small>
+    </a>
+  <% end %>
 
   <div id="di-demo-result" class="alert alert-info" style="margin-top: 15px;">Click a button above to invoke a stdlib method.</div>
 </div>

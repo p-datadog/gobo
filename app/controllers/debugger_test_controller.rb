@@ -70,26 +70,16 @@ class DebuggerTestController < ApplicationController
     # Resolve actual absolute paths for probe targets.
     # Relative paths like "uri/common.rb" can match vendored copies
     # (e.g. bundler/vendor/uri), so we show absolute paths.
-    @probe_targets = [
-      {
-        label: "Set#add",
-        path: resolve_stdlib_path("set.rb"),
-        line: 522,
-        description: "Adds an element to a Set",
-      },
-      {
-        label: "Pathname#join",
-        path: resolve_stdlib_path("pathname.rb"),
-        line: 415,
-        description: "Joins path segments",
-      },
-      {
-        label: "Digest::SHA256",
-        path: resolve_stdlib_path("digest.rb"),
-        line: 56,
-        description: "Computes a SHA256 hash (Ruby wrapper)",
-      },
+    targets = [
+      {label: "Set#add", rel: "set.rb", line: 522, description: "Adds an element to a Set", kind: "set_add"},
+      {label: "Pathname#join", rel: "pathname.rb", line: 415, description: "Joins path segments", kind: "pathname_join"},
+      {label: "Digest::SHA256", rel: "digest.rb", line: 56, description: "Computes a SHA256 hash (Ruby wrapper)", kind: "digest_sha256"},
     ]
+
+    @probe_targets = targets.map do |t|
+      path = resolve_stdlib_path(t[:rel])
+      t.merge(path: path, coverage: probe_coverage(path, t[:line]))
+    end
   end
 
   def stdlib_probe_run
@@ -137,6 +127,28 @@ class DebuggerTestController < ApplicationController
 
   def resolve_stdlib_path(relative)
     File.join(RbConfig::CONFIG["rubylibdir"], relative)
+  end
+
+  # Returns :full, :partial, or :none based on whether the path is in
+  # the code tracker registry and whether the target line is coverable.
+  def probe_coverage(path, line)
+    return :unknown unless defined?(Datadog::DI)
+    code_tracker = Datadog::DI.code_tracker
+    return :unknown unless code_tracker
+
+    registry = code_tracker.send(:registry)
+    return :full if registry.key?(path)
+
+    if code_tracker.send(:instance_variable_defined?, :@per_method_registry)
+      per_method = code_tracker.send(:per_method_registry)
+      iseqs = per_method[path]
+      if iseqs
+        covers_line = iseqs.any? { |iseq| iseq.trace_points.any? { |l, _| l == line } }
+        return covers_line ? :partial : :partial_no_line
+      end
+    end
+
+    :none
   end
 
   public
