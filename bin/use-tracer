@@ -4,7 +4,7 @@ require_relative '../lib/tracer_resolver'
 
 TRACER_FILE = File.join(__dir__, '..', '.dd-tracer')
 
-if ARGV.empty?
+if ARGV.empty? || ARGV.include?('-h') || ARGV.include?('--help')
   if File.exist?(TRACER_FILE)
     puts "Current: #{File.read(TRACER_FILE).strip}"
   else
@@ -25,6 +25,14 @@ if ARGV.empty?
 end
 
 spec = ARGV[0]
+
+# Expand relative paths to absolute so .dd-tracer works from any directory
+if spec =~ /\A\.\.?\// || (spec.include?('/') && !spec.include?(':') && !spec.start_with?('/'))
+  expanded = File.expand_path(spec)
+  if File.directory?(expanded)
+    spec = expanded
+  end
+end
 
 begin
   resolved = TracerResolver.resolve(spec)
