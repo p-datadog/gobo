@@ -112,6 +112,7 @@ fi
 
 # Enable Datadog Dynamic Instrumentation
 export DD_DYNAMIC_INSTRUMENTATION_ENABLED=1
+export DD_SYMBOL_DATABASE_UPLOAD_ENABLED=1
 if [ -n "$DEV_MODE" ]; then
     # Remote Configuration and telemetry are enabled by default in production
     # but not in development. Both are required for DI, so we enable them

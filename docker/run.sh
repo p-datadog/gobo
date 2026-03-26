@@ -12,6 +12,7 @@ bundle exec rake db:migrate
 bundle exec rake create_user
 
 export DD_DYNAMIC_INSTRUMENTATION_ENABLED=true
+export DD_SYMBOL_DATABASE_UPLOAD_ENABLED=true
 
 export RAILS_SERVE_STATIC_FILES=true
 
