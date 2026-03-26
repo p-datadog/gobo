@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/usr/bin/env ruby
 #
 # bin/extract_symbols
 #
@@ -10,57 +10,51 @@
 #   DD_TRACER=/real.home/claude-2/dtr bin/extract_symbols   # local tracer build
 #   DD_TRACE_DEBUG=true bin/extract_symbols                 # verbose logging
 
-set -euo pipefail
-
-if [[ "${1:-}" == "-h" || "${1:-}" == "--help" ]]; then
-  sed -n '2,12p' "$0" | sed 's/^# \?//'
+if ARGV.include?("-h") || ARGV.include?("--help")
+  puts File.read(__FILE__).lines[1..11].map { |l| l.sub(/^# ?/, "") }.join
   exit 0
-fi
+end
 
-export DD_SYMBOL_DATABASE_UPLOAD_ENABLED=true
-export DD_INTERNAL_FORCE_SYMBOL_DATABASE_UPLOAD=true
-export DD_DYNAMIC_INSTRUMENTATION_ENABLED=true
-export DD_TRACE_DEBUG="${DD_TRACE_DEBUG:-true}"
+ENV["DD_SYMBOL_DATABASE_UPLOAD_ENABLED"] ||= "true"
+ENV["DD_INTERNAL_FORCE_SYMBOL_DATABASE_UPLOAD"] ||= "true"
+ENV["DD_DYNAMIC_INSTRUMENTATION_ENABLED"] ||= "true"
+ENV["DD_TRACE_DEBUG"] ||= "false"
+ENV["DD_TRACE_LOG_LEVEL"] ||= "warn"
 
-export DD_SERVICE="${DD_SERVICE:-ruby-symdb-test}"
-export DD_ENV="${DD_ENV:-development}"
-export DD_VERSION="${DD_VERSION:-1.0}"
+ENV["DD_SERVICE"] ||= "ruby-symdb-test"
+ENV["DD_ENV"] ||= "development"
+ENV["DD_VERSION"] ||= "1.0"
 
-echo "Symbol extraction from demo-ruby"
-echo "  Tracer:  ${DD_TRACER:-datadog gem (release)}"
-echo "  Agent:   ${DD_AGENT_HOST:-localhost}:${DD_TRACE_AGENT_PORT:-8126}"
-echo "  Service: $DD_SERVICE ($DD_ENV)"
-echo ""
+puts "Symbol extraction from demo-ruby"
+puts "  Tracer:  #{ENV['DD_TRACER'] || 'datadog gem (release)'}"
+puts "  Agent:   #{ENV['DD_AGENT_HOST'] || 'localhost'}:#{ENV['DD_TRACE_AGENT_PORT'] || '8126'}"
+puts "  Service: #{ENV['DD_SERVICE']} (#{ENV['DD_ENV']})"
+puts ""
 
-bundle exec rails runner '
-  # Eagerly load all application classes (Zeitwerk lazy-loads in development)
-  Rails.application.eager_load!
+APP_PATH = File.expand_path("../config/application", __dir__)
+require_relative "../config/environment"
 
-  puts "Rails loaded. Classes available for extraction:"
-  puts "  Models:      #{ApplicationRecord.descendants.map(&:name).compact.sort.join(", ")}"
-  puts "  Controllers: #{ApplicationController.descendants.map(&:name).compact.sort.join(", ")}"
-  puts ""
+Rails.application.eager_load!
 
-  # Trigger extraction now that all classes are loaded.
-  # In production, eager_load happens during boot and the after_initialize
-  # callback handles this automatically. In development (rails runner),
-  # we need to trigger it explicitly after eager_load!.
-  #
-  # NOTE: This script causes two uploads per run:
-  #   1. The after_initialize callback fires during Rails boot (before eager_load!
-  #      runs here), uploading only the few classes loaded so far (1-2 scopes).
-  #   2. This explicit start_upload call uploads the full set after eager_load!.
-  # This is harmless — the RFC explicitly supports incremental uploads and the
-  # backend merges both into the same service/version tree. Not a bug to fix.
-  symdb = Datadog.send(:components).symbol_database
-  if symdb
-    puts "Triggering symbol extraction..."
-    symdb.start_upload
-  else
-    puts "WARNING: symbol_database component is nil — check DD_SYMBOL_DATABASE_* env vars"
-  end
+puts "Rails loaded. Classes available for extraction:"
+puts "  Models:      #{ApplicationRecord.descendants.map(&:name).compact.sort.join(', ')}"
+puts "  Controllers: #{ApplicationController.descendants.map(&:name).compact.sort.join(', ')}"
+puts ""
 
-  puts "Waiting for upload to complete..."
-  sleep 5
-  puts "Done."
-'
+components = Datadog.send(:components)
+unless components.respond_to?(:symbol_database)
+  abort "ERROR: This version of datadog gem does not support symbol_database.\n" \
+        "  Use bin/use-tracer to point at a build that includes symdb support."
+end
+
+symdb = components.symbol_database
+if symdb
+  puts "Triggering symbol extraction..."
+  symdb.start_upload
+else
+  puts "WARNING: symbol_database component is nil -- check DD_SYMBOL_DATABASE_* env vars"
+end
+
+puts "Waiting for upload to complete..."
+sleep 5
+puts "Done."
