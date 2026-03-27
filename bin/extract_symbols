@@ -18,8 +18,7 @@ end
 ENV["DD_SYMBOL_DATABASE_UPLOAD_ENABLED"] ||= "true"
 ENV["DD_INTERNAL_FORCE_SYMBOL_DATABASE_UPLOAD"] ||= "true"
 ENV["DD_DYNAMIC_INSTRUMENTATION_ENABLED"] ||= "true"
-ENV["DD_TRACE_DEBUG"] ||= "false"
-ENV["DD_TRACE_LOG_LEVEL"] ||= "warn"
+ENV["DD_TRACE_DEBUG"] ||= "true"
 
 ENV["DD_SERVICE"] ||= "ruby-symdb-test"
 ENV["DD_ENV"] ||= "development"
@@ -55,6 +54,3 @@ else
   puts "WARNING: symbol_database component is nil -- check DD_SYMBOL_DATABASE_* env vars"
 end
 
-puts "Waiting for upload to complete..."
-sleep 5
-puts "Done."
