@@ -73,6 +73,7 @@ OptionParser.new do |opts|
 
   opts.on('--agent-port PORT', Integer, "Agent port (default: 8126)")           { |v| options[:agent_port] = v }
   opts.on('--dogfood-agent',  "Use dogfood agent on port 18126")               { options[:agent_port] = 18126 }
+  opts.on('--staging-agent',  "Use staging agent on port 28126")               { options[:agent_port] = 28126 }
 
   opts.on('--git-repo URL',  "GitHub repo URL — fetch latest commit on main branch via API\n" \
                              "                                     (e.g. https://github.com/p-datadog/demo-ruby)\n" \
