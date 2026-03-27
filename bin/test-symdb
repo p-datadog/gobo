@@ -11,6 +11,7 @@
 #   DD_API_KEY=<key> DD_APP_KEY=<key> bin/test-symdb dogfood
 #   DD_API_KEY=<key> DD_APP_KEY=<key> DD_TRACER=~/dtr bin/test-symdb
 #   DD_SKIP_UPLOAD=true DD_API_KEY=<key> DD_APP_KEY=<key> bin/test-symdb
+#   DD_SERVICE=my-service DD_API_KEY=<key> DD_APP_KEY=<key> bin/test-symdb
 #
 # Required:
 #   DD_API_KEY   — Datadog API key (used by tracer for upload auth)
