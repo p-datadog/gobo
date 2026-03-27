@@ -75,6 +75,32 @@ You can also set `DD_TRACER` directly with any of the above formats or a full gi
 export DD_TRACER="git+https://github.com/DataDog/dd-trace-rb@branch-name"
 ```
 
+## Simulating a Service (fake tracer / fake service)
+
+`bin/simulate_service` simulates a Datadog-instrumented service to the backend without
+running a real app. It impersonates a tracer in any supported language and sends the
+minimum payloads needed for the backend to treat it as a live service:
+
+- **Telemetry** — `app-started` event declaring DI enabled, then periodic heartbeats
+- **Remote Config** — polls every 5s with `LIVE_DEBUGGING` + `LIVE_DEBUGGING_SYMBOL_DB`
+  declared; prints any `upload_symbols: true` signal received from the backend
+- **Traces** — a minimal synthetic trace to register the service in APM with git metadata
+
+Useful for testing DI and SymDB backend behavior without a running Rails app. Also
+handy for verifying that capability bits, tracer versions, and RC products are correct
+for a given language — since the simulated service / fake service is fully configurable.
+
+```bash
+bundle exec bin/simulate_service --language java --service demo-ruby
+bundle exec bin/simulate_service --language python --no-traces
+bundle exec bin/simulate_service --language ruby --dogfood-agent
+```
+
+Supported languages: `java`, `python`, `ruby`, `dotnet`, `go`, `node`, `php`
+
+Optional flags: `--no-telemetry`, `--no-rc`, `--no-traces`, `--agent-port PORT`,
+`--dogfood-agent` (port 18126), `--git-repo URL`, `--runtime-id ID`
+
 ## License
 
 This project is available under the MIT License. See [LICENSE.md](LICENSE.md) for details.
