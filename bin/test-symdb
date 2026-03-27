@@ -1,0 +1,177 @@
+#!/usr/bin/env ruby
+#
+# bin/test-symdb
+#
+# Uploads symbols from demo-ruby via the local agent, then queries the
+# matching backend API to verify the expected classes were indexed.
+#
+# Usage:
+#   DD_API_KEY=<key> DD_APP_KEY=<key> bin/test-symdb             # staging (default)
+#   DD_API_KEY=<key> DD_APP_KEY=<key> bin/test-symdb staging
+#   DD_API_KEY=<key> DD_APP_KEY=<key> bin/test-symdb dogfood
+#   DD_API_KEY=<key> DD_APP_KEY=<key> DD_TRACER=~/dtr bin/test-symdb
+#   DD_SKIP_UPLOAD=true DD_API_KEY=<key> DD_APP_KEY=<key> bin/test-symdb
+#
+# Required:
+#   DD_API_KEY   — Datadog API key (used by tracer for upload auth)
+#   DD_APP_KEY   — Datadog application key (for querying the symdb API)
+#
+# Optional:
+#   DD_TRACER        — path to local tracer build (default: installed gem)
+#   DD_SKIP_UPLOAD   — skip upload, query only
+#   DD_SERVICE       — override service name
+
+require "json"
+require "net/http"
+require "uri"
+
+ENVIRONMENTS = {
+  "staging" => {
+    agent_port: 28126,
+    api_url: "https://dd.datad0g.com/api/unstable/symdb-api"
+  },
+  "dogfood" => {
+    agent_port: 18126,
+    api_url: "https://app.datadoghq.com/api/unstable/symdb-api"
+  }
+}.freeze
+
+EXPECTED_CLASSES = %w[
+  User
+  Micropost
+  ExpensiveModel
+  BinaryDataModel
+  AccountActivationsController
+  DebuggerTestController
+  MicropostsController
+  PasswordResetsController
+  ProbesController
+  RelationshipsController
+  SessionsController
+  StaticPagesController
+  UsersController
+].freeze
+
+def extract_scopes(raw)
+  items = raw.is_a?(Hash) ? (raw["data"] || [raw]) : Array(raw)
+  items.flat_map do |item|
+    attrs = item.is_a?(Hash) && item["attributes"] ? item["attributes"] : item
+    attrs.is_a?(Hash) ? (attrs["scopes"] || []).map { |s| s.is_a?(Hash) && s["scope"] ? s["scope"] : s } : []
+  end
+end
+
+if ARGV.include?("-h") || ARGV.include?("--help")
+  puts File.read(__FILE__).lines[1..16].map { |l| l.sub(/^# ?/, "") }.join
+  exit 0
+end
+
+env_name = ARGV.first || "staging"
+env = ENVIRONMENTS[env_name]
+abort "Unknown environment: #{env_name}. Use: staging, dogfood" unless env
+
+api_key = ENV["DD_API_KEY"]
+app_key = ENV["DD_APP_KEY"]
+api_keys_set = api_key && !api_key.empty? && app_key && !app_key.empty?
+
+service = ENV["DD_SERVICE"] || "ruby-symdb-test"
+skip_upload = ENV["DD_SKIP_UPLOAD"] == "true"
+
+puts "=== SymDB End-to-End Test ==="
+puts "  Environment: #{env_name}"
+puts "  Agent port:  #{env[:agent_port]}"
+puts "  API:         #{env[:api_url]}"
+puts "  Service:     #{service}"
+puts "  Upload:      #{skip_upload ? 'skipped' : 'yes'}"
+puts "  Verify:      #{api_keys_set ? 'yes (API keys set)' : 'manual (no API keys)'}"
+puts ""
+
+# --- Step 1: Upload ---
+
+unless skip_upload
+  puts "--- Step 1: Upload symbols ---"
+  puts ""
+
+  ENV["DD_TRACE_AGENT_PORT"] = env[:agent_port].to_s
+
+  extract = File.expand_path("../extract_symbols", __FILE__)
+  system(extract) or abort "extract_symbols failed"
+  puts ""
+end
+
+unless api_keys_set
+  puts "--- Verify manually ---"
+  puts ""
+  puts "No DD_API_KEY / DD_APP_KEY set. Open this URL in a browser (must be logged into #{env_name}):"
+  puts ""
+  puts "  #{env[:api_url]}/scopes/search?service=#{service}&query=User&allow_partial=true"
+  puts ""
+  puts "To run automated verification:"
+  puts "  DD_API_KEY=<key> DD_APP_KEY=<key> DD_SKIP_UPLOAD=true bin/test-symdb #{env_name}"
+  puts ""
+  puts "Get keys from:"
+  puts "  #{env_name == 'staging' ? 'https://dd.datad0g.com' : 'https://app.datadoghq.com'}/organization-settings/api-keys"
+  exit 0
+end
+
+# --- Step 2: Verify ---
+
+puts "--- Step 2: Verify symbols in API ---"
+puts ""
+
+api_get = ->(path) do
+  uri = URI.parse("#{env[:api_url]}#{path}")
+  http = Net::HTTP.new(uri.host, uri.port)
+  http.use_ssl = true
+  http.open_timeout = 10
+  http.read_timeout = 30
+  req = Net::HTTP::Get.new(uri.request_uri)
+  req["DD-API-KEY"] = api_key
+  req["DD-APPLICATION-KEY"] = app_key
+  resp = http.request(req)
+  JSON.parse(resp.body)
+rescue => e
+  abort "API request failed for #{path}: #{e.message}"
+end
+
+# Poll until User appears (backend indexing can take a few seconds)
+puts "  Waiting for backend indexing..."
+max_wait = 120
+poll_interval = 10
+waited = 0
+has_data = false
+
+loop do
+  result = api_get.("/scopes/search?service=#{service}&query=User&exact_match=true&allow_partial=true")
+  has_data = extract_scopes(result).any? { |s| s["name"] == "User" }
+  break if has_data
+  break if waited >= max_wait
+  puts "  #{waited}s elapsed, not indexed yet..."
+  sleep poll_interval
+  waited += poll_interval
+end
+
+abort "  Timed out after #{max_wait}s — data not indexed. Check agent is running on port #{env[:agent_port]}." unless has_data
+
+puts "  Data available after #{waited}s"
+puts ""
+
+# Check each expected class
+pass = 0
+fail = 0
+
+EXPECTED_CLASSES.each do |name|
+  result = api_get.("/scopes/search?service=#{service}&query=#{name}&exact_match=true&allow_partial=true")
+  found = extract_scopes(result).any? { |s| s["name"] == name }
+  if found
+    puts "  [ PASS ] #{name}"
+    pass += 1
+  else
+    puts "  [ FAIL ] #{name}"
+    fail += 1
+  end
+end
+
+puts ""
+puts "=== Results: #{pass} passed, #{fail} failed ==="
+
+exit(fail > 0 ? 1 : 0)
