@@ -66,14 +66,14 @@ options = {
 OptionParser.new do |opts|
   opts.banner = "Usage: bin/simulate_service [options]"
 
-  opts.on('--language LANG', "Tracer language to impersonate (default: java)") { |v| options[:language] = v }
-  opts.on('--service NAME',  "Service name (default: demo-ruby)")               { |v| options[:service]  = v }
-  opts.on('--env ENV',       "Environment (default: development)")              { |v| options[:env]      = v }
-  opts.on('--version VER',   "Service version (default: 1.0)")                 { |v| options[:version]  = v }
+  opts.on('-l', '--language LANG', "Tracer language to impersonate (default: java)") { |v| options[:language] = v }
+  opts.on('-s', '--service NAME',  "Service name (default: demo-ruby)")               { |v| options[:service]  = v }
+  opts.on('-e', '--env ENV',       "Environment (default: development)")              { |v| options[:env]      = v }
+  opts.on('-v', '--version VER',   "Service version (default: 1.0)")                 { |v| options[:version]  = v }
 
-  opts.on('--agent-port PORT', Integer, "Agent port (default: 8126)")           { |v| options[:agent_port] = v }
-  opts.on('--dogfood-agent',  "Use dogfood agent on port 18126")               { options[:agent_port] = 18126 }
-  opts.on('--staging-agent',  "Use staging agent on port 28126")               { options[:agent_port] = 28126 }
+  opts.on('-p', '--agent-port PORT', Integer, "Agent port (default: 8126)")     { |v| options[:agent_port] = v }
+  opts.on('-d', '--dogfood-agent',  "Use dogfood agent on port 18126")          { options[:agent_port] = 18126 }
+  opts.on('-S', '--staging-agent',  "Use staging agent on port 28126")          { options[:agent_port] = 28126 }
 
   opts.on('--git-repo URL',  "GitHub repo URL — fetch latest commit on main branch via API\n" \
                              "                                     (e.g. https://github.com/p-datadog/demo-ruby)\n" \
@@ -84,7 +84,7 @@ OptionParser.new do |opts|
   opts.on('--no-rc',         "Disable remote config polling")                  { options[:components][:remote_config] = false }
   opts.on('--no-traces',     "Disable trace submission")                        { options[:components][:traces]        = false }
 
-  opts.on('--runtime-id ID', "Use a specific runtime ID (default: random UUID)") { |v| options[:runtime_id] = v }
+  opts.on('-r', '--runtime-id ID', "Use a specific runtime ID (default: random UUID)") { |v| options[:runtime_id] = v }
   opts.on('-h', '--help',    "Show this help")                                  { puts opts; exit }
 end.parse!
 
