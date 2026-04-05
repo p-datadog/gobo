@@ -37,31 +37,24 @@
 
 <div class="row">
   <div class="col-md-4">
-    <div class="panel panel-default">
-      <div class="panel-heading"><h4 class="panel-title">Heap Slots</h4></div>
-      <div class="panel-body text-center">
-        <p><strong>Live:</strong> <span id="heap-live"><%= number_with_delimiter(@stats[:heap_live_slots]) %></span></p>
-        <p><strong>Free:</strong> <span id="heap-free"><%= number_with_delimiter(@stats[:heap_free_slots]) %></span></p>
+    <div class="panel panel-default" style="margin-bottom: 10px;">
+      <div class="panel-body" style="padding: 8px 12px;">
+        <strong>Heap slots:</strong> <span id="heap-live"><%= number_with_delimiter(@stats[:heap_live_slots]) %></span> live / <span id="heap-free"><%= number_with_delimiter(@stats[:heap_free_slots]) %></span> free
       </div>
     </div>
   </div>
   <div class="col-md-4">
-    <div class="panel panel-default">
-      <div class="panel-heading"><h4 class="panel-title">GC Runs</h4></div>
-      <div class="panel-body text-center">
-        <h2 id="gc-count"><%= @stats[:gc_count] %></h2>
-        <p class="text-muted"><span id="gc-major"><%= @stats[:major_gc_count] %></span> major / <span id="gc-minor"><%= @stats[:minor_gc_count] %></span> minor</p>
+    <div class="panel panel-default" style="margin-bottom: 10px;">
+      <div class="panel-body" style="padding: 8px 12px;">
+        <strong>GC:</strong> <span id="gc-count"><%= @stats[:gc_count] %></span> (<span id="gc-major"><%= @stats[:major_gc_count] %></span> major / <span id="gc-minor"><%= @stats[:minor_gc_count] %></span> minor)
       </div>
     </div>
   </div>
   <div class="col-md-4">
-    <div class="panel panel-default">
-      <div class="panel-heading"><h4 class="panel-title">Objects</h4></div>
-      <div class="panel-body text-center">
-        <p><strong>Allocated:</strong> <span id="total-alloc"><%= number_with_delimiter(@stats[:total_allocated_objects]) %></span></p>
-        <p><strong>Freed:</strong> <span id="total-freed"><%= number_with_delimiter(@stats[:total_freed_objects]) %></span></p>
-        <p><strong>malloc_increase:</strong> <span id="malloc-inc"><%= number_with_delimiter(@stats[:malloc_increase_bytes]) %></span></p>
-        <p><strong>oldmalloc_increase:</strong> <span id="oldmalloc-inc"><%= number_with_delimiter(@stats[:oldmalloc_increase_bytes]) %></span></p>
+    <div class="panel panel-default" style="margin-bottom: 10px;">
+      <div class="panel-body" style="padding: 8px 12px;">
+        <strong>Objects:</strong> <span id="total-alloc"><%= number_with_delimiter(@stats[:total_allocated_objects]) %></span> alloc / <span id="total-freed"><%= number_with_delimiter(@stats[:total_freed_objects]) %></span> freed<br>
+        <small><strong>malloc_inc:</strong> <span id="malloc-inc"><%= number_with_delimiter(@stats[:malloc_increase_bytes]) %></span> | <strong>oldmalloc_inc:</strong> <span id="oldmalloc-inc"><%= number_with_delimiter(@stats[:oldmalloc_increase_bytes]) %></span></small>
       </div>
     </div>
   </div>
