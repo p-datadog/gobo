@@ -1,5 +1,9 @@
 # Development Guidelines for Claude
 
+## Commit Every Change
+
+Commit after every logical change — don't accumulate uncommitted work. If specs pass, commit. Do not wait for the user to ask.
+
 ## Running Commands
 
 Always prefix Ruby/Rails commands with `bundle exec`. Never run `ruby`, `rails`, `rake`, `rspec`, or other gem-provided executables without `bundle exec`.
