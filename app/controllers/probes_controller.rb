@@ -9,6 +9,11 @@ class ProbesController < ApplicationController
     @service_name = fetch_datadog_service
     @environment = fetch_datadog_env
     @di_enabled = fetch_di_enabled_status
+
+    respond_to do |format|
+      format.html
+      format.json { render json: probes_json }
+    end
   end
 
   def send_status
@@ -153,6 +158,37 @@ class ProbesController < ApplicationController
   rescue => e
     Rails.logger.error "Error sending probe status: #{e.class}: #{e}"
     {success: false, error: "#{e.class}: #{e}"}
+  end
+
+  def probes_json
+    {
+      service: @service_name,
+      environment: @environment,
+      di_enabled: @di_enabled,
+      active: serialize_probes(@probes),
+      disabled: serialize_probes(@disabled_probes),
+      pending: serialize_probes(@pending_probes),
+      failed: serialize_probes(@failed_probes),
+      error: @error,
+    }
+  end
+
+  def serialize_probes(probes)
+    return [] unless probes
+    collection = probes.is_a?(Hash) ? probes.values : probes
+    collection.map { |p| serialize_probe(p) }
+  end
+
+  def serialize_probe(probe)
+    {
+      id: probe.id,
+      type: probe.type,
+      file: probe.file,
+      line_no: probe.line_no,
+      type_name: probe.type_name,
+      method_name: probe.method_name,
+      rate_limit: probe.rate_limit,
+    }.compact
   end
 
   def create_sample_exception
