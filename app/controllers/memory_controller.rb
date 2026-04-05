@@ -1,8 +1,13 @@
 require 'objspace'
+require_relative '../../lib/memory_stats'
 
 class MemoryController < ApplicationController
   def index
     @stats = MemoryStats.snapshot
+    respond_to do |format|
+      format.html
+      format.json { render json: @stats }
+    end
   end
 
   def run_gc
