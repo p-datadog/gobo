@@ -21,6 +21,12 @@ RSpec.describe TracerResolver do
       )
     end
 
+    it 'resolves bare master to branch URL' do
+      expect(described_class.resolve('master')).to eq(
+        'git+https://github.com/DataDog/dd-trace-rb@master'
+      )
+    end
+
     it 'returns nil for --reset' do
       expect(described_class.resolve('--reset')).to be_nil
     end

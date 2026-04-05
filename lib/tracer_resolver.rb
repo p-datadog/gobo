@@ -21,6 +21,8 @@ module TracerResolver
       nil
     when /\Apr:(\d+)\z/
       resolve_pr($1)
+    when "master"
+      "git+https://github.com/#{REPO}@master"
     when /\Abranch:(.+)\z/
       "git+https://github.com/#{REPO}@#{$1}"
     when /\Asha:(.+)\z/
