@@ -18,7 +18,15 @@
         <li><%= link_to "Home", root_path %></li>
         <li><%= link_to "Help", help_path %></li>
         <li><%= link_to "DI Probes", probes_path, title: "View active Dynamic Instrumentation probes" %></li>
-        <li><%= link_to "Memory", memory_path, title: "Memory stats and GC controls" %></li>
+        <li class="dropdown">
+          <a href="#" class="dropdown-toggle" data-toggle="dropdown">
+            Memory <b class="caret"></b>
+          </a>
+          <ul class="dropdown-menu">
+            <li><%= link_to "Full Stats", memory_path, title: "Measured heap breakdown via ObjectSpace (slower)" %></li>
+            <li><%= link_to "Fast Stats", memory_fast_path, title: "C-level only — GC.stat + count_objects (safe with DI probes)" %></li>
+          </ul>
+        </li>
         <li class="dropdown">
           <a href="#" class="dropdown-toggle" data-toggle="dropdown">
             Demos <b class="caret"></b>

@@ -3,6 +3,20 @@ require_relative '../../lib/memory_stats'
 
 class MemoryController < ApplicationController
   def index
+    @fast = MemoryStats.snapshot
+    @deep = MemoryStats.object_stats
+    @stats = @fast.merge(
+      heap_measured_mb: @deep[:total_memsize_mb],
+      top_by_count: @deep[:by_count],
+      top_by_size: @deep[:by_size],
+    )
+    respond_to do |format|
+      format.html
+      format.json { render json: @stats }
+    end
+  end
+
+  def fast
     @stats = MemoryStats.snapshot
     respond_to do |format|
       format.html
@@ -37,11 +51,4 @@ class MemoryController < ApplicationController
     }
   end
 
-  def object_stats
-    @stats = MemoryStats.object_stats
-    respond_to do |format|
-      format.html
-      format.json { render json: @stats }
-    end
-  end
 end

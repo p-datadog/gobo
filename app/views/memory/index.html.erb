@@ -2,7 +2,7 @@
 <h1>Memory Stats <small><%= link_to "JSON", memory_path(format: :json) %></small></h1>
 
 <%
-  heap_mb = @stats[:heap_live_estimate_mb]
+  heap_mb = @stats[:heap_measured_mb]
   gap = @stats[:rss_mb] - heap_mb
   gap_pct = @stats[:rss_mb] > 0 ? (gap / @stats[:rss_mb] * 100).round(0) : 0
   heap_pct = @stats[:rss_mb] > 0 ? (heap_mb / @stats[:rss_mb] * 100).round(0) : 0
@@ -14,20 +14,20 @@
   <div class="panel-body" style="padding: 10px 15px;">
     <p style="margin: 0 0 8px;">
       <strong>RSS</strong> <span id="rss-mb"><%= @stats[:rss_mb] %></span> MB
-      = <strong>Ruby heap</strong> ~<span id="heap-est-mb"><%= heap_mb %></span> MB (<span id="heap-pct"><%= heap_pct %></span>%)
-      + <strong>Off-heap</strong> ~<span id="frag-gap"><%= gap.round(1) %></span> MB (<span id="gap-pct"><%= gap_pct %></span>% — fragmentation, stacks, mmap)
+      = <strong>Ruby heap</strong> <span id="heap-mb"><%= heap_mb %></span> MB (<span id="heap-pct"><%= heap_pct %></span>%)
+      + <strong>Off-heap</strong> <span id="frag-gap"><%= gap.round(1) %></span> MB (<span id="gap-pct"><%= gap_pct %></span>% — fragmentation, stacks, mmap)
     </p>
     <div class="progress" style="margin: 0; height: 22px;">
       <div class="progress-bar progress-bar-success" id="bar-heap" style="width: <%= heap_pct %>%; line-height: 22px; font-size: 12px;">
-        heap ~<%= heap_mb %> MB
+        heap <%= heap_mb %> MB
       </div>
       <div class="progress-bar progress-bar-<%= severity %>" id="bar-offheap" style="width: <%= gap_pct %>%; line-height: 22px; font-size: 12px;">
-        off-heap ~<%= gap.round(1) %> MB
+        off-heap <%= gap.round(1) %> MB
       </div>
     </div>
     <% if gap > 1000 %>
       <p class="text-danger" style="margin-top: 10px;">
-        <strong>~<%= gap.round(0) %> MB outside Ruby's heap.</strong>
+        <strong><%= gap.round(0) %> MB outside Ruby's heap.</strong>
         This suggests malloc fragmentation or large off-heap allocations (thread stacks, native extensions).
         Try <strong>Force GC</strong> then <strong>malloc_trim</strong> below to see if memory can be reclaimed.
       </p>
@@ -67,27 +67,41 @@
   </div>
 </div>
 
-<div class="panel panel-default">
-  <div class="panel-heading"><h4 class="panel-title">Objects by Type (count_objects — fast, C-level)</h4></div>
-  <table class="table table-condensed">
-    <thead><tr><th>Type</th><th class="text-right">Count</th></tr></thead>
-    <tbody>
-      <% @stats[:count_objects].sort_by { |_k, v| -v }.each do |type, count| %>
-        <% next if count == 0 %>
-        <tr><td><code><%= type %></code></td><td class="text-right"><%= number_with_delimiter(count) %></td></tr>
-      <% end %>
-    </tbody>
-  </table>
-</div>
-
 <div class="well">
   <h4>Actions</h4>
   <button id="btn-gc" class="btn btn-warning">Force GC (3x full)</button>
   <button id="btn-trim" class="btn btn-info" style="margin-left: 10px;">malloc_trim</button>
   <button id="btn-refresh" class="btn btn-default" style="margin-left: 10px;">Refresh Stats</button>
-  <%= link_to "Deep Object Scan", "/memory/objects", class: "btn btn-danger", style: "margin-left: 10px;",
-      title: "Slow! Iterates all objects with ObjectSpace.each_object. Can hang if DI probes are on hot methods." %>
   <div id="action-result" class="alert alert-info" style="margin-top: 15px;">Click a button to run a memory action.</div>
+</div>
+
+<div class="row">
+  <div class="col-md-6">
+    <div class="panel panel-default">
+      <div class="panel-heading"><h4 class="panel-title">Top Classes by Count</h4></div>
+      <table class="table table-condensed">
+        <thead><tr><th>Class</th><th class="text-right">Count</th></tr></thead>
+        <tbody>
+          <% @stats[:top_by_count].each do |row| %>
+            <tr><td><code><%= row[:class_name] %></code></td><td class="text-right"><%= number_with_delimiter(row[:count]) %></td></tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <div class="col-md-6">
+    <div class="panel panel-default">
+      <div class="panel-heading"><h4 class="panel-title">Top Classes by Size</h4></div>
+      <table class="table table-condensed">
+        <thead><tr><th>Class</th><th class="text-right">Size</th></tr></thead>
+        <tbody>
+          <% @stats[:top_by_size].each do |row| %>
+            <tr><td><code><%= row[:class_name] %></code></td><td class="text-right"><%= (row[:bytes] / 1048576.0).round(1) %> MB</td></tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  </div>
 </div>
 
 <script>
@@ -102,21 +116,7 @@
   }
 
   function updateStats(stats) {
-    var rssMb = stats.rss_mb;
-    var heapMb = stats.heap_live_estimate_mb;
-    var gap = rssMb - heapMb;
-    var heapPct = rssMb > 0 ? Math.round(heapMb / rssMb * 100) : 0;
-    var gapPct = rssMb > 0 ? Math.round(gap / rssMb * 100) : 0;
-
-    document.getElementById('rss-mb').textContent = rssMb;
-    document.getElementById('heap-est-mb').textContent = heapMb;
-    document.getElementById('frag-gap').textContent = gap.toFixed(1);
-    document.getElementById('heap-pct').textContent = heapPct;
-    document.getElementById('gap-pct').textContent = gapPct;
-    document.getElementById('bar-heap').style.width = heapPct + '%';
-    document.getElementById('bar-heap').textContent = 'heap ~' + heapMb + ' MB';
-    document.getElementById('bar-offheap').style.width = gapPct + '%';
-    document.getElementById('bar-offheap').textContent = 'off-heap ~' + gap.toFixed(1) + ' MB';
+    document.getElementById('rss-mb').textContent = stats.rss_mb;
     document.getElementById('heap-live').textContent = numberWithDelimiter(stats.heap_live_slots);
     document.getElementById('heap-free').textContent = numberWithDelimiter(stats.heap_free_slots);
     document.getElementById('gc-count').textContent = stats.gc_count;
