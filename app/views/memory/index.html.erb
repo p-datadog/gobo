@@ -71,7 +71,6 @@
   <h4>Actions</h4>
   <button id="btn-gc" class="btn btn-warning">Force GC (3x full)</button>
   <button id="btn-trim" class="btn btn-info" style="margin-left: 10px;">malloc_trim</button>
-  <button id="btn-refresh" class="btn btn-default" style="margin-left: 10px;">Refresh Stats</button>
   <div id="action-result" class="alert alert-info" style="margin-top: 15px;">Click a button to run a memory action.</div>
 </div>
 
@@ -164,7 +163,4 @@
     doAction('/memory/malloc_trim', 'malloc_trim');
   });
 
-  document.getElementById('btn-refresh').addEventListener('click', function() {
-    window.location.reload();
-  });
 </script>
