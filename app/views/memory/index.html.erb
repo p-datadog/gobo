@@ -106,9 +106,11 @@
 
 <script>
   function formatBytes(bytes) {
-    if (bytes >= 1048576) return (bytes / 1048576).toFixed(1) + ' MB';
-    if (bytes >= 1024) return (bytes / 1024).toFixed(1) + ' KB';
-    return bytes + ' B';
+    var abs = Math.abs(bytes);
+    var sign = bytes < 0 ? '-' : '';
+    if (abs >= 1048576) return sign + (abs / 1048576).toFixed(1) + ' MB';
+    if (abs >= 1024) return sign + (abs / 1024).toFixed(1) + ' KB';
+    return sign + abs + ' B';
   }
 
   function numberWithDelimiter(n) {
@@ -142,7 +144,8 @@
       })
       .then(function(data) {
         var msg = '<strong>' + label + ':</strong> RSS ' + formatBytes(data.before_rss) +
-          ' &rarr; ' + formatBytes(data.after_rss) + ' (freed ' + formatBytes(data.freed) + ')';
+          ' &rarr; ' + formatBytes(data.after_rss) +
+          ' (' + (data.freed >= 0 ? 'freed ' + formatBytes(data.freed) : 'grew ' + formatBytes(Math.abs(data.freed)) + ' despite our efforts') + ')';
         resultEl.className = 'alert alert-success';
         resultEl.innerHTML = msg;
         updateStats(data.stats);
