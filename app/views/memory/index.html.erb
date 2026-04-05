@@ -1,0 +1,183 @@
+<% provide(:title, 'Memory') %>
+<h1>Memory Stats</h1>
+
+<div class="row">
+  <div class="col-md-4">
+    <div class="panel panel-primary">
+      <div class="panel-heading"><h4 class="panel-title">RSS</h4></div>
+      <div class="panel-body text-center">
+        <h2 id="rss-mb"><%= @stats[:rss_mb] %> MB</h2>
+        <p class="text-muted"><span id="rss-bytes"><%= number_with_delimiter(@stats[:rss_bytes]) %></span> bytes</p>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="panel panel-info">
+      <div class="panel-heading"><h4 class="panel-title">Heap Live Slots</h4></div>
+      <div class="panel-body text-center">
+        <h2 id="heap-live"><%= number_with_delimiter(@stats[:heap_live_slots]) %></h2>
+        <p class="text-muted">~<span id="heap-est-mb"><%= @stats[:heap_live_estimate_mb] %></span> MB estimated</p>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="panel panel-default">
+      <div class="panel-heading"><h4 class="panel-title">GC Runs</h4></div>
+      <div class="panel-body text-center">
+        <h2 id="gc-count"><%= @stats[:gc_count] %></h2>
+        <p class="text-muted"><span id="gc-major"><%= @stats[:major_gc_count] %></span> major / <span id="gc-minor"><%= @stats[:minor_gc_count] %></span> minor</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row">
+  <div class="col-md-4">
+    <div class="panel panel-default">
+      <div class="panel-heading"><h4 class="panel-title">Fragmentation Indicator</h4></div>
+      <div class="panel-body text-center">
+        <% gap = @stats[:rss_mb] - @stats[:heap_live_estimate_mb] %>
+        <h2 id="frag-gap"><%= gap.round(1) %> MB</h2>
+        <p class="text-muted">RSS minus heap estimate (higher = more fragmentation or off-heap alloc)</p>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="panel panel-default">
+      <div class="panel-heading"><h4 class="panel-title">Heap Free Slots</h4></div>
+      <div class="panel-body text-center">
+        <h2 id="heap-free"><%= number_with_delimiter(@stats[:heap_free_slots]) %></h2>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="panel panel-default">
+      <div class="panel-heading"><h4 class="panel-title">Objects</h4></div>
+      <div class="panel-body text-center">
+        <p><strong>Allocated:</strong> <span id="total-alloc"><%= number_with_delimiter(@stats[:total_allocated_objects]) %></span></p>
+        <p><strong>Freed:</strong> <span id="total-freed"><%= number_with_delimiter(@stats[:total_freed_objects]) %></span></p>
+        <p><strong>malloc_increase:</strong> <span id="malloc-inc"><%= number_with_delimiter(@stats[:malloc_increase_bytes]) %></span></p>
+        <p><strong>oldmalloc_increase:</strong> <span id="oldmalloc-inc"><%= number_with_delimiter(@stats[:oldmalloc_increase_bytes]) %></span></p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="well">
+  <h4>Actions</h4>
+  <button id="btn-gc" class="btn btn-warning">Force GC (3x full)</button>
+  <button id="btn-trim" class="btn btn-info" style="margin-left: 10px;">malloc_trim</button>
+  <button id="btn-refresh" class="btn btn-default" style="margin-left: 10px;">Refresh Stats</button>
+  <div id="action-result" class="alert alert-info" style="margin-top: 15px;">Click a button to run a memory action.</div>
+</div>
+
+<div class="row">
+  <div class="col-md-6">
+    <div class="panel panel-default">
+      <div class="panel-heading"><h4 class="panel-title">Top Classes by Count</h4></div>
+      <table class="table table-condensed" id="table-by-count">
+        <thead><tr><th>Class</th><th class="text-right">Count</th></tr></thead>
+        <tbody>
+          <% @stats[:top_by_count].each do |row| %>
+            <tr><td><code><%= row[:class_name] %></code></td><td class="text-right"><%= number_with_delimiter(row[:count]) %></td></tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <div class="col-md-6">
+    <div class="panel panel-default">
+      <div class="panel-heading"><h4 class="panel-title">Top Classes by Size</h4></div>
+      <table class="table table-condensed" id="table-by-size">
+        <thead><tr><th>Class</th><th class="text-right">Size</th></tr></thead>
+        <tbody>
+          <% @stats[:top_by_size].each do |row| %>
+            <tr><td><code><%= row[:class_name] %></code></td><td class="text-right"><%= (row[:bytes] / 1048576.0).round(1) %> MB</td></tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script>
+  function formatBytes(bytes) {
+    if (bytes >= 1048576) return (bytes / 1048576).toFixed(1) + ' MB';
+    if (bytes >= 1024) return (bytes / 1024).toFixed(1) + ' KB';
+    return bytes + ' B';
+  }
+
+  function numberWithDelimiter(n) {
+    return n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+  }
+
+  function updateStats(stats) {
+    document.getElementById('rss-mb').textContent = stats.rss_mb + ' MB';
+    document.getElementById('rss-bytes').textContent = numberWithDelimiter(stats.rss_bytes);
+    document.getElementById('heap-live').textContent = numberWithDelimiter(stats.heap_live_slots);
+    document.getElementById('heap-est-mb').textContent = stats.heap_live_estimate_mb;
+    document.getElementById('heap-free').textContent = numberWithDelimiter(stats.heap_free_slots);
+    document.getElementById('gc-count').textContent = stats.gc_count;
+    document.getElementById('gc-major').textContent = stats.major_gc_count;
+    document.getElementById('gc-minor').textContent = stats.minor_gc_count;
+    document.getElementById('total-alloc').textContent = numberWithDelimiter(stats.total_allocated_objects);
+    document.getElementById('total-freed').textContent = numberWithDelimiter(stats.total_freed_objects);
+    document.getElementById('malloc-inc').textContent = numberWithDelimiter(stats.malloc_increase_bytes);
+    document.getElementById('oldmalloc-inc').textContent = numberWithDelimiter(stats.oldmalloc_increase_bytes);
+    document.getElementById('frag-gap').textContent = (stats.rss_mb - stats.heap_live_estimate_mb).toFixed(1) + ' MB';
+
+    updateTable('table-by-count', stats.top_by_count, function(row) {
+      return '<td><code>' + row.class_name + '</code></td><td class="text-right">' + numberWithDelimiter(row.count) + '</td>';
+    });
+    updateTable('table-by-size', stats.top_by_size, function(row) {
+      return '<td><code>' + row.class_name + '</code></td><td class="text-right">' + (row.bytes / 1048576).toFixed(1) + ' MB</td>';
+    });
+  }
+
+  function updateTable(id, rows, renderRow) {
+    var tbody = document.querySelector('#' + id + ' tbody');
+    tbody.innerHTML = '';
+    rows.forEach(function(row) {
+      var tr = document.createElement('tr');
+      tr.innerHTML = renderRow(row);
+      tbody.appendChild(tr);
+    });
+  }
+
+  function doAction(url, label) {
+    var resultEl = document.getElementById('action-result');
+    resultEl.className = 'alert alert-info';
+    resultEl.innerHTML = '<strong>' + label + ':</strong> Running...';
+
+    fetch(url, {method: 'POST', headers: {'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').content}})
+      .then(function(res) {
+        if (!res.ok) {
+          return res.text().then(function(text) { throw new Error('HTTP ' + res.status + ': ' + text.substring(0, 200)); });
+        }
+        return res.json();
+      })
+      .then(function(data) {
+        var msg = '<strong>' + label + ':</strong> RSS ' + formatBytes(data.before_rss) +
+          ' → ' + formatBytes(data.after_rss) + ' (freed ' + formatBytes(data.freed) + ')';
+        resultEl.className = 'alert alert-success';
+        resultEl.innerHTML = msg;
+        updateStats(data.stats);
+      })
+      .catch(function(err) {
+        resultEl.className = 'alert alert-danger';
+        resultEl.innerHTML = '<strong>Error:</strong> ' + err;
+      });
+  }
+
+  document.getElementById('btn-gc').addEventListener('click', function() {
+    doAction('/memory/run_gc', 'GC');
+  });
+
+  document.getElementById('btn-trim').addEventListener('click', function() {
+    doAction('/memory/malloc_trim', 'malloc_trim');
+  });
+
+  document.getElementById('btn-refresh').addEventListener('click', function() {
+    window.location.reload();
+  });
+</script>
