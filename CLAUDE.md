@@ -47,6 +47,13 @@ Each DI feature demo should require exactly ONE probe to demonstrate all cases. 
 
 Controller actions that trigger DI-instrumented code MUST rescue all exceptions. The UI must work whether or not DI probes are set — DI observes silently, it does not control the user experience. Never design a demo where the UI breaks if DI is absent or misconfigured.
 
+## JSON Endpoints for Diagnostic Pages
+
+Every controller action that displays diagnostic data (memory stats, probes, code tracker,
+etc.) must support a JSON response via `respond_to`. This allows querying from the CLI
+(`curl localhost:3000/memory.json | jq .`) without needing a browser. Add a JSON link in
+the HTML view header so the endpoint is discoverable.
+
 ## Test Coverage
 
 All code changes must have test coverage. When adding or modifying models, controllers, or lib classes, write or update specs in the corresponding `spec/` file. Specs must pass before committing.

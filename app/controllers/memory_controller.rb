@@ -36,4 +36,12 @@ class MemoryController < ApplicationController
       stats: MemoryStats.snapshot,
     }
   end
+
+  def object_stats
+    @stats = MemoryStats.object_stats
+    respond_to do |format|
+      format.html
+      format.json { render json: @stats }
+    end
+  end
 end

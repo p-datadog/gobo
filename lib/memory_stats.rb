@@ -20,27 +20,12 @@ module MemoryStats
     nil
   end
 
-  def self.top_classes_by_count(limit = 15)
-    counts = Hash.new(0)
-    ObjectSpace.each_object do |obj|
-      klass = begin; obj.class; rescue NoMethodError; nil; end
-      counts[klass] += 1 if klass
-    end
-    counts.sort_by { |_k, v| -v }.first(limit).map { |k, v| {class_name: k.name || k.inspect, count: v} }
-  end
-
-  def self.top_classes_by_size(limit = 15)
-    sizes = Hash.new(0)
-    ObjectSpace.each_object do |obj|
-      klass = begin; obj.class; rescue NoMethodError; nil; end
-      sizes[klass] += ObjectSpace.memsize_of(obj) if klass
-    end
-    sizes.sort_by { |_k, v| -v }.first(limit).map { |k, v| {class_name: k.name || k.inspect, bytes: v} }
-  end
-
+  # Fast snapshot using only GC.stat + count_objects (C-level, no Ruby iteration).
+  # Safe to call even with DI probes on hot methods.
   def self.snapshot
     gc = GC.stat
     rss = rss_bytes
+    counts = ObjectSpace.count_objects
 
     {
       rss_bytes: rss,
@@ -55,8 +40,30 @@ module MemoryStats
       minor_gc_count: gc[:minor_gc_count],
       malloc_increase_bytes: gc[:malloc_increase_bytes],
       oldmalloc_increase_bytes: gc[:oldmalloc_increase_bytes],
-      top_by_count: top_classes_by_count,
-      top_by_size: top_classes_by_size,
+      count_objects: counts,
+    }
+  end
+
+  # Expensive: single pass over ObjectSpace with each_object.
+  # Collects per-class counts, sizes, and total memsize.
+  # Can be slow or hang if DI probes are on methods in the iteration path.
+  def self.object_stats(limit = 15)
+    counts = Hash.new(0)
+    sizes = Hash.new(0)
+    total_memsize = 0
+    ObjectSpace.each_object do |obj|
+      klass = begin; obj.class; rescue NoMethodError; nil; end
+      next unless klass
+      sz = ObjectSpace.memsize_of(obj)
+      counts[klass] += 1
+      sizes[klass] += sz
+      total_memsize += sz
+    end
+    {
+      total_memsize: total_memsize,
+      total_memsize_mb: (total_memsize / 1048576.0).round(1),
+      by_count: counts.sort_by { |_k, v| -v }.first(limit).map { |k, v| {class_name: k.name || k.inspect, count: v} },
+      by_size: sizes.sort_by { |_k, v| -v }.first(limit).map { |k, v| {class_name: k.name || k.inspect, bytes: v} },
     }
   end
 end
