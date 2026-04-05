@@ -61,9 +61,9 @@
 <div class="panel panel-default" style="margin-bottom: 10px;">
   <div class="panel-body" style="padding: 8px 12px;">
     <strong>Off-heap malloc pressure:</strong>
-    <span id="malloc-inc"><%= number_with_delimiter(@stats[:malloc_increase_bytes]) %></span> bytes since last minor GC
+    <span id="malloc-inc"><%= number_to_human_size(@stats[:malloc_increase_bytes]) %></span> since last minor GC
     &nbsp;|&nbsp;
-    <span id="oldmalloc-inc"><%= number_with_delimiter(@stats[:oldmalloc_increase_bytes]) %></span> bytes since last major GC
+    <span id="oldmalloc-inc"><%= number_to_human_size(@stats[:oldmalloc_increase_bytes]) %></span> since last major GC
     <span class="text-muted">&mdash; tracks memory allocated outside Ruby's heap (strings, C extensions); triggers GC when thresholds are exceeded</span>
   </div>
 </div>
