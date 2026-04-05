@@ -1,0 +1,24 @@
+#!/bin/bash
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+GOBO_DIR="$(dirname "$SCRIPT_DIR")"
+HOST="${1:-http://host.docker.internal:3000}"
+IMAGE="gobo-locust"
+REPO="https://github.com/p-datadog/locust.git"
+
+if ! docker image inspect "$IMAGE" >/dev/null 2>&1; then
+  echo "Building $IMAGE..."
+  BUILD_DIR=$(mktemp -d /tmp/gobo-locust-build.XXXXXX)
+  chmod 700 "$BUILD_DIR"
+  trap "rm -rf $BUILD_DIR" EXIT
+  git clone --depth 1 "$REPO" "$BUILD_DIR/locust"
+  docker build -t "$IMAGE" "$BUILD_DIR/locust"
+fi
+
+exec docker run --rm -it \
+  --add-host=host.docker.internal:host-gateway \
+  -v "$GOBO_DIR/locustfile.py:/home/locust/locustfile.py:ro" \
+  -p 8089:8089 \
+  "$IMAGE" \
+  -f /home/locust/locustfile.py --host="$HOST"
