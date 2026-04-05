@@ -64,7 +64,7 @@
     <span id="malloc-inc"><%= number_to_human_size(@stats[:malloc_increase_bytes]) %></span> since last minor GC
     &nbsp;|&nbsp;
     <span id="oldmalloc-inc"><%= number_to_human_size(@stats[:oldmalloc_increase_bytes]) %></span> since last major GC
-    <span class="text-muted">&mdash; tracks memory allocated outside Ruby's heap (strings, C extensions); triggers GC when thresholds are exceeded</span>
+    <br><span class="text-muted">Tracks memory allocated outside Ruby's heap (strings, C extensions); triggers GC when thresholds are exceeded.</span>
   </div>
 </div>
 
