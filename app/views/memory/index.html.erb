@@ -53,10 +53,18 @@
   <div class="col-md-4">
     <div class="panel panel-default" style="margin-bottom: 10px;">
       <div class="panel-body" style="padding: 8px 12px;">
-        <strong>Objects:</strong> <span id="total-alloc"><%= number_with_delimiter(@stats[:total_allocated_objects]) %></span> alloc / <span id="total-freed"><%= number_with_delimiter(@stats[:total_freed_objects]) %></span> freed<br>
-        <strong>malloc_inc:</strong> <span id="malloc-inc"><%= number_with_delimiter(@stats[:malloc_increase_bytes]) %></span> | <strong>oldmalloc_inc:</strong> <span id="oldmalloc-inc"><%= number_with_delimiter(@stats[:oldmalloc_increase_bytes]) %></span>
+        <strong>Objects:</strong> <span id="total-alloc"><%= number_with_delimiter(@stats[:total_allocated_objects]) %></span> allocated / <span id="total-freed"><%= number_with_delimiter(@stats[:total_freed_objects]) %></span> freed
       </div>
     </div>
+  </div>
+</div>
+<div class="panel panel-default" style="margin-bottom: 10px;">
+  <div class="panel-body" style="padding: 8px 12px;">
+    <strong>Off-heap malloc pressure:</strong>
+    <span id="malloc-inc"><%= number_with_delimiter(@stats[:malloc_increase_bytes]) %></span> bytes since last minor GC
+    &nbsp;|&nbsp;
+    <span id="oldmalloc-inc"><%= number_with_delimiter(@stats[:oldmalloc_increase_bytes]) %></span> bytes since last major GC
+    <span class="text-muted">&mdash; tracks memory allocated outside Ruby's heap (strings, C extensions); triggers GC when thresholds are exceeded</span>
   </div>
 </div>
 
