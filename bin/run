@@ -21,7 +21,7 @@ usage() {
 PORT=""
 WORKERS=""
 SERVICE=""
-DDENV=""
+env_flag=""
 DEBUG=""
 DEV_MODE=""
 MODE="rails"
@@ -45,7 +45,7 @@ while getopts "rup:w:s:e:dD" opt; do
             SERVICE="$OPTARG"
             ;;
         e)
-            DDENV="$OPTARG"
+            env_flag="$OPTARG"
             ;;
         d)
             DEBUG="1"
@@ -132,9 +132,9 @@ fi
 
 # Set DD_ENV (default to development; DI requires an environment to be set)
 # DD_ENV is set in the Datadog initializer from Rails.env with
-# developmestuction as fallback. Only override here if DDENV is explicit.
-if [ -n "$DDENV" ]; then
-    export DD_ENV="$DDENV"
+# developmestuction as fallback. Only override here if -e was given.
+if [ -n "$env_flag" ]; then
+    export DD_ENV="$env_flag"
 fi
 
 # Set DD_TRACE_DEBUG if requested
