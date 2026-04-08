@@ -131,7 +131,7 @@ if [ -n "$SERVICE" ]; then
 fi
 
 # Set DD_ENV (default to development; DI requires an environment to be set)
-export DD_ENV="${DDENV:-developmestuction}"
+export DD_ENV="${DDENV:-${RAILS_ENV:-developmestuction}}"
 
 # Set DD_TRACE_DEBUG if requested
 if [ -n "$DEBUG" ]; then

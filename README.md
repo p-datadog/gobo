@@ -53,7 +53,7 @@ Follow the instructions in [Section 1.2.2 `rails server`](https://www.railstutor
 
 ## DD_ENV Configuration
 
-`DD_ENV` is defaulted to `developmestuction` because Dynamic Instrumentation requires an environment to be set. Without it, DI probes will not be delivered to the application. You can override this by passing `-e <env>` to `bin/run` or by setting the `DD_ENV` environment variable directly.
+`DD_ENV` is set from `DDENV`, then `RAILS_ENV`, then falls back to `developmestuction`. Dynamic Instrumentation requires an environment to be set — without it, DI probes will not be delivered to the application. You can override this by passing `-e <env>` to `bin/run` or by setting the `DD_ENV` environment variable directly.
 
 ## DD_TRACER Configuration
 
