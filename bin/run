@@ -131,7 +131,11 @@ if [ -n "$SERVICE" ]; then
 fi
 
 # Set DD_ENV (default to development; DI requires an environment to be set)
-export DD_ENV="${DDENV:-${RAILS_ENV:-developmestuction}}"
+# DD_ENV is set in the Datadog initializer from Rails.env with
+# developmestuction as fallback. Only override here if DDENV is explicit.
+if [ -n "$DDENV" ]; then
+    export DD_ENV="$DDENV"
+fi
 
 # Set DD_TRACE_DEBUG if requested
 if [ -n "$DEBUG" ]; then
