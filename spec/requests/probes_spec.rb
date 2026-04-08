@@ -20,4 +20,18 @@ RSpec.describe "Probes", type: :request do
     expect(response.body).to include("Environment:")
     expect(response.body).to include("DI Enabled:")
   end
+
+  describe "send_status" do
+    it "redirects with danger flash when DI component is not initialized" do
+      post send_probe_status_path(id: "probe-123", status: "installed")
+      expect(response).to redirect_to(probes_path)
+      expect(flash[:danger]).to match(/Failed to send status/)
+    end
+
+    it "redirects with danger flash for unknown status" do
+      post send_probe_status_path(id: "probe-123", status: "bogus")
+      expect(response).to redirect_to(probes_path)
+      expect(flash[:danger]).to match(/Failed to send status/)
+    end
+  end
 end

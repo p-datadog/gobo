@@ -24,4 +24,14 @@ RSpec.describe "StaticPages", type: :request do
     expect(response).to have_http_status(:success)
     expect(response.body).to include("<title>Contact | Ruby Debugger Demo</title>")
   end
+
+  describe "vote" do
+    it "creates a vote and returns OK" do
+      post = microposts(:orange)
+      expect {
+        get "/microposts/#{post.id}/vote/job-42"
+      }.to change(Vote, :count).by(1)
+      expect(response.body).to include("OK #{post.id} job-42")
+    end
+  end
 end
