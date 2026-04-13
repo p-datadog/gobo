@@ -96,3 +96,23 @@ instead of using the same guard pattern.
    just mocks). Include a test context simulating a tracer version where the feature does
    not exist (e.g. stub `respond_to?(:symbol_database)` to return false) to verify
    graceful degradation."
+
+## Initial Recommendations
+
+1. [CLAUDE.md] Add "Tracer Integration" section — verify tracer API paths before calling.
+2. [CLAUDE.md] Add to Test Coverage — test correctness of status values, not just presence.
+3. [CLAUDE.md] Add to Test Coverage — test graceful degradation for missing tracer features.
+
+## Final Recommendations
+
+Identical to initial. User approved all.
+
+## Changes Made
+
+1. Added "Tracer Integration" section to gobo CLAUDE.md: "When writing code that calls
+   dd-trace-rb configuration APIs, read the actual settings file in the tracer to verify
+   the setting path exists. Do not guess API shapes."
+2. Added to Test Coverage: status page tests must verify values are correct, not just
+   present. `expect(json['key']).to eq(expected)` not `expect(json).to include('key')`.
+3. Added to Test Coverage: include a test context simulating a tracer version where the
+   feature does not exist to verify graceful degradation.
