@@ -60,6 +60,10 @@ etc.) must support a JSON response via `respond_to`. This allows querying from t
 (`curl localhost:3000/memory.json | jq .`) without needing a browser. Add a JSON link in
 the HTML view header so the endpoint is discoverable.
 
+## Tracer Integration
+
+When writing code that calls dd-trace-rb configuration APIs, read the actual settings file in the tracer to verify the setting path exists. Do not guess API shapes. The tracer is a local checkout — reading the source is instant.
+
 ## Test Coverage
 
 All code changes must have test coverage. When adding or modifying models, controllers, or lib classes, write or update specs in the corresponding `spec/` file.
@@ -69,6 +73,10 @@ When fixing a bug, the fix must be accompanied by a test that would have caught 
 Run the full test suite before committing. If any tests fail for any reason — including pre-existing failures unrelated to your changes — investigate and fix them. Commit fixes for pre-existing failures as separate commits before committing your own work. Do not dismiss failures as "pre-existing" or "not my problem."
 
 Exception: documentation-only changes (CLAUDE.md, README, comments) that cannot affect test outcomes may be committed without running the full suite.
+
+Tests for diagnostic/status pages must verify that displayed values are correct, not just that they are present. `expect(json).to include('key')` only verifies the key exists. `expect(json['key']).to eq(expected)` verifies the value is truthful. Status pages that display wrong values with confidence are worse than pages that display nothing.
+
+When the controller integrates with dd-trace-rb, include a test context simulating a tracer version where the feature does not exist (e.g. stub `respond_to?(:symbol_database)` to return false) to verify graceful degradation.
 
 The test command is:
 ```
