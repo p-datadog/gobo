@@ -69,7 +69,6 @@ class SymdbController < ApplicationController
     @service = fetch_service
     @env = fetch_env
     @symdb_enabled = symdb_enabled?
-    @upload_enabled = upload_enabled?
     @component_status = fetch_component_status
 
     respond_to do |format|
@@ -104,15 +103,6 @@ class SymdbController < ApplicationController
     false
   end
 
-  def upload_enabled?
-    defined?(Datadog) && Datadog.configuration.respond_to?(:symbol_database) &&
-      Datadog.configuration.symbol_database.respond_to?(:upload) &&
-      Datadog.configuration.symbol_database.upload.enabled
-  rescue => e
-    Rails.logger.error "Error checking symdb upload status: #{e.class}: #{e}"
-    false
-  end
-
   # Check the runtime state of the SymbolDatabase component.
   # The component is created only when all preconditions are met (enabled, MRI 2.6+,
   # remote config available). If it exists and is not shut down, uploads can happen.
@@ -136,7 +126,6 @@ class SymdbController < ApplicationController
       service: @service,
       env: @env,
       symdb_enabled: @symdb_enabled,
-      upload_enabled: @upload_enabled,
       component_status: @component_status,
       sample_files: @sample_classes.map do |group|
         {
