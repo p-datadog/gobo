@@ -1,0 +1,84 @@
+<% provide(:title, 'Symbol Database Demo') %>
+<h1>Symbol Database Demo <small><%= link_to "JSON", symdb_path(format: :json) %></small></h1>
+
+<p class="lead">
+  Sample classes and modules for exercising symbol database extraction and upload.
+  After upload, these should appear in the Datadog UI's symbol database for this service.
+</p>
+
+<div class="panel panel-info">
+  <div class="panel-heading"><h4 class="panel-title">Status</h4></div>
+  <div class="panel-body">
+    <p>
+      <strong>Symbol Database:</strong>
+      <% if @symdb_enabled %>
+        <span class="label label-success">Enabled</span>
+      <% else %>
+        <span class="label label-danger">Disabled</span>
+      <% end %>
+    </p>
+    <p>
+      <strong>Upload:</strong>
+      <% if @upload_enabled %>
+        <span class="label label-success">Enabled</span>
+      <% else %>
+        <span class="label label-danger">Disabled</span>
+      <% end %>
+    </p>
+  </div>
+</div>
+
+<h3>Expected Classes in Symbol Database</h3>
+
+<p>
+  Each file below contains sample classes/modules designed to exercise specific symbol database features.
+  After a successful upload, search for these names in the
+  <a href="https://app.datadoghq.com/debugging" target="_blank">Datadog DI UI</a>
+  autocomplete.
+</p>
+
+<% @sample_classes.each do |group| %>
+  <div class="panel panel-default">
+    <div class="panel-heading">
+      <h4 class="panel-title"><code><%= group[:file] %></code></h4>
+    </div>
+    <table class="table table-striped">
+      <thead>
+        <tr>
+          <th style="width: 15%">Scope</th>
+          <th style="width: 35%">Name</th>
+          <th>What it exercises</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% group[:entries].each do |entry| %>
+          <tr>
+            <td><span class="label label-<%= entry[:type] == :CLASS ? 'primary' : 'info' %>"><%= entry[:type] %></span></td>
+            <td><code><%= entry[:name] %></code></td>
+            <td><%= entry[:description] %></td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+<% end %>
+
+<div class="panel panel-warning">
+  <div class="panel-heading"><h4 class="panel-title">Scope Hierarchy</h4></div>
+  <div class="panel-body">
+    <p>Ruby uploads use <strong>FILE</strong> as the root scope (one per source file), with CLASS and MODULE scopes nested inside:</p>
+    <pre>FILE (/app/app/models/symdb_samples/basic_class.rb)
+  file_hash in language_specifics
+  CLASS (SymdbSamples::BasicClass)
+    STATIC_FIELD: GREETING, @@instance_count
+    METHOD: greet, describe, ...
+      ARG symbols for each parameter</pre>
+    <p>
+      Namespace modules are created by FQN splitting. For example, <code>SymdbSamples::Namespaces::Outer::Inner</code> produces:
+    </p>
+    <pre>FILE (namespaces.rb)
+  MODULE (SymdbSamples::Namespaces::Outer)
+    CLASS (SymdbSamples::Namespaces::Outer::Inner)
+      METHOD scopes...</pre>
+  </div>
+</div>
