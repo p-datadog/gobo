@@ -66,8 +66,11 @@ class SymdbController < ApplicationController
 
   def index
     @sample_classes = SAMPLE_CLASSES
+    @service = fetch_service
+    @env = fetch_env
     @symdb_enabled = symdb_enabled?
     @upload_enabled = upload_enabled?
+    @component_status = fetch_component_status
 
     respond_to do |format|
       format.html
@@ -76,6 +79,22 @@ class SymdbController < ApplicationController
   end
 
   private
+
+  def fetch_service
+    return nil unless defined?(Datadog)
+    Datadog.configuration.service
+  rescue => e
+    Rails.logger.error "Error fetching DD_SERVICE: #{e.class}: #{e}"
+    nil
+  end
+
+  def fetch_env
+    return nil unless defined?(Datadog)
+    Datadog.configuration.env
+  rescue => e
+    Rails.logger.error "Error fetching DD_ENV: #{e.class}: #{e}"
+    nil
+  end
 
   def symdb_enabled?
     defined?(Datadog) && Datadog.configuration.respond_to?(:symbol_database) &&
@@ -94,10 +113,31 @@ class SymdbController < ApplicationController
     false
   end
 
+  # Check the runtime state of the SymbolDatabase component.
+  # The component is created only when all preconditions are met (enabled, MRI 2.6+,
+  # remote config available). If it exists and is not shut down, uploads can happen.
+  # There is no public API to check whether an upload succeeded — that information
+  # is only available in debug logs (DD_TRACE_DEBUG=1).
+  def fetch_component_status
+    return :no_datadog unless defined?(Datadog::SymbolDatabase)
+
+    component = Datadog.send(:components).symbol_database
+    return :not_created if component.nil?
+    return :shutdown if component.shutdown?
+
+    :active
+  rescue => e
+    Rails.logger.error "Error fetching symdb component status: #{e.class}: #{e}"
+    :error
+  end
+
   def symdb_json
     {
+      service: @service,
+      env: @env,
       symdb_enabled: @symdb_enabled,
       upload_enabled: @upload_enabled,
+      component_status: @component_status,
       sample_files: @sample_classes.map do |group|
         {
           file: group[:file],

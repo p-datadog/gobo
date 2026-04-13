@@ -28,11 +28,22 @@ RSpec.describe SymdbController, type: :controller do
       )
     end
 
+    it 'assigns service and env' do
+      get :index
+      expect(assigns(:service)).to be_a(String).or be_nil
+      expect(assigns(:env)).to be_a(String).or be_nil
+    end
+
+    it 'assigns component_status' do
+      get :index
+      expect(assigns(:component_status)).to be_a(Symbol)
+    end
+
     it 'returns JSON when requested' do
       get :index, format: :json
       expect(response).to have_http_status(:success)
       json = JSON.parse(response.body)
-      expect(json).to include('sample_files')
+      expect(json).to include('sample_files', 'service', 'env', 'component_status')
       expect(json['sample_files'].size).to eq(7)
     end
 

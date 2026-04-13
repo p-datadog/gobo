@@ -9,22 +9,71 @@
 <div class="panel panel-info">
   <div class="panel-heading"><h4 class="panel-title">Status</h4></div>
   <div class="panel-body">
-    <p>
-      <strong>Symbol Database:</strong>
-      <% if @symdb_enabled %>
-        <span class="label label-success">Enabled</span>
-      <% else %>
-        <span class="label label-danger">Disabled</span>
-      <% end %>
-    </p>
-    <p>
-      <strong>Upload:</strong>
-      <% if @upload_enabled %>
-        <span class="label label-success">Enabled</span>
-      <% else %>
-        <span class="label label-danger">Disabled</span>
-      <% end %>
-    </p>
+    <div class="row">
+      <div class="col-md-3">
+        <strong>DD_SERVICE:</strong>
+        <% if @service %>
+          <code><%= @service %></code>
+        <% else %>
+          <span class="text-muted">Not configured</span>
+        <% end %>
+      </div>
+      <div class="col-md-3">
+        <strong>DD_ENV:</strong>
+        <% if @env %>
+          <code><%= @env %></code>
+        <% else %>
+          <span class="text-muted">Not configured</span>
+        <% end %>
+      </div>
+      <div class="col-md-3">
+        <strong>Symbol Database:</strong>
+        <% if @symdb_enabled %>
+          <span class="label label-success">Enabled</span>
+        <% else %>
+          <span class="label label-danger">Disabled</span>
+        <% end %>
+      </div>
+      <div class="col-md-3">
+        <strong>Upload:</strong>
+        <% if @upload_enabled %>
+          <span class="label label-success">Enabled</span>
+        <% else %>
+          <span class="label label-danger">Disabled</span>
+        <% end %>
+      </div>
+    </div>
+    <div class="row" style="margin-top: 10px;">
+      <div class="col-md-12">
+        <strong>Component:</strong>
+        <% case @component_status %>
+        <% when :active %>
+          <span class="label label-success">Active</span>
+          <span class="text-muted">&mdash; component created, upload can be triggered via remote config</span>
+        <% when :not_created %>
+          <span class="label label-warning">Not created</span>
+          <span class="text-muted">&mdash; preconditions not met (check enabled, Ruby version, remote config)</span>
+        <% when :shutdown %>
+          <span class="label label-danger">Shutdown</span>
+        <% when :no_datadog %>
+          <span class="label label-default">N/A</span>
+          <span class="text-muted">&mdash; Datadog::SymbolDatabase not loaded</span>
+        <% when :error %>
+          <span class="label label-danger">Error</span>
+          <span class="text-muted">&mdash; could not read component status (check logs)</span>
+        <% end %>
+      </div>
+    </div>
+    <% if @component_status != :active %>
+      <div class="row" style="margin-top: 10px;">
+        <div class="col-md-12">
+          <p class="text-muted" style="margin-bottom: 0;">
+            To verify upload is working, run with <code>DD_TRACE_DEBUG=1</code> and look for
+            <code>symdb: uploaded N scopes successfully</code> in the logs.
+          </p>
+        </div>
+      </div>
+    <% end %>
   </div>
 </div>
 
