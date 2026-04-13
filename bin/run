@@ -6,7 +6,7 @@ set -eu
 script_dir="$(cd "$(dirname "$0")" && pwd)"
 
 usage() {
-    echo "Usage: $0 [-r | -u] [-p PORT] [-w WORKERS] [-s SERVICE] [-e ENV] [-d] [-D]"
+    echo "Usage: $0 [-r | -u] [-p PORT] [-w WORKERS] [-s SERVICE] [-e ENV] [-d] [-D] [-S]"
     echo "  -r            Run Rails server in production mode"
     echo "  -u            Run Puma server in production mode"
     echo "  -p PORT       Override port number (default: 3000)"
@@ -15,6 +15,7 @@ usage() {
     echo "  -e ENV        Set DD_ENV environment"
     echo "  -d            Enable DD_TRACE_DEBUG"
     echo "  -D            Use development environment (default: production)"
+    echo "  -S            Use staging agent (port 28126; default: dogfood on 18126)"
     exit 1
 }
 
@@ -24,10 +25,11 @@ service=""
 env_flag=""
 debug=""
 dev_mode=""
+agent_port=""
 mode="rails"
 
 # Parse options
-while getopts "rup:w:s:e:dD" opt; do
+while getopts "rup:w:s:e:dDS" opt; do
     case $opt in
         r)
             mode="rails"
@@ -52,6 +54,9 @@ while getopts "rup:w:s:e:dD" opt; do
             ;;
         D)
             dev_mode="1"
+            ;;
+        S)
+            agent_port="28126"
             ;;
         *)
             usage
@@ -135,6 +140,11 @@ fi
 # developmestuction as fallback. Only override here if -e was given.
 if [ -n "$env_flag" ]; then
     export DD_ENV="$env_flag"
+fi
+
+# Set DD_TRACE_AGENT_PORT if dogfood or staging agent was selected
+if [ -n "$agent_port" ]; then
+    export DD_TRACE_AGENT_PORT="$agent_port"
 fi
 
 # Set DD_TRACE_DEBUG if requested
