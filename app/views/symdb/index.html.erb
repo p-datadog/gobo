@@ -41,7 +41,20 @@
         <% case @component_status %>
         <% when :active %>
           <span class="label label-success">Active</span>
-          <span class="text-muted">&mdash; component created, upload can be triggered via remote config</span>
+          <% if @upload_info %>
+            <% if @upload_info[:upload_in_progress] %>
+              <span class="text-muted">&mdash; upload in progress</span>
+            <% elsif @upload_info[:last_upload_time] %>
+              <% ago = Time.now - @upload_info[:last_upload_time] %>
+              <span class="text-muted">&mdash; uploaded <%= distance_of_time_in_words(ago) %> ago</span>
+            <% elsif @upload_info[:enabled] %>
+              <span class="text-muted">&mdash; enabled, no upload yet</span>
+            <% else %>
+              <span class="text-muted">&mdash; waiting for remote config trigger</span>
+            <% end %>
+          <% else %>
+            <span class="text-muted">&mdash; component created (upgrade tracer for upload details)</span>
+          <% end %>
         <% when :not_created %>
           <span class="label label-warning">Not created</span>
           <span class="text-muted">&mdash; preconditions not met (check enabled, Ruby version, remote config)</span>
@@ -56,16 +69,6 @@
         <% end %>
       </div>
     </div>
-    <% if @component_status != :active %>
-      <div class="row" style="margin-top: 10px;">
-        <div class="col-md-12">
-          <p class="text-muted" style="margin-bottom: 0;">
-            To verify upload is working, run with <code>DD_TRACE_DEBUG=1</code> and look for
-            <code>symdb: uploaded N scopes successfully</code> in the logs.
-          </p>
-        </div>
-      </div>
-    <% end %>
   </div>
 </div>
 

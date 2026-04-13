@@ -70,6 +70,7 @@ class SymdbController < ApplicationController
     @env = fetch_env
     @symdb_enabled = symdb_enabled?
     @component_status = fetch_component_status
+    @upload_info = fetch_upload_info
 
     respond_to do |format|
       format.html
@@ -103,11 +104,6 @@ class SymdbController < ApplicationController
     false
   end
 
-  # Check the runtime state of the SymbolDatabase component.
-  # The component is created only when all preconditions are met (enabled, MRI 2.6+,
-  # remote config available). If it exists and is not shut down, uploads can happen.
-  # There is no public API to check whether an upload succeeded — that information
-  # is only available in debug logs (DD_TRACE_DEBUG=1).
   def fetch_component_status
     return :no_datadog unless defined?(Datadog::SymbolDatabase)
 
@@ -121,12 +117,33 @@ class SymdbController < ApplicationController
     :error
   end
 
+  # Read upload status from the component's diagnostic accessors.
+  # Returns nil if the component doesn't exist or the accessors aren't available
+  # (older tracer without the attr_readers).
+  def fetch_upload_info
+    return nil unless defined?(Datadog::SymbolDatabase)
+
+    component = Datadog.send(:components).symbol_database
+    return nil if component.nil?
+    return nil unless component.respond_to?(:last_upload_time)
+
+    {
+      enabled: component.enabled,
+      last_upload_time: component.last_upload_time,
+      upload_in_progress: component.upload_in_progress,
+    }
+  rescue => e
+    Rails.logger.error "Error fetching symdb upload info: #{e.class}: #{e}"
+    nil
+  end
+
   def symdb_json
     {
       service: @service,
       env: @env,
       symdb_enabled: @symdb_enabled,
       component_status: @component_status,
+      upload_info: @upload_info,
       sample_files: @sample_classes.map do |group|
         {
           file: group[:file],

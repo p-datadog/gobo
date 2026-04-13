@@ -92,5 +92,42 @@ RSpec.describe SymdbController, type: :controller do
         expect(json).not_to have_key('upload_enabled')
       end
     end
+
+    context 'upload_info' do
+      it 'assigns upload_info as a Hash or nil' do
+        get :index
+        info = assigns(:upload_info)
+        expect(info).to be_a(Hash).or be_nil
+      end
+
+      it 'includes upload_info in JSON' do
+        get :index, format: :json
+        json = JSON.parse(response.body)
+        expect(json).to have_key('upload_info')
+      end
+
+      it 'reports correct upload_info values when accessors exist' do
+        get :index, format: :json
+        json = JSON.parse(response.body)
+        info = json['upload_info']
+        next if info.nil? # tracer without accessors
+
+        expect(info).to have_key('enabled')
+        expect(info).to have_key('last_upload_time')
+        expect(info).to have_key('upload_in_progress')
+        expect(info['upload_in_progress']).to eq(false)
+      end
+
+      context 'when tracer lacks diagnostic accessors (older tracer)' do
+        before do
+          allow_any_instance_of(SymdbController).to receive(:fetch_upload_info).and_return(nil)
+        end
+
+        it 'returns nil upload_info gracefully' do
+          get :index
+          expect(assigns(:upload_info)).to be_nil
+        end
+      end
+    end
   end
 end
