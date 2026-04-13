@@ -2,7 +2,7 @@
 
 ## Commit Every Change
 
-Commit after every logical change — don't accumulate uncommitted work. If specs pass, commit. Do not wait for the user to ask.
+Commit after every logical change in the same response that makes the change — don't accumulate uncommitted work. If specs pass, commit. Do not wait for the user to ask. A change without a commit in the same response is a violation of this rule.
 
 ## Running Commands
 
@@ -67,6 +67,8 @@ All code changes must have test coverage. When adding or modifying models, contr
 When fixing a bug, the fix must be accompanied by a test that would have caught the bug. The test should describe the specific scenario that triggered it (e.g. "does not raise when targets is a base64-encoded string").
 
 Run the full test suite before committing. If any tests fail for any reason — including pre-existing failures unrelated to your changes — investigate and fix them. Commit fixes for pre-existing failures as separate commits before committing your own work. Do not dismiss failures as "pre-existing" or "not my problem."
+
+Exception: documentation-only changes (CLAUDE.md, README, comments) that cannot affect test outcomes may be committed without running the full suite.
 
 The test command is:
 ```
