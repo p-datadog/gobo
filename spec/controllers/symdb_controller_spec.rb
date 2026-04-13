@@ -55,5 +55,42 @@ RSpec.describe SymdbController, type: :controller do
       first_entry = first_file['entries'].first
       expect(first_entry).to include('name', 'type', 'description')
     end
+
+    context 'symdb_enabled reflects actual tracer setting' do
+      it 'returns true when symbol_database setting exists and is enabled' do
+        get :index
+        # The tracer we test with has symbol_database — it should be enabled
+        # (default is true per DD_SYMBOL_DATABASE_UPLOAD_ENABLED)
+        if defined?(Datadog::SymbolDatabase)
+          expect(assigns(:symdb_enabled)).to eq(true)
+        end
+      end
+    end
+
+    context 'when tracer lacks symbol_database (older tracer)' do
+      before do
+        # Simulate a tracer version without SymbolDatabase
+        allow(Datadog.configuration).to receive(:respond_to?).and_call_original
+        allow(Datadog.configuration).to receive(:respond_to?).with(:symbol_database).and_return(false)
+      end
+
+      it 'returns success without errors' do
+        get :index
+        expect(response).to have_http_status(:success)
+      end
+
+      it 'shows symdb as disabled' do
+        get :index
+        expect(assigns(:symdb_enabled)).to eq(false)
+      end
+    end
+
+    context 'JSON does not include upload_enabled (nonexistent setting)' do
+      it 'does not include upload_enabled key' do
+        get :index, format: :json
+        json = JSON.parse(response.body)
+        expect(json).not_to have_key('upload_enabled')
+      end
+    end
   end
 end
