@@ -5,14 +5,18 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 GOBO_DIR="$(dirname "$SCRIPT_DIR")"
 HOST="${1:-http://host.docker.internal:3000}"
 IMAGE="gobo-locust"
-REPO="https://github.com/p-datadog/locust.git"
+REPO_HTTPS="https://github.com/p-datadog/locust.git"
+REPO_SSH="git@github.com:p-datadog/locust.git"
 
 if ! docker image inspect "$IMAGE" >/dev/null 2>&1; then
   echo "Building $IMAGE..."
   BUILD_DIR=$(mktemp -d /tmp/gobo-locust-build.XXXXXX)
   chmod 700 "$BUILD_DIR"
   trap "rm -rf $BUILD_DIR" EXIT
-  git clone --depth 1 "$REPO" "$BUILD_DIR/locust"
+  if ! git clone --depth 1 "$REPO_HTTPS" "$BUILD_DIR/locust" 2>/dev/null; then
+    echo "HTTPS clone failed, trying SSH..."
+    git clone --depth 1 "$REPO_SSH" "$BUILD_DIR/locust"
+  fi
   docker build -t "$IMAGE" "$BUILD_DIR/locust"
 fi
 
