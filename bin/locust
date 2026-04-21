@@ -20,9 +20,13 @@ if ! docker image inspect "$IMAGE" >/dev/null 2>&1; then
   docker build -t "$IMAGE" "$BUILD_DIR/locust"
 fi
 
+TMPFILE=$(mktemp /tmp/locustfile.XXXXXX.py)
+cp "$GOBO_DIR/locustfile.py" "$TMPFILE"
+chmod 644 "$TMPFILE"
+
 exec docker run --rm -it \
   --add-host=host.docker.internal:host-gateway \
-  -v "$GOBO_DIR/locustfile.py:/home/locust/locustfile.py:ro" \
+  -v "$TMPFILE:/home/locust/locustfile.py:ro" \
   -p 8089:8089 \
   "$IMAGE" \
   -f /home/locust/locustfile.py --host="$HOST"
