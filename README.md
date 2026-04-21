@@ -101,6 +101,31 @@ Supported languages: `java`, `python`, `ruby`, `dotnet`, `go`, `node`, `php`
 Optional flags: `--no-telemetry`, `--no-rc`, `--no-traces`, `--agent-port PORT`,
 `--dogfood-agent` (port 18126), `--git-repo URL`, `--runtime-id ID`
 
+## Load Testing
+
+`bin/locust` runs [Locust](https://locust.io/) load tests against gobo via Docker, using
+a patched fork ([p-datadog/locust](https://github.com/p-datadog/locust)) with UI fixes.
+On first run it clones the fork and builds the Docker image automatically; subsequent runs
+reuse the cached image.
+
+```bash
+bin/locust                              # Hit localhost:3000 (default)
+bin/locust http://other-host:3000       # Hit a different host
+```
+
+The Locust web UI is at **http://localhost:8089** — set the number of users and spawn rate
+there to start the test.
+
+Endpoints hit (weight):
+- `/` (3) — homepage
+- `/debugger_test/stdlib_probe` (3) — exercises DI stdlib probe code
+- `/help` (1)
+- `/about` (1)
+
+Wait time between requests is 10–50ms per user, so even a small user count generates
+significant throughput. Useful for verifying that DI probes don't degrade performance
+under load.
+
 ## License
 
 This project is available under the MIT License. See [LICENSE.md](LICENSE.md) for details.
