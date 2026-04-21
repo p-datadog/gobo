@@ -17,7 +17,7 @@ while getopts "r" opt; do
 done
 shift $((OPTIND - 1))
 
-HOST="${1:-http://host.docker.internal:3000}"
+HOST="${1:-http://localhost:3000}"
 
 if [ -n "$REBUILD" ]; then
   docker rmi "$IMAGE" 2>/dev/null || true
@@ -39,9 +39,10 @@ TMPFILE=$(mktemp /tmp/locustfile.XXXXXX.py)
 cp "$GOBO_DIR/locustfile.py" "$TMPFILE"
 chmod 644 "$TMPFILE"
 
+# --network=host shares the host network stack so localhost:3000 reaches gobo
+# directly. Bridge networking requires firewall rules for container-to-host traffic.
 exec docker run --rm -it \
-  --add-host=host.docker.internal:host-gateway \
+  --network=host \
   -v "$TMPFILE:/home/locust/locustfile.py:ro" \
-  -p 8089:8089 \
   "$IMAGE" \
   -f /home/locust/locustfile.py --host="$HOST"
