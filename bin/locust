@@ -3,10 +3,25 @@ set -eu
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 GOBO_DIR="$(dirname "$SCRIPT_DIR")"
-HOST="${1:-http://host.docker.internal:3000}"
 IMAGE="gobo-locust"
 REPO_HTTPS="https://github.com/p-datadog/locust.git"
 REPO_SSH="git@github.com:p-datadog/locust.git"
+REBUILD=""
+HOST=""
+
+while getopts "r" opt; do
+  case $opt in
+    r) REBUILD=1 ;;
+    *) echo "Usage: $0 [-r] [host]"; exit 1 ;;
+  esac
+done
+shift $((OPTIND - 1))
+
+HOST="${1:-http://host.docker.internal:3000}"
+
+if [ -n "$REBUILD" ]; then
+  docker rmi "$IMAGE" 2>/dev/null || true
+fi
 
 if ! docker image inspect "$IMAGE" >/dev/null 2>&1; then
   echo "Building $IMAGE..."
