@@ -113,6 +113,10 @@ bin/locust                              # Hit localhost:3000 (default)
 bin/locust http://other-host:3000       # Hit a different host
 ```
 
+The Docker container reaches gobo on the host via `--add-host=host.docker.internal:host-gateway`,
+which maps `host.docker.internal` to the host's IP inside the container. The default target
+`http://host.docker.internal:3000` uses this to connect to gobo running on the host.
+
 The Locust web UI is at **http://localhost:8089** — set the number of users and spawn rate
 there to start the test.
 
