@@ -12,6 +12,8 @@ Always prefix Ruby/Rails commands with `bundle exec`. Never run `ruby`, `rails`,
 
 All script logic must live in files under `lib/` so it can be unit tested. `bin/` scripts are thin wrappers that parse CLI options and call into `lib/`. Add specs in `spec/lib/` for all lib code.
 
+Shell scripts must be POSIX-compatible (`#!/bin/sh`). No bashisms — no `[[ ]]`, no `local` in non-function context, no `set -o pipefail`, no arrays, no `$()` process substitution where backticks differ, no `source` (use `.`). Use `shellcheck -s sh` to verify.
+
 ## Exception Reporting
 
 When logging exceptions, always use the pattern `#{e.class}: #{e}` to include both the exception class and message.
