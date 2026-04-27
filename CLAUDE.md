@@ -34,6 +34,7 @@ end
 
 ## UI Usability
 
+- Links must be rendered as links (`<a>` tags), not buttons. Use `link_to`, not `button_to` or `btn` classes, for navigation.
 - Links must wrap the full visible element (the entire path, the entire label), not a small annotation like `[src]` next to it.
 - Never use `display: none` on content the user will need. Show a default state instead (e.g. "Click to trigger" instead of hiding).
 - AJAX error responses must always be shown to the user, never swallowed.
