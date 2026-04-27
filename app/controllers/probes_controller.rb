@@ -9,6 +9,7 @@ class ProbesController < ApplicationController
     @service_name = fetch_datadog_service
     @environment = fetch_datadog_env
     @di_enabled = fetch_di_enabled_status
+    @agent_address = fetch_agent_address
 
     respond_to do |format|
       format.html
@@ -91,6 +92,15 @@ class ProbesController < ApplicationController
   def probe_manager_failed_probes(probe_manager)
     store = probe_store(probe_manager)
     store.respond_to?(:failed_probes) ? store.failed_probes : {}
+  end
+
+  def fetch_agent_address
+    return nil unless defined?(Datadog)
+
+    settings = Datadog.configuration
+    "#{settings.agent.host}:#{settings.agent.port}"
+  rescue => e
+    "error: #{e.message}"
   end
 
   def fetch_datadog_service

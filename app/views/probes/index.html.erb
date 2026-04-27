@@ -9,7 +9,7 @@
 
 <div class="well well-sm">
   <div class="row">
-    <div class="col-md-4">
+    <div class="col-md-3">
       <strong>Service:</strong>
       <% if @service_name %>
         <code><%= @service_name %></code>
@@ -17,7 +17,7 @@
         <span class="text-muted">Not configured</span>
       <% end %>
     </div>
-    <div class="col-md-4">
+    <div class="col-md-3">
       <strong>Environment:</strong>
       <% if @environment %>
         <code><%= @environment %></code>
@@ -25,12 +25,20 @@
         <span class="text-muted">Not configured</span>
       <% end %>
     </div>
-    <div class="col-md-4">
+    <div class="col-md-3">
       <strong>DI Enabled:</strong>
       <% if @di_enabled %>
         <span class="text-success"><strong>✓ Yes</strong></span>
       <% else %>
         <span class="text-danger"><strong>✗ No</strong></span>
+      <% end %>
+    </div>
+    <div class="col-md-3">
+      <strong>Agent:</strong>
+      <% if @agent_address %>
+        <code><%= @agent_address %></code>
+      <% else %>
+        <span class="text-muted">Unknown</span>
       <% end %>
     </div>
   </div>
