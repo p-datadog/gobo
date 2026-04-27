@@ -1,5 +1,5 @@
 <% provide(:title, 'DI Code Tracker') %>
-<h1>DI Code Tracker Registry</h1>
+<h1>DI Code Tracker Registry <small><%= link_to "JSON", code_tracker_path(format: :json) %></small></h1>
 
 <p class="lead">
   Files known to DI's CodeTracker. Line probes can only target files in this registry.

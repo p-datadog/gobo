@@ -1,5 +1,5 @@
 <% provide(:title, 'Code Tracker - Full List') %>
-<h1>Code Tracker — Full List (<%= @entries.size %> files)</h1>
+<h1>Code Tracker — Full List (<%= @entries.size %> files) <small><%= link_to "JSON", code_tracker_full_path(format: :json) %></small></h1>
 
 <p><%= link_to "← Back to summary", code_tracker_path %></p>
 

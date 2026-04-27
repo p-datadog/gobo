@@ -5,10 +5,20 @@ class CodeTrackerController < ApplicationController
     # Show app + stdlib entries only, including partially covered stdlib
     @entries = @all_entries.select { |e| e[:category] == :app || e[:category] == :stdlib }
     @entries.sort_by! { |e| [e[:coverage].to_s, e[:path]] }
+
+    respond_to do |format|
+      format.html
+      format.json { render json: {entries: @entries, counts: @counts, audit: @audit} }
+    end
   end
 
   def full
     @entries = @all_entries.sort_by { |e| [e[:category].to_s, e[:coverage].to_s, e[:path]] }
+
+    respond_to do |format|
+      format.html
+      format.json { render json: {entries: @entries, counts: @counts, audit: @audit} }
+    end
   end
 
   private
