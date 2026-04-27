@@ -6,6 +6,14 @@
   After upload, these should appear in the Datadog UI's symbol database for this service.
 </p>
 
+<% if @service %>
+  <p>
+    <%= link_to "View uploaded symbols in staging API",
+      "https://dd.datad0g.com/api/unstable/symdb-api/scopes/search?service=#{ERB::Util.url_encode(@service)}&allow_partial=true",
+      target: "_blank" %>
+  </p>
+<% end %>
+
 <div class="panel panel-info">
   <div class="panel-heading"><h4 class="panel-title">Status</h4></div>
   <div class="panel-body">

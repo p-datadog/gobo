@@ -93,6 +93,22 @@ RSpec.describe SymdbController, type: :controller do
       end
     end
 
+    context 'staging API link' do
+      render_views
+
+      it 'renders staging API link when service is configured' do
+        allow_any_instance_of(SymdbController).to receive(:fetch_service).and_return('gobo')
+        get :index
+        expect(response.body).to include('https://dd.datad0g.com/api/unstable/symdb-api/scopes/search?service=gobo')
+      end
+
+      it 'does not render staging API link when service is nil' do
+        allow_any_instance_of(SymdbController).to receive(:fetch_service).and_return(nil)
+        get :index
+        expect(response.body).not_to include('symdb-api/scopes/search')
+      end
+    end
+
     context 'upload_info' do
       it 'assigns upload_info as a Hash or nil' do
         get :index
