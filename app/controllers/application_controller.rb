@@ -6,6 +6,15 @@ class ApplicationController < ActionController::Base
 
   private
 
+    def fetch_agent_address
+      return nil unless defined?(Datadog)
+
+      settings = Datadog.configuration
+      "#{settings.agent.host}:#{settings.agent.port}"
+    rescue => e
+      "error: #{e.message}"
+    end
+
     # Confirms a logged-in user.
     def logged_in_user
       unless logged_in?

@@ -81,15 +81,6 @@ class SymdbController < ApplicationController
 
   private
 
-  def fetch_agent_address
-    return nil unless defined?(Datadog)
-
-    settings = Datadog.configuration
-    "#{settings.agent.host}:#{settings.agent.port}"
-  rescue => e
-    "error: #{e.message}"
-  end
-
   def fetch_service
     return nil unless defined?(Datadog)
     Datadog.configuration.service

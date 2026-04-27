@@ -94,15 +94,6 @@ class ProbesController < ApplicationController
     store.respond_to?(:failed_probes) ? store.failed_probes : {}
   end
 
-  def fetch_agent_address
-    return nil unless defined?(Datadog)
-
-    settings = Datadog.configuration
-    "#{settings.agent.host}:#{settings.agent.port}"
-  rescue => e
-    "error: #{e.message}"
-  end
-
   def fetch_datadog_service
     return nil unless defined?(Datadog)
 
