@@ -34,7 +34,15 @@
           <span class="text-muted">Not configured</span>
         <% end %>
       </div>
-      <div class="col-md-6">
+      <div class="col-md-3">
+        <strong>Agent:</strong>
+        <% if @agent_address %>
+          <code><%= @agent_address %></code>
+        <% else %>
+          <span class="text-muted">Unknown</span>
+        <% end %>
+      </div>
+      <div class="col-md-3">
         <strong>Symbol Database:</strong>
         <% if @symdb_enabled %>
           <span class="label label-success">Enabled</span>

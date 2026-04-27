@@ -69,6 +69,7 @@ class SymdbController < ApplicationController
     @service = fetch_service
     @env = fetch_env
     @symdb_enabled = symdb_enabled?
+    @agent_address = fetch_agent_address
     @component_status = fetch_component_status
     @upload_info = fetch_upload_info
 
@@ -79,6 +80,15 @@ class SymdbController < ApplicationController
   end
 
   private
+
+  def fetch_agent_address
+    return nil unless defined?(Datadog)
+
+    settings = Datadog.configuration
+    "#{settings.agent.host}:#{settings.agent.port}"
+  rescue => e
+    "error: #{e.message}"
+  end
 
   def fetch_service
     return nil unless defined?(Datadog)
