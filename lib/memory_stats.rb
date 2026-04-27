@@ -52,12 +52,16 @@ module MemoryStats
     sizes = Hash.new(0)
     total_memsize = 0
     ObjectSpace.each_object do |obj|
-      klass = begin; obj.class; rescue NoMethodError; nil; end
-      next unless klass
-      sz = ObjectSpace.memsize_of(obj)
-      counts[klass] += 1
-      sizes[klass] += sz
-      total_memsize += sz
+      begin
+        klass = obj.class
+        next unless klass
+        sz = ObjectSpace.memsize_of(obj)
+        counts[klass] += 1
+        sizes[klass] += sz
+        total_memsize += sz
+      rescue NoMethodError, TypeError
+        next
+      end
     end
     {
       total_memsize: total_memsize,
