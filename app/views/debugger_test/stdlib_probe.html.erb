@@ -53,10 +53,9 @@
 
 <div class="well">
   <h4>Run the Demo</h4>
-  <% btn_styles = %w[btn-success btn-info btn-warning btn-primary btn-danger] %>
   <% @probe_targets.each_with_index do |target, i| %>
     <a href="/debugger_test/stdlib_probe_run?kind=<%= target[:kind] %>"
-       class="btn <%= btn_styles[i % btn_styles.size] %> di-demo-btn"
+       class="di-demo-btn"
        <%= 'style="margin-left: 10px;"'.html_safe if i > 0 %>>
       <strong><%= target[:label] %></strong><br>
       <small><%= target[:description] %></small>
