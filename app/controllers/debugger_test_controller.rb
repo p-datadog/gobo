@@ -17,6 +17,8 @@ class DebuggerTestController < ApplicationController
     # Build response string separately to avoid static analysis false positives
     response_text = "fibonacci(#{fibonacci_n}) = #{result}. Execution time: #{(execution_time * 1000).round(2)}ms"
     render plain: response_text
+  rescue => e
+    render plain: "#{e.class}: #{e.message}"
   end
 
   def circuit_breaker
@@ -35,6 +37,8 @@ class DebuggerTestController < ApplicationController
     # Build response string separately to avoid static analysis false positives
     response_text = "ExpensiveModel processed with n=#{fibonacci_n}. Execution time: #{(execution_time * 1000).round(2)}ms"
     render plain: response_text
+  rescue => e
+    render plain: "#{e.class}: #{e.message}"
   end
 
   def exception_message
@@ -177,5 +181,7 @@ class DebuggerTestController < ApplicationController
       "BinaryDataModel processed normally. Execution time: #{(execution_time * 1000).round(2)}ms"
     end
     render plain: response_text
+  rescue => e
+    render plain: "#{e.class}: #{e.message}"
   end
 end
