@@ -92,7 +92,7 @@ class SymdbCaptureServer
 
     lines.join
   rescue Zlib::GzipFile::Error => e
-    "=== Upload ##{n} -- Could not decompress symbols: #{e} ===\n"
+    "=== Upload ##{n} -- Could not decompress symbols: #{e.class}: #{e} ===\n"
   end
 end
 

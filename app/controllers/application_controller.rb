@@ -12,7 +12,7 @@ class ApplicationController < ActionController::Base
       settings = Datadog.configuration
       "#{settings.agent.host}:#{settings.agent.port}"
     rescue => e
-      "error: #{e.message}"
+      "error: #{e.class}: #{e}"
     end
 
     # Confirms a logged-in user.
