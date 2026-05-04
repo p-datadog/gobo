@@ -50,6 +50,11 @@ symdb = components.symbol_database
 if symdb
   puts "Triggering symbol extraction..."
   symdb.start_upload
+  # start_upload now schedules a debounced extraction; wait until it runs.
+  if symdb.respond_to?(:wait_for_idle)
+    finished = symdb.wait_for_idle(timeout: 30)
+    puts "WARNING: extraction did not complete within 30s" unless finished
+  end
 else
   puts "WARNING: symbol_database component is nil -- check DD_SYMBOL_DATABASE_* env vars"
 end
