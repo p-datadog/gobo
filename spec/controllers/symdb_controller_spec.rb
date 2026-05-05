@@ -34,6 +34,18 @@ RSpec.describe SymdbController, type: :controller do
       expect(assigns(:env)).to be_a(String).or be_nil
     end
 
+    it 'assigns version and agent_address' do
+      get :index
+      expect(assigns(:version)).to be_a(String).or be_nil
+      expect(assigns(:agent_address)).to be_a(String).or be_nil
+    end
+
+    it 'includes version and agent_address in JSON' do
+      get :index, format: :json
+      json = JSON.parse(response.body)
+      expect(json).to include('version', 'agent_address')
+    end
+
     it 'assigns component_status' do
       get :index
       expect(assigns(:component_status)).to be_a(Symbol)

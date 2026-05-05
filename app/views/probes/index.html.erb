@@ -7,40 +7,21 @@
   </a>
 </p>
 
-<div class="well well-sm">
-  <div class="row">
-    <div class="col-md-3">
-      <strong>Service:</strong>
-      <% if @service_name %>
-        <code><%= @service_name %></code>
-      <% else %>
-        <span class="text-muted">Not configured</span>
-      <% end %>
-    </div>
-    <div class="col-md-3">
-      <strong>Environment:</strong>
-      <% if @environment %>
-        <code><%= @environment %></code>
-      <% else %>
-        <span class="text-muted">Not configured</span>
-      <% end %>
-    </div>
-    <div class="col-md-3">
-      <strong>DI Enabled:</strong>
-      <% if @di_enabled %>
-        <span class="text-success"><strong>✓ Yes</strong></span>
-      <% else %>
-        <span class="text-danger"><strong>✗ No</strong></span>
-      <% end %>
-    </div>
-    <div class="col-md-3">
-      <strong>Agent:</strong>
-      <% if @agent_address %>
-        <code><%= @agent_address %></code>
-      <% else %>
-        <span class="text-muted">Unknown</span>
-      <% end %>
-    </div>
+<%= render 'shared/datadog_status',
+      service: @service,
+      env: @env,
+      version: @version,
+      agent_address: @agent_address %>
+
+<div class="panel panel-info">
+  <div class="panel-heading"><h4 class="panel-title">Dynamic Instrumentation</h4></div>
+  <div class="panel-body">
+    <strong>DI Enabled:</strong>
+    <% if @di_enabled %>
+      <span class="text-success"><strong>✓ Yes</strong></span>
+    <% else %>
+      <span class="text-danger"><strong>✗ No</strong></span>
+    <% end %>
   </div>
 </div>
 

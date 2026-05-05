@@ -6,8 +6,9 @@ class ProbesController < ApplicationController
     @disabled_probes = all_probes.reject { |id, probe| probe.enabled? }
     @pending_probes = fetch_pending_probes
     @failed_probes = fetch_failed_probes
-    @service_name = fetch_datadog_service
-    @environment = fetch_datadog_env
+    @service = fetch_service
+    @env = fetch_env
+    @version = fetch_version
     @di_enabled = fetch_di_enabled_status
     @agent_address = fetch_agent_address
 
@@ -94,24 +95,6 @@ class ProbesController < ApplicationController
     store.respond_to?(:failed_probes) ? store.failed_probes : {}
   end
 
-  def fetch_datadog_service
-    return nil unless defined?(Datadog)
-
-    Datadog.configuration.service
-  rescue => e
-    Rails.logger.error "Error fetching Datadog service: #{e.class}: #{e}"
-    nil
-  end
-
-  def fetch_datadog_env
-    return nil unless defined?(Datadog)
-
-    Datadog.configuration.env
-  rescue => e
-    Rails.logger.error "Error fetching Datadog environment: #{e.class}: #{e}"
-    nil
-  end
-
   def fetch_di_enabled_status
     return false unless defined?(Datadog::DI)
 
@@ -163,8 +146,10 @@ class ProbesController < ApplicationController
 
   def probes_json
     {
-      service: @service_name,
-      environment: @environment,
+      service: @service,
+      env: @env,
+      version: @version,
+      agent_address: @agent_address,
       di_enabled: @di_enabled,
       active: serialize_probes(@probes),
       disabled: serialize_probes(@disabled_probes),

@@ -16,8 +16,10 @@ RSpec.describe "Probes", type: :request do
   it "should display datadog configuration" do
     get probes_path
     expect(response).to have_http_status(:success)
-    expect(response.body).to include("Service:")
-    expect(response.body).to include("Environment:")
+    expect(response.body).to include("DD_SERVICE:")
+    expect(response.body).to include("DD_ENV:")
+    expect(response.body).to include("DD_VERSION:")
+    expect(response.body).to include("Agent:")
     expect(response.body).to include("DI Enabled:")
   end
 

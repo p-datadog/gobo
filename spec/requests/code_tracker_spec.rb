@@ -12,6 +12,14 @@ RSpec.describe "CodeTracker", type: :request do
     expect(response.body).to match(/Code tracking active:/)
   end
 
+  it "shows datadog status fragment" do
+    get code_tracker_path
+    expect(response.body).to include("DD_SERVICE:")
+    expect(response.body).to include("DD_ENV:")
+    expect(response.body).to include("DD_VERSION:")
+    expect(response.body).to include("Agent:")
+  end
+
   it "shows file table" do
     get code_tracker_path
     expect(response.body).to include("registry-table")

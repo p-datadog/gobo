@@ -14,77 +14,55 @@
   </p>
 <% end %>
 
+<%= render 'shared/datadog_status',
+      service: @service,
+      env: @env,
+      version: @version,
+      agent_address: @agent_address %>
+
 <div class="panel panel-info">
-  <div class="panel-heading"><h4 class="panel-title">Status</h4></div>
+  <div class="panel-heading"><h4 class="panel-title">Symbol Database</h4></div>
   <div class="panel-body">
-    <div class="row">
-      <div class="col-md-3">
-        <strong>DD_SERVICE:</strong>
-        <% if @service %>
-          <code><%= @service %></code>
-        <% else %>
-          <span class="text-muted">Not configured</span>
-        <% end %>
-      </div>
-      <div class="col-md-3">
-        <strong>DD_ENV:</strong>
-        <% if @env %>
-          <code><%= @env %></code>
-        <% else %>
-          <span class="text-muted">Not configured</span>
-        <% end %>
-      </div>
-      <div class="col-md-3">
-        <strong>Agent:</strong>
-        <% if @agent_address %>
-          <code><%= @agent_address %></code>
-        <% else %>
-          <span class="text-muted">Unknown</span>
-        <% end %>
-      </div>
-      <div class="col-md-3">
-        <strong>Symbol Database:</strong>
-        <% if @symdb_enabled %>
-          <span class="label label-success">Enabled</span>
-        <% else %>
-          <span class="label label-danger">Disabled</span>
-        <% end %>
-      </div>
-    </div>
-    <div class="row" style="margin-top: 10px;">
-      <div class="col-md-12">
-        <strong>Component:</strong>
-        <% case @component_status %>
-        <% when :active %>
-          <span class="label label-success">Active</span>
-          <% if @upload_info %>
-            <% if @upload_info[:upload_in_progress] %>
-              <span class="text-muted">&mdash; upload in progress</span>
-            <% elsif @upload_info[:last_upload_time] %>
-              <% ago = Time.now - @upload_info[:last_upload_time] %>
-              <span class="text-muted">&mdash; uploaded <%= distance_of_time_in_words(ago) %> ago</span>
-            <% elsif @upload_info[:enabled] %>
-              <span class="text-muted">&mdash; enabled, no upload yet</span>
-            <% else %>
-              <span class="text-muted">&mdash; waiting for remote config trigger</span>
-            <% end %>
+    <p>
+      <strong>Enabled:</strong>
+      <% if @symdb_enabled %>
+        <span class="label label-success">Yes</span>
+      <% else %>
+        <span class="label label-danger">No</span>
+      <% end %>
+    </p>
+    <p>
+      <strong>Component:</strong>
+      <% case @component_status %>
+      <% when :active %>
+        <span class="label label-success">Active</span>
+        <% if @upload_info %>
+          <% if @upload_info[:upload_in_progress] %>
+            <span class="text-muted">&mdash; upload in progress</span>
+          <% elsif @upload_info[:last_upload_time] %>
+            <% ago = Time.now - @upload_info[:last_upload_time] %>
+            <span class="text-muted">&mdash; uploaded <%= distance_of_time_in_words(ago) %> ago</span>
+          <% elsif @upload_info[:enabled] %>
+            <span class="text-muted">&mdash; enabled, no upload yet</span>
           <% else %>
-            <span class="text-muted">&mdash; component created (upgrade tracer for upload details)</span>
+            <span class="text-muted">&mdash; waiting for remote config trigger</span>
           <% end %>
-        <% when :not_created %>
-          <span class="label label-warning">Not created</span>
-          <span class="text-muted">&mdash; preconditions not met (check enabled, Ruby version, remote config)</span>
-        <% when :shutdown %>
-          <span class="label label-danger">Shutdown</span>
-        <% when :no_datadog %>
-          <span class="label label-default">N/A</span>
-          <span class="text-muted">&mdash; Datadog::SymbolDatabase not loaded</span>
-        <% when :error %>
-          <span class="label label-danger">Error</span>
-          <span class="text-muted">&mdash; could not read component status (check logs)</span>
+        <% else %>
+          <span class="text-muted">&mdash; component created (upgrade tracer for upload details)</span>
         <% end %>
-      </div>
-    </div>
+      <% when :not_created %>
+        <span class="label label-warning">Not created</span>
+        <span class="text-muted">&mdash; preconditions not met (check enabled, Ruby version, remote config)</span>
+      <% when :shutdown %>
+        <span class="label label-danger">Shutdown</span>
+      <% when :no_datadog %>
+        <span class="label label-default">N/A</span>
+        <span class="text-muted">&mdash; Datadog::SymbolDatabase not loaded</span>
+      <% when :error %>
+        <span class="label label-danger">Error</span>
+        <span class="text-muted">&mdash; could not read component status (check logs)</span>
+      <% end %>
+    </p>
   </div>
 </div>
 

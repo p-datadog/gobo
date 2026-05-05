@@ -5,8 +5,14 @@
   Files known to DI's CodeTracker. Line probes can only target files in this registry.
 </p>
 
+<%= render 'shared/datadog_status',
+      service: @service,
+      env: @env,
+      version: @version,
+      agent_address: @agent_address %>
+
 <div class="panel panel-info">
-  <div class="panel-heading"><h4 class="panel-title">Status</h4></div>
+  <div class="panel-heading"><h4 class="panel-title">Code Tracker</h4></div>
   <div class="panel-body">
     <p><strong>Code tracking active:</strong>
       <% if @tracking_active %>

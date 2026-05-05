@@ -15,6 +15,30 @@ class ApplicationController < ActionController::Base
       "error: #{e.class}: #{e}"
     end
 
+    def fetch_service
+      return nil unless defined?(Datadog)
+      Datadog.configuration.service
+    rescue => e
+      Rails.logger.error "Error fetching DD_SERVICE: #{e.class}: #{e}"
+      nil
+    end
+
+    def fetch_env
+      return nil unless defined?(Datadog)
+      Datadog.configuration.env
+    rescue => e
+      Rails.logger.error "Error fetching DD_ENV: #{e.class}: #{e}"
+      nil
+    end
+
+    def fetch_version
+      return nil unless defined?(Datadog)
+      Datadog.configuration.version
+    rescue => e
+      Rails.logger.error "Error fetching DD_VERSION: #{e.class}: #{e}"
+      nil
+    end
+
     # Confirms a logged-in user.
     def logged_in_user
       unless logged_in?

@@ -1,4 +1,5 @@
 class CodeTrackerController < ApplicationController
+  before_action :load_status
   before_action :load_registry_data
 
   def index
@@ -22,6 +23,13 @@ class CodeTrackerController < ApplicationController
   end
 
   private
+
+  def load_status
+    @service = fetch_service
+    @env = fetch_env
+    @version = fetch_version
+    @agent_address = fetch_agent_address
+  end
 
   def load_registry_data
     @tracking_active = false

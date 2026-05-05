@@ -68,6 +68,7 @@ class SymdbController < ApplicationController
     @sample_classes = SAMPLE_CLASSES
     @service = fetch_service
     @env = fetch_env
+    @version = fetch_version
     @symdb_enabled = symdb_enabled?
     @agent_address = fetch_agent_address
     @component_status = fetch_component_status
@@ -80,22 +81,6 @@ class SymdbController < ApplicationController
   end
 
   private
-
-  def fetch_service
-    return nil unless defined?(Datadog)
-    Datadog.configuration.service
-  rescue => e
-    Rails.logger.error "Error fetching DD_SERVICE: #{e.class}: #{e}"
-    nil
-  end
-
-  def fetch_env
-    return nil unless defined?(Datadog)
-    Datadog.configuration.env
-  rescue => e
-    Rails.logger.error "Error fetching DD_ENV: #{e.class}: #{e}"
-    nil
-  end
 
   def symdb_enabled?
     defined?(Datadog) && Datadog.configuration.respond_to?(:symbol_database) &&
@@ -142,6 +127,8 @@ class SymdbController < ApplicationController
     {
       service: @service,
       env: @env,
+      version: @version,
+      agent_address: @agent_address,
       symdb_enabled: @symdb_enabled,
       component_status: @component_status,
       upload_info: @upload_info,

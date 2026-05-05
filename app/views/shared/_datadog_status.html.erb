@@ -1,0 +1,46 @@
+<div class="panel panel-info">
+  <div class="panel-heading"><h4 class="panel-title">Status</h4></div>
+  <div class="panel-body">
+    <div class="row">
+      <div class="col-md-3">
+        <strong>DD_SERVICE:</strong>
+        <% if service %>
+          <code><%= service %></code>
+        <% else %>
+          <span class="text-muted">Not configured</span>
+        <% end %>
+      </div>
+      <div class="col-md-3">
+        <strong>DD_ENV:</strong>
+        <% if env %>
+          <code><%= env %></code>
+        <% else %>
+          <span class="text-muted">Not configured</span>
+        <% end %>
+      </div>
+      <div class="col-md-3">
+        <strong>DD_VERSION:</strong>
+        <% if version %>
+          <code><%= version %></code>
+        <% else %>
+          <span class="text-muted">Not configured</span>
+        <% end %>
+      </div>
+      <div class="col-md-3">
+        <strong>Agent:</strong>
+        <% if agent_address %>
+          <code><%= agent_address %></code>
+        <% else %>
+          <span class="text-muted">Unknown</span>
+        <% end %>
+      </div>
+    </div>
+    <% if local_assigns[:extras].present? %>
+      <div class="row" style="margin-top: 10px;">
+        <div class="col-md-12">
+          <%= extras %>
+        </div>
+      </div>
+    <% end %>
+  </div>
+</div>
