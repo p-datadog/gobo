@@ -7,11 +7,39 @@
 </p>
 
 <% if @service %>
-  <p>
-    <%= link_to "View uploaded symbols in staging API",
-      "https://dd.datad0g.com/api/unstable/symdb-api/scopes/search?service=#{ERB::Util.url_encode(@service)}&allow_partial=true",
-      target: "_blank" %>
-  </p>
+  <% encoded_service = ERB::Util.url_encode(@service) %>
+  <% symdb_base = "https://dd.datad0g.com/api/unstable/symdb-api" %>
+  <div class="panel panel-info">
+    <div class="panel-heading"><h4 class="panel-title">Staging API queries</h4></div>
+    <div class="panel-body">
+      <ul style="margin-bottom: 0;">
+        <li>
+          <%= link_to "Service metadata",
+            "#{symdb_base}/services/metadata?service=#{encoded_service}&allow_partial=true",
+            target: "_blank" %>
+          &mdash; versions registered for this service
+        </li>
+        <li>
+          <%= link_to "Uploaded files",
+            "#{symdb_base}/files?service=#{encoded_service}&allow_partial=true",
+            target: "_blank" %>
+          &mdash; list of source files in the upload
+        </li>
+        <li>
+          <%= link_to "Search scopes",
+            "#{symdb_base}/scopes/search?service=#{encoded_service}&query=SymdbSamples&allow_partial=true",
+            target: "_blank" %>
+          &mdash; scopes whose name starts with <code>SymdbSamples</code>
+        </li>
+        <li>
+          <%= link_to "File scopes",
+            "#{symdb_base}/scopes/file?service=#{encoded_service}&source_file=#{ERB::Util.url_encode('app/models/symdb_samples/basic_class.rb')}&allow_partial=true",
+            target: "_blank" %>
+          &mdash; scopes inside <code>basic_class.rb</code>
+        </li>
+      </ul>
+    </div>
+  </div>
 <% end %>
 
 <%= render 'shared/datadog_status',

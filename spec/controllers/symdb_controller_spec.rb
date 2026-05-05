@@ -141,19 +141,22 @@ RSpec.describe SymdbController, type: :controller do
       end
     end
 
-    context 'staging API link' do
+    context 'staging API links' do
       render_views
 
-      it 'renders staging API link when service is configured' do
+      it 'renders all four staging API endpoints when service is configured' do
         allow_any_instance_of(SymdbController).to receive(:fetch_service).and_return('gobo')
         get :index
-        expect(response.body).to include('https://dd.datad0g.com/api/unstable/symdb-api/scopes/search?service=gobo')
+        expect(response.body).to include('https://dd.datad0g.com/api/unstable/symdb-api/services/metadata?service=gobo&amp;allow_partial=true')
+        expect(response.body).to include('https://dd.datad0g.com/api/unstable/symdb-api/files?service=gobo&amp;allow_partial=true')
+        expect(response.body).to include('https://dd.datad0g.com/api/unstable/symdb-api/scopes/search?service=gobo&amp;query=SymdbSamples&amp;allow_partial=true')
+        expect(response.body).to include('https://dd.datad0g.com/api/unstable/symdb-api/scopes/file?service=gobo&amp;source_file=app%2Fmodels%2Fsymdb_samples%2Fbasic_class.rb&amp;allow_partial=true')
       end
 
-      it 'does not render staging API link when service is nil' do
+      it 'does not render any staging API links when service is nil' do
         allow_any_instance_of(SymdbController).to receive(:fetch_service).and_return(nil)
         get :index
-        expect(response.body).not_to include('symdb-api/scopes/search')
+        expect(response.body).not_to include('symdb-api/')
       end
     end
 
