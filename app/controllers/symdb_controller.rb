@@ -116,9 +116,9 @@ class SymdbController < ApplicationController
     return nil unless component.respond_to?(:last_upload_time)
 
     {
-      enabled: component.enabled,
       last_upload_time: component.last_upload_time,
       upload_in_progress: component.upload_in_progress,
+      rc_requested_at: component.instance_variable_get(:@scheduled_at),
     }
   rescue => e
     Rails.logger.error "Error fetching symdb upload info: #{e.class}: #{e}"

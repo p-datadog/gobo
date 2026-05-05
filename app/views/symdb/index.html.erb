@@ -26,11 +26,11 @@
   <div class="panel-heading"><h4 class="panel-title">Symbol Database</h4></div>
   <div class="panel-body">
     <p>
-      <strong>Enabled:</strong>
+      <strong>Configuration:</strong>
       <% if @symdb_enabled %>
-        <span class="label label-success">Yes</span>
+        <span class="label label-success">Enabled</span>
       <% else %>
-        <span class="label label-danger">No</span>
+        <span class="label label-danger">Disabled</span>
       <% end %>
     </p>
     <p>
@@ -38,20 +38,6 @@
       <% case @component_status %>
       <% when :active %>
         <span class="label label-success">Active</span>
-        <% if @upload_info %>
-          <% if @upload_info[:upload_in_progress] %>
-            <span class="text-muted">&mdash; upload in progress</span>
-          <% elsif @upload_info[:last_upload_time] %>
-            <% ago = Time.now - @upload_info[:last_upload_time] %>
-            <span class="text-muted">&mdash; uploaded <%= distance_of_time_in_words(ago) %> ago</span>
-          <% elsif @upload_info[:enabled] %>
-            <span class="text-muted">&mdash; enabled, no upload yet</span>
-          <% else %>
-            <span class="text-muted">&mdash; waiting for remote config trigger</span>
-          <% end %>
-        <% else %>
-          <span class="text-muted">&mdash; component created (upgrade tracer for upload details)</span>
-        <% end %>
       <% when :not_created %>
         <span class="label label-warning">Not created</span>
         <span class="text-muted">&mdash; preconditions not met (check enabled, Ruby version, remote config)</span>
@@ -63,6 +49,36 @@
       <% when :error %>
         <span class="label label-danger">Error</span>
         <span class="text-muted">&mdash; could not read component status (check logs)</span>
+      <% end %>
+    </p>
+    <p>
+      <strong>RC requested upload:</strong>
+      <% if @upload_info.nil? %>
+        <span class="text-muted">Unknown (older tracer without diagnostic accessors)</span>
+      <% elsif @upload_info[:rc_requested_at] %>
+        <% delta = @upload_info[:rc_requested_at] - Process.clock_gettime(Process::CLOCK_MONOTONIC, :float_second) %>
+        <span class="label label-success">Yes</span>
+        <% if delta > 0 %>
+          <span class="text-muted">&mdash; firing in <%= delta.round(1) %>s (debounce window)</span>
+        <% else %>
+          <span class="text-muted">&mdash; triggered <%= distance_of_time_in_words(-delta) %> ago</span>
+        <% end %>
+      <% else %>
+        <span class="label label-default">No</span>
+      <% end %>
+    </p>
+    <p>
+      <strong>Last upload:</strong>
+      <% if @upload_info.nil? %>
+        <span class="text-muted">Unknown (older tracer without diagnostic accessors)</span>
+      <% elsif @upload_info[:upload_in_progress] %>
+        <span class="label label-info">In progress</span>
+      <% elsif @upload_info[:last_upload_time] %>
+        <% ago = Time.now - @upload_info[:last_upload_time] %>
+        <code><%= @upload_info[:last_upload_time].strftime('%Y-%m-%d %H:%M:%S') %></code>
+        <span class="text-muted">(<%= distance_of_time_in_words(ago) %> ago)</span>
+      <% else %>
+        <span class="text-muted">Never</span>
       <% end %>
     </p>
   </div>
