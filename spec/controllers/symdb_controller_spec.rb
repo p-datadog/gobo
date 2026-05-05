@@ -46,6 +46,42 @@ RSpec.describe SymdbController, type: :controller do
       expect(json).to include('version', 'agent_address')
     end
 
+    context 'git tags' do
+      let(:repo_url) { 'https://github.com/DataDog/gobo' }
+      let(:commit_sha) { 'a61e4ce9d235046baffc81c7d08764aedeefcb7c' }
+
+      before do
+        allow(Datadog::Core::Environment::Git).to receive(:git_repository_url).and_return(repo_url)
+        allow(Datadog::Core::Environment::Git).to receive(:git_commit_sha).and_return(commit_sha)
+      end
+
+      it 'assigns git_repository_url and git_commit_sha from the tracer' do
+        get :index
+        expect(assigns(:git_repository_url)).to eq(repo_url)
+        expect(assigns(:git_commit_sha)).to eq(commit_sha)
+      end
+
+      it 'returns the tracer-provided git tags in JSON' do
+        get :index, format: :json
+        json = JSON.parse(response.body)
+        expect(json['git_repository_url']).to eq(repo_url)
+        expect(json['git_commit_sha']).to eq(commit_sha)
+      end
+    end
+
+    context 'when tracer lacks Datadog::Core::Environment::Git (older tracer)' do
+      before do
+        hide_const('Datadog::Core::Environment::Git')
+      end
+
+      it 'assigns nil for git tags without raising' do
+        get :index
+        expect(response).to have_http_status(:success)
+        expect(assigns(:git_repository_url)).to be_nil
+        expect(assigns(:git_commit_sha)).to be_nil
+      end
+    end
+
     it 'assigns component_status' do
       get :index
       expect(assigns(:component_status)).to be_a(Symbol)

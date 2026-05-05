@@ -69,6 +69,8 @@ class SymdbController < ApplicationController
     @service = fetch_service
     @env = fetch_env
     @version = fetch_version
+    @git_repository_url = fetch_git_repository_url
+    @git_commit_sha = fetch_git_commit_sha
     @symdb_enabled = symdb_enabled?
     @agent_address = fetch_agent_address
     @component_status = fetch_component_status
@@ -128,6 +130,8 @@ class SymdbController < ApplicationController
       service: @service,
       env: @env,
       version: @version,
+      git_repository_url: @git_repository_url,
+      git_commit_sha: @git_commit_sha,
       agent_address: @agent_address,
       symdb_enabled: @symdb_enabled,
       component_status: @component_status,

@@ -28,6 +28,8 @@ class CodeTrackerController < ApplicationController
     @service = fetch_service
     @env = fetch_env
     @version = fetch_version
+    @git_repository_url = fetch_git_repository_url
+    @git_commit_sha = fetch_git_commit_sha
     @agent_address = fetch_agent_address
   end
 

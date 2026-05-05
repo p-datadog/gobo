@@ -35,6 +35,24 @@
         <% end %>
       </div>
     </div>
+    <div class="row" style="margin-top: 10px;">
+      <div class="col-md-6">
+        <strong>DD_GIT_REPOSITORY_URL:</strong>
+        <% if local_assigns[:git_repository_url].present? %>
+          <code><%= git_repository_url %></code>
+        <% else %>
+          <span class="text-muted">Not configured</span>
+        <% end %>
+      </div>
+      <div class="col-md-6">
+        <strong>DD_GIT_COMMIT_SHA:</strong>
+        <% if local_assigns[:git_commit_sha].present? %>
+          <code><%= git_commit_sha %></code>
+        <% else %>
+          <span class="text-muted">Not configured</span>
+        <% end %>
+      </div>
+    </div>
     <% if local_assigns[:extras].present? %>
       <div class="row" style="margin-top: 10px;">
         <div class="col-md-12">

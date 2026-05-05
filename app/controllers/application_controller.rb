@@ -39,6 +39,22 @@ class ApplicationController < ActionController::Base
       nil
     end
 
+    def fetch_git_repository_url
+      return nil unless defined?(Datadog::Core::Environment::Git)
+      Datadog::Core::Environment::Git.git_repository_url
+    rescue => e
+      Rails.logger.error "Error fetching DD_GIT_REPOSITORY_URL: #{e.class}: #{e}"
+      nil
+    end
+
+    def fetch_git_commit_sha
+      return nil unless defined?(Datadog::Core::Environment::Git)
+      Datadog::Core::Environment::Git.git_commit_sha
+    rescue => e
+      Rails.logger.error "Error fetching DD_GIT_COMMIT_SHA: #{e.class}: #{e}"
+      nil
+    end
+
     # Confirms a logged-in user.
     def logged_in_user
       unless logged_in?

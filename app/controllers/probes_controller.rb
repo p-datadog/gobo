@@ -9,6 +9,8 @@ class ProbesController < ApplicationController
     @service = fetch_service
     @env = fetch_env
     @version = fetch_version
+    @git_repository_url = fetch_git_repository_url
+    @git_commit_sha = fetch_git_commit_sha
     @di_enabled = fetch_di_enabled_status
     @agent_address = fetch_agent_address
 
@@ -149,6 +151,8 @@ class ProbesController < ApplicationController
       service: @service,
       env: @env,
       version: @version,
+      git_repository_url: @git_repository_url,
+      git_commit_sha: @git_commit_sha,
       agent_address: @agent_address,
       di_enabled: @di_enabled,
       active: serialize_probes(@probes),
