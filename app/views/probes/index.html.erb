@@ -2,7 +2,7 @@
 <h1>Active Dynamic Instrumentation Probes <small><%= link_to "JSON", probes_path(format: :json) %></small></h1>
 
 <p>
-  <a href="https://app.datadoghq.com/debugging/sessions" target="_blank">
+  <a href="https://<%= AgentEnvironments.fetch('dogfood')[:host] %>/debugging/sessions" target="_blank">
     View Debugging Sessions in Datadog &rarr;
   </a>
 </p>

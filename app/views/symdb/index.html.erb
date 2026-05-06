@@ -8,7 +8,7 @@
 
 <% if @service %>
   <% encoded_service = ERB::Util.url_encode(@service) %>
-  <% symdb_base = "https://dd.datad0g.com/api/unstable/symdb-api" %>
+  <% symdb_base = AgentEnvironments.symdb_api_url('staging') %>
   <div class="panel panel-info">
     <div class="panel-heading"><h4 class="panel-title">Staging API queries</h4></div>
     <div class="panel-body">
@@ -113,7 +113,7 @@
 <p>
   Each file below contains sample classes/modules designed to exercise specific symbol database features.
   After a successful upload, search for these names in the
-  <a href="https://app.datadoghq.com/debugging" target="_blank">Datadog DI UI</a>
+  <a href="https://<%= AgentEnvironments.fetch('dogfood')[:host] %>/debugging" target="_blank">Datadog DI UI</a>
   autocomplete.
 </p>
 

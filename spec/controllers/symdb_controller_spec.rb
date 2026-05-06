@@ -147,9 +147,10 @@ RSpec.describe SymdbController, type: :controller do
       it 'renders staging API endpoints when service is configured' do
         allow_any_instance_of(SymdbController).to receive(:fetch_service).and_return('gobo')
         get :index
-        expect(response.body).to include('https://dd.datad0g.com/api/unstable/symdb-api/services/metadata?service=gobo&amp;allow_partial=true')
-        expect(response.body).to include('https://dd.datad0g.com/api/unstable/symdb-api/scopes/search?service=gobo&amp;query=SymdbSamples&amp;allow_partial=true')
-        expect(response.body).to include('https://dd.datad0g.com/api/unstable/symdb-api/scopes/file?service=gobo&amp;source_file=app%2Fmodels%2Fsymdb_samples%2Fbasic_class.rb&amp;allow_partial=true')
+        base = AgentEnvironments.symdb_api_url('staging')
+        expect(response.body).to include("#{base}/services/metadata?service=gobo&amp;allow_partial=true")
+        expect(response.body).to include("#{base}/scopes/search?service=gobo&amp;query=SymdbSamples&amp;allow_partial=true")
+        expect(response.body).to include("#{base}/scopes/file?service=gobo&amp;source_file=app%2Fmodels%2Fsymdb_samples%2Fbasic_class.rb&amp;allow_partial=true")
       end
 
       it 'does not link the /files endpoint (404s on public gateway)' do
