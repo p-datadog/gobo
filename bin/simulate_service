@@ -54,6 +54,7 @@ require 'logger'
 require 'optparse'
 require 'securerandom'
 require 'datadog_sim/runner'
+require 'agent_environments'
 
 options = {
   language:   ENV.fetch('DD_SIM_LANGUAGE', 'ruby'),
@@ -75,8 +76,10 @@ OptionParser.new do |opts|
   opts.on('-v', '--version VER',   "Service version (default: 1.42.42)")             { |v| options[:version]  = v }
 
   opts.on('-p', '--agent-port PORT', Integer, "Agent port (default: 8126)")     { |v| options[:agent_port] = v }
-  opts.on('-D', '--dogfood-agent',  "Use dogfood agent on port 18126")          { options[:agent_port] = 18126 }
-  opts.on('-S', '--staging-agent',  "Use staging agent on port 28126")          { options[:agent_port] = 28126 }
+  dogfood_port = AgentEnvironments.fetch('dogfood')[:agent_port]
+  staging_port = AgentEnvironments.fetch('staging')[:agent_port]
+  opts.on('-D', '--dogfood-agent',  "Use dogfood agent on port #{dogfood_port}") { options[:agent_port] = dogfood_port }
+  opts.on('-S', '--staging-agent',  "Use staging agent on port #{staging_port}") { options[:agent_port] = staging_port }
 
   opts.on('--git-repo URL',  "GitHub repo URL — fetch latest commit on main branch via API\n" \
                              "                                     (e.g. https://github.com/p-datadog/demo-ruby)\n" \
