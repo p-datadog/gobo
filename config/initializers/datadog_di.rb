@@ -1,8 +1,10 @@
 # Datadog Dynamic Instrumentation Configuration
 
+require_relative '../../lib/agent_environments'
+
 Datadog.configure do |c|
   c.env = ENV.fetch('DD_ENV') { Rails.env }
-  c.agent.port = (ENV["DD_TRACE_AGENT_PORT"] || 18126).to_i
+  c.agent.port = (ENV["DD_TRACE_AGENT_PORT"] || AgentEnvironments.fetch(AgentEnvironments::DEFAULT_LABEL)[:agent_port]).to_i
   c.dynamic_instrumentation.internal.development = true
 end
 
