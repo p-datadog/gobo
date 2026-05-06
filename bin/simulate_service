@@ -59,7 +59,7 @@ options = {
   language:   ENV.fetch('DD_SIM_LANGUAGE', 'ruby'),
   service:    ENV.fetch('DD_SERVICE', 'demo-ruby'),
   env:        ENV.fetch('DD_ENV', 'development'),
-  version:    ENV.fetch('DD_VERSION', '1.0'),
+  version:    ENV.fetch('DD_VERSION', '1.42.42'),
   components: { telemetry: true, remote_config: true, traces: true },
 }
 
@@ -69,7 +69,7 @@ OptionParser.new do |opts|
   opts.on('-l', '--language LANG', "Tracer language to impersonate (default: ruby)") { |v| options[:language] = v }
   opts.on('-s', '--service NAME',  "Service name (default: demo-ruby)")               { |v| options[:service]  = v }
   opts.on('-e', '--env ENV',       "Environment (default: development)")              { |v| options[:env]      = v }
-  opts.on('-v', '--version VER',   "Service version (default: 1.0)")                 { |v| options[:version]  = v }
+  opts.on('-v', '--version VER',   "Service version (default: 1.42.42)")             { |v| options[:version]  = v }
 
   opts.on('-p', '--agent-port PORT', Integer, "Agent port (default: 8126)")     { |v| options[:agent_port] = v }
   opts.on('-D', '--dogfood-agent',  "Use dogfood agent on port 18126")          { options[:agent_port] = 18126 }
