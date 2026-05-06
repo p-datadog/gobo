@@ -28,6 +28,7 @@ if [[ "${1:-}" == "-h" || "${1:-}" == "--help" ]]; then
 fi
 
 SERVICE="${DD_SERVICE:-ruby-symdb-test}"
+# Source of truth: config/agent_environments.yml (dogfood.host).
 BASE_URL="https://app.datadoghq.com/api/unstable/symdb-api"
 
 # Check required env vars
