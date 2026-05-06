@@ -117,6 +117,7 @@ class SymdbController < ApplicationController
 
     {
       last_upload_time: component.last_upload_time,
+      last_upload_scope_count: component.respond_to?(:last_upload_scope_count) ? component.last_upload_scope_count : nil,
       upload_in_progress: component.upload_in_progress,
       rc_requested_at: component.instance_variable_get(:@scheduled_at),
     }

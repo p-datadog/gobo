@@ -104,7 +104,9 @@
       <% elsif @upload_info[:last_upload_time] %>
         <% ago = Time.now - @upload_info[:last_upload_time] %>
         <code><%= @upload_info[:last_upload_time].strftime('%Y-%m-%d %H:%M:%S') %></code>
-        <span class="text-muted">(<%= distance_of_time_in_words(ago) %> ago)</span>
+        <span class="text-muted">
+          (<%= distance_of_time_in_words(ago) %> ago<% if @upload_info[:last_upload_scope_count] %>, <%= pluralize(@upload_info[:last_upload_scope_count], 'scope') %><% end %>)
+        </span>
       <% else %>
         <span class="text-muted">Never</span>
       <% end %>

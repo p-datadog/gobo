@@ -181,6 +181,7 @@ RSpec.describe SymdbController, type: :controller do
 
         expect(info).to have_key('rc_requested_at')
         expect(info).to have_key('last_upload_time')
+        expect(info).to have_key('last_upload_scope_count')
         expect(info).to have_key('upload_in_progress')
         expect(info['upload_in_progress']).to eq(false)
       end
