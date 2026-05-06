@@ -1,0 +1,6 @@
+dogfood:
+  agent_port: 18126
+  host: app.datadoghq.com
+staging:
+  agent_port: 28126
+  host: dd.datad0g.com
