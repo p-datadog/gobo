@@ -1,0 +1,36 @@
+<div class="list-group">
+  <%= link_to "Home", root_path, class: "list-group-item" %>
+  <%= link_to "Help", help_path, class: "list-group-item" %>
+  <%= link_to "DI Probes", probes_path, class: "list-group-item" %>
+</div>
+
+<h5 style="margin-top: 15px;">Memory</h5>
+<div class="list-group">
+  <%= link_to "Full Stats", memory_path, class: "list-group-item" %>
+  <%= link_to "Fast Stats", memory_fast_path, class: "list-group-item" %>
+</div>
+
+<h5 style="margin-top: 15px;">Demos</h5>
+<div class="list-group">
+  <%= link_to "Exception Message", debugger_test_exception_message_path, class: "list-group-item" %>
+  <%= link_to "Stdlib Line Probe", debugger_test_stdlib_probe_path, class: "list-group-item" %>
+  <%= link_to "JSON Encoding Error", debugger_test_json_error_path, class: "list-group-item" %>
+  <%= link_to "Symbol Database Demo", symdb_path, class: "list-group-item" %>
+  <%= link_to "Code Tracker Registry", code_tracker_path, class: "list-group-item" %>
+</div>
+
+<% if logged_in? %>
+  <h5 style="margin-top: 15px;">Account</h5>
+  <div class="list-group">
+    <%= link_to "Users", users_path, class: "list-group-item" %>
+    <%= link_to "Profile", current_user, class: "list-group-item" %>
+    <%= link_to "Settings", edit_user_path(current_user), class: "list-group-item" %>
+    <%= link_to "Log out", logout_path, method: :delete, class: "list-group-item" %>
+  </div>
+<% else %>
+  <h5 style="margin-top: 15px;">Account</h5>
+  <div class="list-group">
+    <%= link_to "Log in", login_path, class: "list-group-item" %>
+    <%= link_to "Sign up", signup_path, class: "list-group-item" %>
+  </div>
+<% end %>
