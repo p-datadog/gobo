@@ -99,7 +99,10 @@ bundle exec bin/simulate_service --language ruby --dogfood-agent
 Supported languages: `java`, `python`, `ruby`, `dotnet`, `go`, `node`, `php`
 
 Optional flags: `--no-telemetry`, `--no-rc`, `--no-traces`, `--agent-port PORT`,
-`--dogfood-agent` (port 18126), `--git-repo URL`, `--runtime-id ID`
+`--dogfood-agent`, `--staging-agent`, `--git-repo URL`, `--runtime-id ID`
+
+Agent ports for `--dogfood-agent` and `--staging-agent` come from
+[`config/agent_environments.yml`](config/agent_environments.yml).
 
 ## Load Testing
 
