@@ -1,0 +1,295 @@
+#!/usr/bin/env ruby
+# bin/stress — extraction stress test orchestrator
+#
+# Boots puma, runs concurrent HTTP load against the /stress/* endpoints,
+# samples CPU/RSS, prints a per-scenario report comparing baseline (extractor off)
+# vs experiment (extractor on).
+#
+# Usage:
+#   bin/stress                              # full matrix, defaults
+#   bin/stress --warmup 5 --steady 20       # short for smoke test
+#   bin/stress --scenarios simple,cpu1s     # subset
+
+require 'net/http'
+require 'optparse'
+require 'fileutils'
+require 'json'
+
+GOBO_DIR = File.expand_path('..', __dir__)
+HOST = 'localhost'
+PORT = ENV.fetch('PORT', '3000').to_i
+PUMA_PIDFILE = File.join(GOBO_DIR, 'tmp', 'pids', 'server.pid')
+PUMA_LOG = File.join(GOBO_DIR, 'tmp', 'stress-puma.log')
+
+SCENARIOS = [
+  { name: 'simple', path: '/stress/simple', concurrency: 50 },
+  { name: 'cpu1s',  path: '/stress/cpu1s',  concurrency: 10 },
+  { name: 'mix2s',  path: '/stress/mix2s',  concurrency: 20 },
+  { name: 'io2s',   path: '/stress/io2s',   concurrency: 40 },
+].freeze
+
+options = { warmup: 30, steady: 120, scenarios: nil }
+OptionParser.new do |o|
+  o.on('-w', '--warmup SECONDS', Integer) { |v| options[:warmup] = v }
+  o.on('-s', '--steady SECONDS', Integer) { |v| options[:steady] = v }
+  o.on('-S', '--scenarios LIST', Array) { |v| options[:scenarios] = v }
+end.parse!
+
+scenarios = if options[:scenarios]
+              SCENARIOS.select { |s| options[:scenarios].include?(s[:name]) }
+            else
+              SCENARIOS
+            end
+
+CLK_TCK = `getconf CLK_TCK`.to_i
+
+def puma_pids(master_pid)
+  return [] unless master_pid
+  pids = [master_pid]
+  # Workers are children of master.
+  children = `pgrep -P #{master_pid} 2>/dev/null`.split.map(&:to_i)
+  pids + children
+end
+
+def read_proc_stat(pid)
+  fields = File.read("/proc/#{pid}/stat").split
+  utime = fields[13].to_i
+  stime = fields[14].to_i
+  utime + stime
+rescue Errno::ENOENT
+  0
+end
+
+def read_proc_rss_kb(pid)
+  File.foreach("/proc/#{pid}/status") do |line|
+    return line[/(\d+) kB/, 1].to_i if line.start_with?('VmRSS:')
+  end
+  0
+rescue Errno::ENOENT
+  0
+end
+
+def sample_cpu_window(master_pid, seconds)
+  pids = puma_pids(master_pid)
+  t0_ticks = pids.sum { |p| read_proc_stat(p) }
+  t0 = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+  sleep seconds
+  t1 = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+  pids = puma_pids(master_pid)
+  t1_ticks = pids.sum { |p| read_proc_stat(p) }
+  elapsed = t1 - t0
+  ticks = t1_ticks - t0_ticks
+  cpu_pct = (ticks.to_f / CLK_TCK / elapsed) * 100
+  rss_kb = pids.sum { |p| read_proc_rss_kb(p) }
+  [cpu_pct, rss_kb]
+end
+
+def start_puma(extract_loop:)
+  stop_puma
+  env = {
+    'STRESS_MODE' => 'true',
+    'RAILS_ENV' => 'development',
+    'RAILS_LOG_LEVEL' => 'warn',
+    'SYMDB_EXTRACT_LOOP' => extract_loop ? 'true' : 'false',
+    'DD_TRACE_ENABLED' => 'false',
+    'DD_DYNAMIC_INSTRUMENTATION_ENABLED' => 'false',
+    'DD_SYMBOL_DATABASE_UPLOAD_ENABLED' => 'false',
+    'DD_REMOTE_CONFIG_ENABLED' => 'false',
+    'WEB_CONCURRENCY' => '2',
+    'RAILS_MAX_THREADS' => '5',
+  }
+  FileUtils.mkdir_p(File.dirname(PUMA_LOG))
+  pid = Process.spawn(env, 'bundle exec puma -C config/puma.rb',
+                      chdir: GOBO_DIR,
+                      out: PUMA_LOG, err: [:child, :out])
+  Process.detach(pid)
+  wait_for_boot(pid)
+  pid
+end
+
+def stop_puma
+  if File.exist?(PUMA_PIDFILE)
+    pid = File.read(PUMA_PIDFILE).to_i
+    begin
+      Process.kill('TERM', pid)
+      30.times { Process.kill(0, pid); sleep 0.2 }
+      Process.kill('KILL', pid) rescue nil
+    rescue Errno::ESRCH
+      # already gone
+    end
+    File.delete(PUMA_PIDFILE) rescue nil
+  end
+  # Also sweep any stray puma processes
+  `pkill -f 'puma.*config/puma.rb' 2>/dev/null`
+  sleep 0.5
+end
+
+def wait_for_boot(pid, timeout: 120)
+  deadline = Time.now + timeout
+  loop do
+    raise "puma died during boot (see #{PUMA_LOG})" unless alive?(pid)
+    if (Time.now > deadline)
+      raise "puma did not respond within #{timeout}s (see #{PUMA_LOG})"
+    end
+    begin
+      Net::HTTP.start(HOST, PORT, open_timeout: 1, read_timeout: 2) do |http|
+        resp = http.get('/up')
+        return if (200..399).include?(resp.code.to_i)
+      end
+    rescue StandardError
+      # not ready
+    end
+    sleep 1
+  end
+end
+
+def alive?(pid)
+  Process.kill(0, pid)
+  true
+rescue Errno::ESRCH
+  false
+end
+
+# Returns hash: { rps:, p50:, p95:, p99:, count:, errors:, duration: }
+def run_load(path, concurrency, duration)
+  stop_at = Process.clock_gettime(Process::CLOCK_MONOTONIC) + duration
+  samples_per_thread = Array.new(concurrency) { [] }
+  errors_per_thread = Array.new(concurrency, 0)
+
+  threads = concurrency.times.map do |i|
+    Thread.new do
+      http = Net::HTTP.new(HOST, PORT)
+      http.open_timeout = 5
+      http.read_timeout = 30
+      http.start
+      while Process.clock_gettime(Process::CLOCK_MONOTONIC) < stop_at
+        t0 = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+        begin
+          resp = http.get(path)
+          dt_ms = (Process.clock_gettime(Process::CLOCK_MONOTONIC) - t0) * 1000
+          if resp.code.to_i == 200
+            samples_per_thread[i] << dt_ms
+          else
+            errors_per_thread[i] += 1
+          end
+        rescue StandardError
+          errors_per_thread[i] += 1
+          http = Net::HTTP.new(HOST, PORT)
+          http.open_timeout = 5
+          http.read_timeout = 30
+          begin; http.start; rescue StandardError; end
+        end
+      end
+      http.finish rescue nil
+    end
+  end
+
+  start_real = Time.now
+  threads.each(&:join)
+  elapsed_real = Time.now - start_real
+
+  samples = samples_per_thread.flatten.sort
+  count = samples.size
+  errors = errors_per_thread.sum
+  {
+    rps: count / elapsed_real,
+    p50: pct(samples, 0.50),
+    p95: pct(samples, 0.95),
+    p99: pct(samples, 0.99),
+    count: count,
+    errors: errors,
+    duration: elapsed_real,
+  }
+end
+
+def pct(sorted, p)
+  return 0.0 if sorted.empty?
+  i = ((sorted.size - 1) * p).round
+  sorted[i]
+end
+
+def format_row(label, m)
+  format('%-12s %10.1f %10.1f %10.1f %10.1f %10d %8d',
+         label, m[:rps], m[:p50], m[:p95], m[:p99], m[:count], m[:errors])
+end
+
+def format_delta(b, e)
+  rps_pct = b[:rps].zero? ? 0.0 : (e[:rps] - b[:rps]) / b[:rps] * 100
+  format('%-12s %10.1f %10.1f %10.1f %10.1f %10s %8s',
+         'Δ',
+         e[:rps] - b[:rps],
+         e[:p50] - b[:p50],
+         e[:p95] - b[:p95],
+         e[:p99] - b[:p99],
+         format('%+.1f%%', rps_pct),
+         '')
+end
+
+def print_scenario_report(scn, baseline, experiment, baseline_cpu, exp_cpu)
+  puts
+  puts '=' * 78
+  puts "Scenario: #{scn[:name]}  (path=#{scn[:path]}  concurrency=#{scn[:concurrency]})"
+  puts '=' * 78
+  puts format('%-12s %10s %10s %10s %10s %10s %8s',
+              'phase', 'rps', 'p50_ms', 'p95_ms', 'p99_ms', 'count', 'errors')
+  puts '-' * 78
+  puts format_row('baseline', baseline)
+  puts format_row('experiment', experiment)
+  puts format_delta(baseline, experiment)
+  puts
+  puts format('CPU%%  baseline=%.1f  experiment=%.1f   RSS_MB baseline=%.0f experiment=%.0f',
+              baseline_cpu[0], exp_cpu[0],
+              baseline_cpu[1] / 1024.0, exp_cpu[1] / 1024.0)
+  puts
+end
+
+results = []
+
+at_exit { stop_puma }
+
+scenarios.each_with_index do |scn, idx|
+  warn "\n>>> [#{idx + 1}/#{scenarios.size}] Scenario: #{scn[:name]}"
+
+  # --- baseline ---
+  warn '    booting puma (baseline, extractor off)...'
+  master = start_puma(extract_loop: false)
+  warn "    puma master pid=#{master}; warming up #{options[:warmup]}s..."
+  run_load(scn[:path], scn[:concurrency], options[:warmup])  # discard warmup samples
+  warn "    measuring baseline for #{options[:steady]}s..."
+  cpu_thread = Thread.new { Thread.current[:result] = sample_cpu_window(master, options[:steady]) }
+  baseline = run_load(scn[:path], scn[:concurrency], options[:steady])
+  baseline_cpu = cpu_thread.value
+  stop_puma
+
+  # --- experiment ---
+  warn '    booting puma (experiment, extractor ON)...'
+  master = start_puma(extract_loop: true)
+  warn "    puma master pid=#{master}; warming up #{options[:warmup]}s..."
+  run_load(scn[:path], scn[:concurrency], options[:warmup])
+  warn "    measuring experiment for #{options[:steady]}s..."
+  cpu_thread = Thread.new { Thread.current[:result] = sample_cpu_window(master, options[:steady]) }
+  experiment = run_load(scn[:path], scn[:concurrency], options[:steady])
+  exp_cpu = cpu_thread.value
+  stop_puma
+
+  print_scenario_report(scn, baseline, experiment, baseline_cpu, exp_cpu)
+  results << { scenario: scn[:name], baseline: baseline, experiment: experiment,
+                baseline_cpu: baseline_cpu, experiment_cpu: exp_cpu }
+end
+
+puts
+puts '#' * 78
+puts '# FINAL SUMMARY'
+puts '#' * 78
+puts format('%-10s %12s %12s %10s %10s %10s',
+            'scenario', 'rps_base', 'rps_exp', 'rps_Δ%', 'p95_base', 'p95_exp')
+puts '-' * 78
+results.each do |r|
+  b = r[:baseline]; e = r[:experiment]
+  rps_pct = b[:rps].zero? ? 0.0 : (e[:rps] - b[:rps]) / b[:rps] * 100
+  puts format('%-10s %12.1f %12.1f %+9.1f%% %10.1f %10.1f',
+              r[:scenario], b[:rps], e[:rps], rps_pct, b[:p95], e[:p95])
+end
+
+FileUtils.mkdir_p(File.join(GOBO_DIR, 'tmp'))
+File.write(File.join(GOBO_DIR, 'tmp', "stress-#{Time.now.to_i}.json"), JSON.pretty_generate(results))

@@ -12,4 +12,9 @@ plugin :tmp_restart
 on_worker_boot do
   # Re-open appenders after forking the process
   SemanticLogger.reopen
+
+  if ENV['SYMDB_EXTRACT_LOOP'] == 'true'
+    require Rails.root.join('lib/stress/extraction_loop').to_s
+    Stress::ExtractionLoop.start!
+  end
 end

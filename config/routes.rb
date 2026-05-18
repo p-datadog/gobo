@@ -38,4 +38,8 @@ Rails.application.routes.draw do
   get '/code_tracker', to: 'code_tracker#index'
   get '/code_tracker/full', to: 'code_tracker#full'
   post '/probes/:id/send_status', to: 'probes#send_status', as: 'send_probe_status'
+  get '/stress/simple', to: 'stress#simple'
+  get '/stress/cpu1s', to: 'stress#cpu1s'
+  get '/stress/mix2s', to: 'stress#mix2s'
+  get '/stress/io2s', to: 'stress#io2s'
 end
