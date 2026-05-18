@@ -22,17 +22,19 @@ PUMA_PIDFILE = File.join(GOBO_DIR, 'tmp', 'pids', 'server.pid')
 PUMA_LOG = File.join(GOBO_DIR, 'tmp', 'stress-puma.log')
 
 SCENARIOS = [
-  { name: 'simple', path: '/stress/simple', concurrency: 50 },
-  { name: 'cpu1s',  path: '/stress/cpu1s',  concurrency: 10 },
-  { name: 'mix2s',  path: '/stress/mix2s',  concurrency: 20 },
-  { name: 'io2s',   path: '/stress/io2s',   concurrency: 40 },
+  { name: 'simple', path: '/stress/simple', concurrency: 50, think_ms: 0 },
+  { name: 'cpu1s',  path: '/stress/cpu1s',  concurrency: 2,  think_ms: 333 },
+  { name: 'mix2s',  path: '/stress/mix2s',  concurrency: 20, think_ms: 0 },
+  { name: 'io2s',   path: '/stress/io2s',   concurrency: 40, think_ms: 0 },
 ].freeze
 
-options = { warmup: 30, steady: 120, scenarios: nil }
+options = { warmup: 30, steady: 120, scenarios: nil, concurrency: nil, think_ms: nil }
 OptionParser.new do |o|
   o.on('-w', '--warmup SECONDS', Integer) { |v| options[:warmup] = v }
   o.on('-s', '--steady SECONDS', Integer) { |v| options[:steady] = v }
   o.on('-S', '--scenarios LIST', Array) { |v| options[:scenarios] = v }
+  o.on('-c', '--concurrency N', Integer) { |v| options[:concurrency] = v }
+  o.on('-t', '--think-ms N', Integer) { |v| options[:think_ms] = v }
 end.parse!
 
 scenarios = if options[:scenarios]
@@ -40,6 +42,13 @@ scenarios = if options[:scenarios]
             else
               SCENARIOS
             end
+
+scenarios = scenarios.map do |s|
+  s = s.dup
+  s[:concurrency] = options[:concurrency] if options[:concurrency]
+  s[:think_ms] = options[:think_ms] if options[:think_ms]
+  s
+end
 
 CLK_TCK = `getconf CLK_TCK`.to_i
 
@@ -151,10 +160,11 @@ rescue Errno::ESRCH
 end
 
 # Returns hash: { rps:, p50:, p95:, p99:, count:, errors:, duration: }
-def run_load(path, concurrency, duration)
+def run_load(path, concurrency, duration, think_ms: 0)
   stop_at = Process.clock_gettime(Process::CLOCK_MONOTONIC) + duration
   samples_per_thread = Array.new(concurrency) { [] }
   errors_per_thread = Array.new(concurrency, 0)
+  think_s = think_ms / 1000.0
 
   threads = concurrency.times.map do |i|
     Thread.new do
@@ -179,6 +189,7 @@ def run_load(path, concurrency, duration)
           http.read_timeout = 30
           begin; http.start; rescue StandardError; end
         end
+        sleep think_s if think_s > 0
       end
       http.finish rescue nil
     end
@@ -250,14 +261,16 @@ at_exit { stop_puma }
 scenarios.each_with_index do |scn, idx|
   warn "\n>>> [#{idx + 1}/#{scenarios.size}] Scenario: #{scn[:name]}"
 
+  think_ms = scn[:think_ms] || 0
+
   # --- baseline ---
   warn '    booting puma (baseline, extractor off)...'
   master = start_puma(extract_loop: false)
   warn "    puma master pid=#{master}; warming up #{options[:warmup]}s..."
-  run_load(scn[:path], scn[:concurrency], options[:warmup])  # discard warmup samples
+  run_load(scn[:path], scn[:concurrency], options[:warmup], think_ms: think_ms)
   warn "    measuring baseline for #{options[:steady]}s..."
   cpu_thread = Thread.new { Thread.current[:result] = sample_cpu_window(master, options[:steady]) }
-  baseline = run_load(scn[:path], scn[:concurrency], options[:steady])
+  baseline = run_load(scn[:path], scn[:concurrency], options[:steady], think_ms: think_ms)
   baseline_cpu = cpu_thread.value
   stop_puma
 
@@ -265,10 +278,10 @@ scenarios.each_with_index do |scn, idx|
   warn '    booting puma (experiment, extractor ON)...'
   master = start_puma(extract_loop: true)
   warn "    puma master pid=#{master}; warming up #{options[:warmup]}s..."
-  run_load(scn[:path], scn[:concurrency], options[:warmup])
+  run_load(scn[:path], scn[:concurrency], options[:warmup], think_ms: think_ms)
   warn "    measuring experiment for #{options[:steady]}s..."
   cpu_thread = Thread.new { Thread.current[:result] = sample_cpu_window(master, options[:steady]) }
-  experiment = run_load(scn[:path], scn[:concurrency], options[:steady])
+  experiment = run_load(scn[:path], scn[:concurrency], options[:steady], think_ms: think_ms)
   exp_cpu = cpu_thread.value
   stop_puma
 
