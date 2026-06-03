@@ -91,7 +91,7 @@ handy for verifying that capability bits, tracer versions, and RC products are c
 for a given language — since the simulated service / fake service is fully configurable.
 
 ```bash
-bundle exec bin/simulate_service --language java --service demo-ruby
+bundle exec bin/simulate_service --language java --service gobo
 bundle exec bin/simulate_service --language python --no-traces
 bundle exec bin/simulate_service --language ruby --dogfood-agent
 ```

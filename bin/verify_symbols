@@ -2,7 +2,7 @@
 #
 # bin/verify_symbols
 #
-# Uploads symbols from demo-ruby then queries the Datadog symdb API to verify
+# Uploads symbols from gobo then queries the Datadog symdb API to verify
 # that all expected model and controller classes were indexed.
 #
 # Usage:
@@ -15,7 +15,7 @@
 #   DD_APP_KEY   - Datadog application key (for querying the symdb API)
 #
 # Optional:
-#   DD_SERVICE          - Service name to query (default: demo-ruby)
+#   DD_SERVICE          - Service name to query (default: gobo)
 #   DD_SKIP_UPLOAD      - Set to "true" to skip upload and query only
 #   DD_TRACER           - Path to local tracer (passed through to extract_symbols)
 #   DD_TRACE_DEBUG      - Set to "true" for verbose tracer logging

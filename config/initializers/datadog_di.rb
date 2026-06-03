@@ -3,6 +3,10 @@
 require_relative '../../lib/agent_environments'
 
 Datadog.configure do |c|
+  # Default service to 'gobo' so telemetry reports under a stable name across
+  # entry points (bin/run with no -s, bin/extract_symbols, console). DD_SERVICE
+  # env still wins per the tracer's option precedence.
+  c.service = ENV.fetch('DD_SERVICE', 'gobo')
   c.env = ENV.fetch('DD_ENV') { Rails.env }
   c.agent.port = (ENV["DD_TRACE_AGENT_PORT"] || AgentEnvironments.fetch(AgentEnvironments::DEFAULT_LABEL)[:agent_port]).to_i
   c.dynamic_instrumentation.internal.development = true

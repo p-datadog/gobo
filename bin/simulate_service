@@ -22,9 +22,9 @@ $LOAD_PATH.unshift File.expand_path('../lib', __dir__)
 # Each component can be disabled individually with --no-telemetry, --no-rc, --no-traces.
 #
 # Usage:
-#   bundle exec bin/simulate_service --language java --service demo-ruby
+#   bundle exec bin/simulate_service --language java --service gobo
 #   bundle exec bin/simulate_service --language python --no-traces
-#   bundle exec bin/simulate_service --language java --service demo-ruby --no-rc
+#   bundle exec bin/simulate_service --language java --service gobo --no-rc
 #
 # Supported languages: java, python, ruby, dotnet, go, node, php
 #
@@ -58,7 +58,7 @@ require 'agent_environments'
 
 options = {
   language:   ENV.fetch('DD_SIM_LANGUAGE', 'ruby'),
-  service:    ENV.fetch('DD_SERVICE', 'demo-ruby'),
+  service:    ENV.fetch('DD_SERVICE', 'gobo'),
   env:        ENV.fetch('DD_ENV', 'development'),
   # Default differs from DatadogSim::Runner's library default ('1.42')
   # so the emitted version reveals which code path built the Runner:
@@ -71,7 +71,7 @@ OptionParser.new do |opts|
   opts.banner = "Usage: bin/simulate_service [options]"
 
   opts.on('-l', '--language LANG', "Tracer language to impersonate (default: ruby)") { |v| options[:language] = v }
-  opts.on('-s', '--service NAME',  "Service name (default: demo-ruby)")               { |v| options[:service]  = v }
+  opts.on('-s', '--service NAME',  "Service name (default: gobo)")                    { |v| options[:service]  = v }
   opts.on('-e', '--env ENV',       "Environment (default: development)")              { |v| options[:env]      = v }
   opts.on('-v', '--version VER',   "Service version (default: 1.42.42)")             { |v| options[:version]  = v }
 
@@ -82,7 +82,7 @@ OptionParser.new do |opts|
   opts.on('-S', '--staging-agent',  "Use staging agent on port #{staging_port}") { options[:agent_port] = staging_port }
 
   opts.on('--git-repo URL',  "GitHub repo URL — fetch latest commit on main branch via API\n" \
-                             "                                     (e.g. https://github.com/p-datadog/demo-ruby)\n" \
+                             "                                     (e.g. https://github.com/p-datadog/gobo)\n" \
                              "                                     Omit to auto-detect from local git repo")         { |v| options[:git_repo_url] = v }
   opts.on('--git-branch BR', "Branch to use with --git-repo (default: main)")  { |v| options[:git_branch] = v }
 

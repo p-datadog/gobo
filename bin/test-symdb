@@ -2,7 +2,7 @@
 #
 # bin/test-symdb
 #
-# Uploads symbols from demo-ruby via the local agent, then queries the
+# Uploads symbols from gobo via the local agent, then queries the
 # matching backend API to verify the expected classes were indexed.
 #
 # Usage:
