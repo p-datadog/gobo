@@ -1,0 +1,134 @@
+#!/bin/bash
+# Orchestrate one run of the hot-load hook test (PR #5697).
+#
+# - Launches gobo as a single rails-server process (no Puma workers) with
+#   eager_load=true (production env via bin/run -r).
+# - Hits / once to boot RC and trigger initial extraction.
+# - Waits for `symdb: uploaded N scopes successfully` to confirm initial upload.
+# - Hits /symdb_hot_load_test/define_class?n=<NN> a few times to trigger the
+#   TracePoint :class hook against named runtime-defined classes.
+# - Waits for a second upload log line.
+# - Stops the server and prints log path + a summary.
+#
+# Pairs with config/initializers/zzy_symdb_fork_test.rb (PID-prefixed
+# Datadog.logger) and config/initializers/zzy_symdb_hot_load_test.rb
+# (the /symdb_hot_load_test/* routes).
+
+set -u
+
+LOG_DIR=${LOG_DIR:-$HOME/.local/tmp/symdb-hot-load-test}
+mkdir -p "$LOG_DIR"
+
+TS=$(date +%Y%m%d-%H%M%S)
+LOG=$LOG_DIR/run-$TS.log
+SERVICE=${DD_SERVICE:-gobo-hotload-$TS}
+PORT=${PORT:-3001}
+HOT_LOAD_CLASSES=${HOT_LOAD_CLASSES:-3}   # number of classes to define
+INITIAL_UPLOAD_TIMEOUT=${INITIAL_UPLOAD_TIMEOUT:-180}
+SECOND_UPLOAD_TIMEOUT=${SECOND_UPLOAD_TIMEOUT:-60}
+
+echo "[runner] log:      $LOG"
+echo "[runner] service:  $SERVICE"
+echo "[runner] agent:    dogfood (port 18126)"
+echo "[runner] classes:  $HOT_LOAD_CLASSES"
+
+cd "$(dirname "$0")/.."
+
+# Required for both initializers + the bin/run flags below.
+export SYMDB_FORK_TEST=1
+export SYMDB_HOT_LOAD_TEST=1
+export PORT=$PORT
+
+# bin/run -r = rails server (single process, no Puma cluster).
+# -d = DD_TRACE_DEBUG=1 so we get the symdb log lines.
+# Dogfood agent is bin/run's default (port 18126).
+bin/run -r -p "$PORT" -s "$SERVICE" -d >"$LOG" 2>&1 &
+RUN_PID=$!
+echo "[runner] bin/run pid: $RUN_PID"
+
+cleanup() {
+  echo "[runner] stopping..."
+  pkill -TERM -P "$RUN_PID" 2>/dev/null || true
+  kill -TERM "$RUN_PID" 2>/dev/null || true
+  sleep 2
+  pkill -KILL -P "$RUN_PID" 2>/dev/null || true
+  kill -KILL "$RUN_PID" 2>/dev/null || true
+}
+trap cleanup EXIT
+
+wait_for_port() {
+  local deadline=$((SECONDS + 180))
+  while [ "$SECONDS" -lt "$deadline" ]; do
+    if curl -sf -o /dev/null --max-time 1 "http://localhost:$PORT/" 2>/dev/null; then
+      return 0
+    fi
+    sleep 1
+    if ! kill -0 "$RUN_PID" 2>/dev/null; then
+      echo "[runner] bin/run exited prematurely; tail of log:"; tail -30 "$LOG"
+      return 1
+    fi
+  done
+  return 1
+}
+
+count_uploads() {
+  grep -c "symdb: uploaded .* scopes successfully" "$LOG" 2>/dev/null | tr -d ' '
+}
+
+echo "[runner] waiting for server..."
+wait_for_port || exit 1
+echo "[runner] server up"
+
+# Burst a few hits to make sure RC boots and a request has been served.
+for _ in 1 2 3; do curl -s -o /dev/null --max-time 2 "http://localhost:$PORT/" || true; done
+
+echo "[runner] waiting for initial upload..."
+deadline=$((SECONDS + INITIAL_UPLOAD_TIMEOUT))
+while [ "$SECONDS" -lt "$deadline" ]; do
+  if [ "$(count_uploads)" -ge 1 ]; then
+    break
+  fi
+  sleep 2
+done
+
+initial=$(count_uploads)
+if [ "$initial" -lt 1 ]; then
+  echo "[runner] no initial upload within ${INITIAL_UPLOAD_TIMEOUT}s; aborting."
+  exit 2
+fi
+echo "[runner] initial upload count: $initial"
+
+# Trigger hot-load: define $HOT_LOAD_CLASSES named classes.
+echo "[runner] triggering hot-load classes..."
+for n in $(seq 1 "$HOT_LOAD_CLASSES"); do
+  curl -s "http://localhost:$PORT/symdb_hot_load_test/define_class?n=$n" 2>&1 | tail -1
+  sleep 0.2
+done
+
+# Capture status mid-flight.
+curl -s "http://localhost:$PORT/symdb_hot_load_test/status" 2>&1 | head -1
+echo
+
+echo "[runner] waiting for second upload..."
+deadline=$((SECONDS + SECOND_UPLOAD_TIMEOUT))
+while [ "$SECONDS" -lt "$deadline" ]; do
+  if [ "$(count_uploads)" -ge $((initial + 1)) ]; then
+    break
+  fi
+  sleep 2
+done
+
+second=$(count_uploads)
+echo "[runner] upload count after hot-load: $second (delta=$((second - initial)))"
+
+# A small post-upload wait so any final log lines are captured.
+sleep 3
+
+echo
+echo "[runner] === summary ==="
+echo "log: $LOG"
+echo "uploads observed:"
+grep -E "symdb: uploaded .* scopes successfully" "$LOG" || echo "(none)"
+echo
+echo "hot-load classes defined:"
+grep -E "defined HotLoad" "$LOG" || echo "(none captured in log; check curl output above)"
