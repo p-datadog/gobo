@@ -109,6 +109,38 @@
   </div>
 </div>
 
+<div class="panel panel-info">
+  <div class="panel-heading">
+    <h4 class="panel-title">Hot-Load Runtime Classes (PR #5697)</h4>
+  </div>
+  <div class="panel-body">
+    <p>
+      Define a class at runtime by loading
+      <code>lib/hot_load_runtime/hot_load_&lt;N&gt;.rb</code>.
+      After clicking, wait a few seconds for the next symdb upload &mdash; the
+      new <code>HotLoad&lt;N&gt;</code> class should appear in the scope count
+      above and in the DI UI's autocomplete. Each link opens the endpoint
+      response in a new tab.
+    </p>
+    <ul style="margin-bottom: 0;">
+      <% (1..5).each do |n| %>
+        <li>
+          <%= link_to "Define HotLoad#{n}",
+                "/symdb_hot_load_test/define_class?n=#{n}",
+                target: "_blank" %>
+          &mdash; loads <code>hot_load_<%= n %>.rb</code>
+        </li>
+      <% end %>
+      <li>
+        <%= link_to "Hot-load status (JSON)",
+              "/symdb_hot_load_test/status",
+              target: "_blank" %>
+        &mdash; per-pid symdb component state
+      </li>
+    </ul>
+  </div>
+</div>
+
 <h3>Expected Classes in Symbol Database</h3>
 
 <p>
