@@ -106,10 +106,12 @@ RSpec.describe SymdbController, type: :controller do
 
     context 'symdb_enabled reflects actual tracer setting' do
       it 'returns true when symbol_database setting exists and is enabled' do
-        get :index
-        # The tracer we test with has symbol_database — it should be enabled
-        # (default is true per DD_SYMBOL_DATABASE_UPLOAD_ENABLED)
         if defined?(Datadog::SymbolDatabase)
+          # DD_SYMBOL_DATABASE_UPLOAD_ENABLED defaults to false in the tracer,
+          # so explicitly enable the setting for this test rather than relying
+          # on the developer's shell env to set it.
+          allow(Datadog.configuration.symbol_database).to receive(:enabled).and_return(true)
+          get :index
           expect(assigns(:symdb_enabled)).to eq(true)
         end
       end
