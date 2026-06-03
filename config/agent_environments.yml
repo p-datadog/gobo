@@ -1,6 +1,14 @@
+# `host` is the API host used to build symdb / debugger API URLs (e.g. /api/unstable/symdb-api).
+# `ui_host` is the web-UI host for deep links from gobo's status/probe/symdb pages.
+# For dogfood both happen to be squirrel.datadoghq.com (verified via
+# /api/unstable/symdb-api/services/metadata?service=gobo).
+# For staging both happen to be dd.datad0g.com.
+# The split is kept in case API and UI diverge in the future.
 dogfood:
   agent_port: 18126
-  host: app.datadoghq.com
+  host: squirrel.datadoghq.com
+  ui_host: squirrel.datadoghq.com
 staging:
   agent_port: 28126
   host: dd.datad0g.com
+  ui_host: dd.datad0g.com

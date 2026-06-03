@@ -7,18 +7,23 @@ RSpec.describe AgentEnvironments do
       expect(described_class.all.keys).to contain_exactly('dogfood', 'staging')
     end
 
-    it 'exposes agent_port and host for each label' do
+    it 'exposes agent_port, host, and ui_host for each label' do
       described_class.all.each_value do |attrs|
-        expect(attrs).to include(:agent_port, :host)
+        expect(attrs).to include(:agent_port, :host, :ui_host)
         expect(attrs[:agent_port]).to be_a(Integer)
         expect(attrs[:host]).to be_a(String)
+        expect(attrs[:ui_host]).to be_a(String)
       end
     end
   end
 
   describe '.fetch' do
     it 'returns attributes for a known label' do
-      expect(described_class.fetch('staging')).to include(agent_port: 28126, host: 'dd.datad0g.com')
+      expect(described_class.fetch('staging')).to include(agent_port: 28126, host: 'dd.datad0g.com', ui_host: 'dd.datad0g.com')
+    end
+
+    it 'returns squirrel host and ui_host for dogfood' do
+      expect(described_class.fetch('dogfood')).to include(host: 'squirrel.datadoghq.com', ui_host: 'squirrel.datadoghq.com')
     end
 
     it 'raises for an unknown label' do
@@ -48,7 +53,7 @@ RSpec.describe AgentEnvironments do
   describe '.symdb_api_url' do
     it 'builds the api url from the host' do
       expect(described_class.symdb_api_url('staging')).to eq('https://dd.datad0g.com/api/unstable/symdb-api')
-      expect(described_class.symdb_api_url('dogfood')).to eq('https://app.datadoghq.com/api/unstable/symdb-api')
+      expect(described_class.symdb_api_url('dogfood')).to eq('https://squirrel.datadoghq.com/api/unstable/symdb-api')
     end
   end
 

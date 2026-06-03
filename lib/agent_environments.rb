@@ -7,7 +7,15 @@ module AgentEnvironments
   class << self
     def all
       @all ||= YAML.load_file(CONFIG_PATH).each_with_object({}) do |(label, attrs), out|
-        out[label] = { agent_port: attrs.fetch('agent_port'), host: attrs.fetch('host') }.freeze
+        host = attrs.fetch('host')
+        out[label] = {
+          agent_port: attrs.fetch('agent_port'),
+          host: host,
+          # ui_host is optional; if not set, fall back to host. Use ui_host
+          # when building UI deep links (e.g. /debugging/sessions);
+          # use host when building API URLs (e.g. /api/unstable/symdb-api).
+          ui_host: attrs.fetch('ui_host', host),
+        }.freeze
       end.freeze
     end
 
