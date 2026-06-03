@@ -28,11 +28,17 @@ if ENV['SYMDB_HOT_LOAD_TEST'] == '1'
 
         class_name = "HotLoad#{n}"
         already = Object.const_defined?(class_name)
-        # Use eval-of-class-statement so the TracePoint :class event fires
-        # against a named class (Class.new produces an anonymous class at
-        # event time even when later const_set'd; the design doc calls this
-        # out — anonymous modules are intentionally invisible to symdb).
-        eval("class ::#{class_name}; def hot_load_method_#{n}; #{n}; end; end") unless already
+        # Load a real file under lib/hot_load_runtime/ so the resulting class
+        # has a non-(eval) source_location. The extractor filters out (eval)
+        # paths (extractor.rb:212), so eval-defined classes would never reach
+        # the upload — we want a real file path for the hot-load buffer to
+        # produce a non-empty extraction.
+        path = Rails.root.join('lib/hot_load_runtime', "hot_load_#{n}.rb")
+        unless File.exist?(path)
+          render plain: "no file: #{path}", status: 404
+          return
+        end
+        load(path.to_s) unless already
         render plain: "defined #{class_name} (was_already=#{already}) pid=#{Process.pid}"
       end
 
