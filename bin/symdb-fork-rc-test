@@ -1,0 +1,81 @@
+#!/bin/bash
+# Orchestrate one run of the symdb fork RC distribution test.
+# - Launches gobo with Puma -w 8 (preload_app! is the default in config/puma.rb).
+# - Warms each worker so its lazy RC poller boots (Remote::Tie.boot fires on first Rack req).
+# - Waits long enough for the agent/backend to deliver LIVE_DEBUGGING_SYMBOL_DB.
+# - Captures all stdout/stderr to a single PID-tagged log file.
+# - Stops the server and prints log path.
+#
+# Pairs with config/initializers/zzy_symdb_fork_test.rb, which routes
+# Datadog.logger to stdout with PID-prefixed lines (env-gated on SYMDB_FORK_TEST=1).
+
+set -u
+
+# Log dir defaults to a per-user tmp location; override with LOG_DIR.
+LOG_DIR=${LOG_DIR:-$HOME/.local/tmp/symdb-fork-test}
+mkdir -p "$LOG_DIR"
+
+TS=$(date +%Y%m%d-%H%M%S)
+LOG=$LOG_DIR/run-$TS.log
+SERVICE=symdb-fork-test-$TS
+PORT=3001
+WORKERS=8
+WARMUP_SECONDS=20
+WARMUP_RPS=20
+RC_WAIT_SECONDS=120
+
+echo "[runner] log:     $LOG"
+echo "[runner] service: $SERVICE"
+echo "[runner] agent:   dogfood (port 18126)"
+
+cd "$(dirname "$0")/.."
+
+export SYMDB_FORK_TEST=1
+export PORT=$PORT
+export WEB_CONCURRENCY=$WORKERS
+
+# bin/run defaults to dogfood agent; production env; sets DD_DYNAMIC_INSTRUMENTATION_ENABLED + DD_SYMBOL_DATABASE_UPLOAD_ENABLED.
+# We pass -d for DD_TRACE_DEBUG and -s for service name.
+bin/run -u -w "$WORKERS" -p "$PORT" -s "$SERVICE" -d >"$LOG" 2>&1 &
+RUN_PID=$!
+echo "[runner] bin/run pid: $RUN_PID"
+
+cleanup() {
+  echo "[runner] stopping..."
+  # Kill the whole process group; bin/run forks puma which forks 8 workers.
+  pkill -TERM -P "$RUN_PID" 2>/dev/null || true
+  kill -TERM "$RUN_PID" 2>/dev/null || true
+  sleep 3
+  pkill -KILL -P "$RUN_PID" 2>/dev/null || true
+  kill -KILL "$RUN_PID" 2>/dev/null || true
+}
+trap cleanup EXIT
+
+echo "[runner] waiting for server to accept on :$PORT..."
+for i in $(seq 1 120); do
+  if curl -sf -o /dev/null --max-time 1 "http://localhost:$PORT/up" 2>/dev/null || \
+     curl -sf -o /dev/null --max-time 1 "http://localhost:$PORT/" 2>/dev/null; then
+    echo "[runner] server up after ${i}s"
+    break
+  fi
+  sleep 1
+  if ! kill -0 "$RUN_PID" 2>/dev/null; then
+    echo "[runner] bin/run exited prematurely; tail of log:"; tail -30 "$LOG"; exit 1
+  fi
+done
+
+echo "[runner] warm-up: ${WARMUP_RPS} req/s for ${WARMUP_SECONDS}s = $((WARMUP_RPS*WARMUP_SECONDS)) requests"
+end=$((SECONDS + WARMUP_SECONDS))
+while [ "$SECONDS" -lt "$end" ]; do
+  for _ in $(seq 1 "$WARMUP_RPS"); do
+    curl -s -o /dev/null --max-time 1 "http://localhost:$PORT/" &
+  done
+  wait
+  sleep 1
+done
+
+echo "[runner] warm-up done; awaiting RC for ${RC_WAIT_SECONDS}s..."
+sleep "$RC_WAIT_SECONDS"
+
+echo "[runner] log path: $LOG"
+echo "[runner] log size: $(wc -l <"$LOG") lines"
