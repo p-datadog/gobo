@@ -36,7 +36,8 @@ $LOAD_PATH.unshift File.expand_path('../lib', __dir__)
 #
 #   2. RC request capabilities must be non-empty — an empty/zero bitmask causes the
 #      backend to return "targets: {}" on every poll (no configs delivered). Must
-#      include APM_TRACING capability bits (bits 12,13,14,29).
+#      include APM_TRACING capability bits (bits 12,13,14,29) and, for implicit DI
+#      enablement, bit 38 (APM_TRACING_ENABLE_DYNAMIC_INSTRUMENTATION).
 #
 #   3. Tracer version must be valid semver and meet minimum per language:
 #      DI:    java>=1.5.0, dotnet>=2.23.0, python>=1.8.0, go>=1.64.0,

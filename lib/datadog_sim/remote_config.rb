@@ -11,7 +11,9 @@
 #    The `client.capabilities` field must be a non-empty Base64 bitmask.
 #    An empty string or Base64("\x00") causes the backend to return
 #    `"targets": {}` on every poll — no configs are ever delivered.
-#    Must include APM_TRACING bits (12, 13, 14, 29). See CAPABILITIES constant.
+#    Must include APM_TRACING bits (12, 13, 14, 29) and bit 38
+#    (APM_TRACING_ENABLE_DYNAMIC_INSTRUMENTATION) so the backend delivers
+#    implicit DI enablement signals. See CAPABILITIES constant.
 #
 # 2. TRACER VERSION (REQUIRED — must be valid semver above minimum)
 #    `client_tracer.tracer_version` is parsed by TracerVersionChecker.
@@ -56,8 +58,12 @@ module DatadogSim
     # REQUIRED: non-empty APM_TRACING capability bitmask.
     # See requirement #1 in the file header above.
     # bits 12,13,14,29 = APM_TRACING_SAMPLE_RATE, LOGS_INJECTION, HTTP_HEADER_TAGS, SAMPLE_RULES
-    # (1<<12)|(1<<13)|(1<<14)|(1<<29) = 0x20007000 = bytes [32, 0, 112, 0] = "IABwAA=="
-    CAPABILITIES = Base64.strict_encode64([32, 0, 112, 0].pack('C*'))
+    # bit 38       = APM_TRACING_ENABLE_DYNAMIC_INSTRUMENTATION (implicit DI enablement)
+    # (1<<12)|(1<<13)|(1<<14)|(1<<29)|(1<<38) = 0x4020007000
+    #   = bytes [64, 32, 0, 112, 0] = "QCAAcAA="
+    # Declaring bit 38 lets the backend send `lib_config.dynamic_instrumentation_enabled`
+    # in APM_TRACING configs to this simulated tracer when a probe is created in the UI.
+    CAPABILITIES = Base64.strict_encode64([64, 32, 0, 112, 0].pack('C*'))
 
     def initialize(config, on_config: nil)
       @config = config
@@ -182,6 +188,18 @@ module DatadogSim
             @on_config&.call({ upload_symbols: true })
           else
             @config[:logger]&.debug("RC: LIVE_DEBUGGING_SYMBOL_DB config content: #{config_content.inspect}")
+          end
+        elsif path.include?('APM_TRACING')
+          # Implicit DI enablement: `lib_config.dynamic_instrumentation_enabled`
+          # arrives here when a probe is created/deleted in the Datadog UI for
+          # this service. Verifies the backend is wired up before testing with
+          # a real tracer. See dd-trace-rb #5525, design/gobo-changes.md.
+          config_content = extract_config_content(body, path)
+          lib_config = config_content.is_a?(Hash) ? config_content['lib_config'] : nil
+          if lib_config.is_a?(Hash) && lib_config.key?('dynamic_instrumentation_enabled')
+            @config[:logger]&.info("RC: APM_TRACING received: dynamic_instrumentation_enabled=#{lib_config['dynamic_instrumentation_enabled']}")
+          else
+            @config[:logger]&.info("RC: APM_TRACING received: dynamic_instrumentation_enabled not present (preserve)")
           end
         else
           @config[:logger]&.debug("RC: ignoring config for other product: #{path}")
