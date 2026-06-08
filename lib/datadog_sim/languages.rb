@@ -47,10 +47,11 @@ module DatadogSim
       language_name: 'ruby',
       runtime_name: 'ruby',
       runtime_version: RUBY_VERSION,
-      # 2.35.35 — intentionally above web-ui PR #286651's 2.31.0 placeholder
-      # AND above the expected real-release floor (>= 2.35.0). High patch
-      # number to stay above any near-term bump of the web-ui placeholder.
-      tracer_version: '2.35.35',
+      # 2.36.36 — intentionally above the v2.36.0 floor pinned by dd-go PR
+      # #241136 (rc-api `MinVersionForDIServiceEnv["ruby"]`) and the matching
+      # web-ui PR #286651 placeholder. High patch number to stay above any
+      # near-term bump of either constant.
+      tracer_version: '2.36.36',
       rc_language: 'ruby',
     },
     'java' => {
