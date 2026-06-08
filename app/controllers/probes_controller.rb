@@ -101,8 +101,12 @@ class ProbesController < ApplicationController
   def fetch_di_enabled_status
     return false unless defined?(Datadog::DI)
 
+    # With implicit enablement the DI component is built unconditionally
+    # on supported environments (so it can be started later by RC), so
+    # `!component.nil?` would always be true. `started?` reflects whether
+    # DI is actually running — set by env var at boot or by RC at runtime.
     component = Datadog::DI.component
-    !component.nil?
+    component&.started? || false
   rescue => e
     Rails.logger.error "Error fetching DI enabled status: #{e.class}: #{e}"
     false
