@@ -2,6 +2,22 @@ class DebuggerTestController < ApplicationController
   # No CSRF token verification needed - these are GET endpoints which are
   # exempt from CSRF protection by Rails convention (GET requests should be idempotent)
 
+  # Triggers Datadog.configure so we can verify that DI (implicitly enabled
+  # via remote config) survives a Components rebuild. The block is a no-op;
+  # `Datadog.configure` always rebuilds Components regardless. See the
+  # ComponentsState round-trip path in dd-trace-rb #5525.
+  #
+  # POST so it can't be triggered by accidental link prefetch / link probing.
+  skip_before_action :verify_authenticity_token, only: :reconfigure
+  def reconfigure
+    before_started = di_started?
+    Datadog.configure { |_c| }
+    after_started = di_started?
+    render plain: "Datadog.configure called. DI started: before=#{before_started} after=#{after_started}"
+  rescue => e
+    render plain: "#{e.class}: #{e.message}", status: :internal_server_error
+  end
+
   def calculate
     # Get fibonacci_n from params, default to ExpensiveModel::DEFAULT_FIBONACCI_N
     fibonacci_n = params[:fibonacci_n]&.to_i || ExpensiveModel::DEFAULT_FIBONACCI_N
@@ -183,5 +199,12 @@ class DebuggerTestController < ApplicationController
     render plain: response_text
   rescue => e
     render plain: "#{e.class}: #{e.message}"
+  end
+
+  private
+
+  def di_started?
+    return false unless defined?(Datadog::DI)
+    Datadog::DI.component&.started? || false
   end
 end
