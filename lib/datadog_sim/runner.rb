@@ -65,7 +65,14 @@ module DatadogSim
     # Sends app-started, then polls RC at RC_POLL_INTERVAL and sends
     # heartbeats at HEARTBEAT_INTERVAL.
     def run
-      log "Starting simulation (language=#{@config[:rc_language]}, service=#{@config[:service]})"
+      log "Starting simulation (language=#{@config[:rc_language]}, service=#{@config[:service]}, env=#{@config[:env]})"
+      # Reporting tracer_version so it's obvious from the startup output which
+      # version the simulator is claiming — the UI's enablement-eligibility
+      # floor (web-ui constants.ts) and the backend's TracerVersionChecker.kt
+      # floor are both gated on this value. See lib/datadog_sim/languages.rb
+      # header for the per-language floors and the cross-check rule.
+      log "Reporting tracer_version=#{@config[:tracer_version]} service_version=#{@config[:version]}"
+      log "Agent: #{@config[:agent_host]}:#{@config[:agent_port]}"
       log "Components: telemetry=#{@enable_telemetry} remote_config=#{@enable_remote_config} traces=#{@enable_traces}"
 
       startup
