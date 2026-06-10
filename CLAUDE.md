@@ -8,6 +8,36 @@ Commit after every logical change in the same response that makes the change —
 
 Always prefix Ruby/Rails commands with `bundle exec`. Never run `ruby`, `rails`, `rake`, `rspec`, or other gem-provided executables without `bundle exec`.
 
+## Launching the App
+
+**Use `bin/run` as the entry point.** Do not invoke `bundle exec puma`, `bin/rails server`, or `unicorn` directly. `bin/run` handles every prerequisite the servers need: `bundle install`, `yarn install`, `rails db:migrate`, admin-user seed, `assets:precompile`, `webpacker:compile`, `SECRET_KEY_BASE` generation for production, and the standard Datadog env block (service, env, agent port, RC enablement in dev, DI/SymDB enablement).
+
+**Flags** (see `bin/run -h` for the live list):
+
+| Flag | Meaning |
+|---|---|
+| `-r` | Rails server (default mode) |
+| `-u` | Puma server |
+| `-p PORT` | port (default 3000) |
+| `-w WORKERS` | Puma worker count (only with `-u`) |
+| `-s SERVICE` | `DD_SERVICE` |
+| `-e ENV` | `DD_ENV` |
+| `-d` | `DD_TRACE_DEBUG=1` |
+| `-D` | Development env (default is production) |
+| `-S` | Staging agent on port 28126 (default: dogfood on 18126) |
+
+**Common invocations:**
+
+```sh
+# Local dev against staging agent with debug logs
+bin/run -r -D -S -d -s gobo -e staging
+
+# Puma cluster (2 workers) in production env against staging
+bin/run -u -w 2 -S -d -s gobo -e staging
+```
+
+**Limitation — implicit DI enablement testing:** `bin/run` exports `DD_DYNAMIC_INSTRUMENTATION_ENABLED=1` and `DD_SYMBOL_DATABASE_UPLOAD_ENABLED=1` unconditionally. Tests that require these env vars to be **unset** (for example, verifying DI is turned on by Remote Configuration rather than by env var) cannot use `bin/run` as-is. Either add a `-I` flag to `bin/run` (so it leaves DI/SymDB env vars unset) or document the manual launch with the full env block in the test plan that requires it.
+
 ## Scripts
 
 All script logic must live in files under `lib/` so it can be unit tested. `bin/` scripts are thin wrappers that parse CLI options and call into `lib/`. Add specs in `spec/lib/` for all lib code.
