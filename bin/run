@@ -71,6 +71,13 @@ cd "$script_dir/.."
 bundle install
 yarn install
 
+# webpack 4 hashes with MD4, which OpenSSL 3 (Node 17+) disables by default.
+# Re-enable the legacy provider so asset compilation does not abort.
+node_major=$(node -v | cut -d'.' -f1 | sed 's/v//')
+if [ "$node_major" -ge 17 ]; then
+    export NODE_OPTIONS=--openssl-legacy-provider
+fi
+
 # Set Rails environment
 if [ -n "$dev_mode" ]; then
     export RAILS_ENV=development
@@ -109,11 +116,6 @@ if [ -z "$dev_mode" ]; then
   # Compile webpacker if necessary
   if [ ! -f "public/packs/manifest.json" ]; then
     echo "Compiling webpacker..."
-    # Set NODE_OPTIONS for Node 17+ compatibility
-    NODE_VERSION=$(node -v | cut -d'.' -f1 | sed 's/v//')
-    if [ "$NODE_VERSION" -ge 17 ]; then
-      export NODE_OPTIONS=--openssl-legacy-provider
-    fi
     DD_TRACE_ENABLED=false WEBPACKER_DEBUG=true WEBPACK_VERBOSE=true bundle exec rails webpacker:compile
   fi
 fi
