@@ -4,7 +4,7 @@ RSpec.describe "Probes", type: :request do
   it "should get index" do
     get probes_path
     expect(response).to have_http_status(:success)
-    expect(response.body).to include("<title>Active Dynamic Instrumentation Probes | Gobo</title>")
+    expect(response.body).to include("<title>DI Status | Gobo</title>")
   end
 
   it "should display probe counts when no probes are active" do
