@@ -90,6 +90,53 @@ RSpec.describe DiStatusController, type: :controller do
     end
   end
 
+  describe 'REDAPL service_config query' do
+    render_views
+
+    let(:result) do
+      RedaplQuery::Result.new(
+        rows: [RedaplQuery::Row.new(service_name: 'gobo', language_name: 'ruby', env: 'staging')],
+        error: nil, query: "SELECT ... WHERE service_name = 'gobo'",
+        host: 'dd.datad0g.com', cookie_path: '/cookies-staging.json', window_minutes: 10
+      )
+    end
+
+    it 'does not run the query on a plain page load' do
+      expect(RedaplQuery).not_to receive(:new)
+      get :index
+      expect(assigns(:redapl)).to be_nil
+    end
+
+    it 'runs the query for the requested environment and renders the rows' do
+      expect(RedaplQuery).to receive(:new)
+        .with(host: 'dd.datad0g.com', cookie_label: 'staging', service: anything)
+        .and_return(instance_double(RedaplQuery, call: result))
+      get :index, params: {redapl: 'staging'}
+      expect(assigns(:redapl)[:rows]).to eq([{service_name: 'gobo', language_name: 'ruby', env: 'staging'}])
+      expect(response.body).to include('cookies-staging.json')
+      expect(response.body).to include('gobo')
+      expect(response.body).to include('staging')
+    end
+
+    it 'shows the query error to the user when REDAPL fails' do
+      failed = RedaplQuery::Result.new(
+        rows: [], error: 'RuntimeError: no cookies staged at /cookies-dogfood.json',
+        query: 'SELECT ...', host: 'squirrel.datadoghq.com',
+        cookie_path: '/cookies-dogfood.json', window_minutes: 10
+      )
+      allow(RedaplQuery).to receive(:new).and_return(instance_double(RedaplQuery, call: failed))
+      get :index, params: {redapl: 'dogfood'}
+      expect(response.body).to include('REDAPL query failed')
+      expect(response.body).to include('no cookies staged at /cookies-dogfood.json')
+    end
+
+    it 'ignores an unknown environment without running the query' do
+      expect(RedaplQuery).not_to receive(:new)
+      get :index, params: {redapl: 'bogus'}
+      expect(assigns(:redapl)).to be_nil
+    end
+  end
+
   describe 'JSON di_enabled' do
     it 'serializes the state as a string' do
       allow(controller).to receive(:fetch_di_enabled_status).and_return(:can_enable_remotely)

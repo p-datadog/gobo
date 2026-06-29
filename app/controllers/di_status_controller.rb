@@ -1,3 +1,5 @@
+require_relative '../../lib/redapl_query'
+
 class DiStatusController < ApplicationController
   def index
     # Get active dynamic instrumentation probes from Datadog
@@ -14,6 +16,9 @@ class DiStatusController < ApplicationController
     @di_enabled = fetch_di_enabled_status
     @agent_address = fetch_agent_address
     @agent_environment_label = fetch_agent_environment_label
+    @redapl_environments = AgentEnvironments.all.keys
+    @redapl_env = redapl_env_param
+    @redapl = fetch_redapl_environments(@redapl_env) if @redapl_env
 
     respond_to do |format|
       format.html
@@ -37,6 +42,30 @@ class DiStatusController < ApplicationController
   end
 
   private
+
+  # The requested REDAPL environment. The query runs only when explicitly
+  # requested, and only for a known agent environment.
+  def redapl_env_param
+    requested = params[:redapl].presence
+    requested if requested && AgentEnvironments.all.key?(requested)
+  end
+
+  # Reads cookies fresh from wclip (/cookies-<env>.json) on every request and
+  # runs the REDAPL service_config query for the current service. Cookies are
+  # never stored.
+  def fetch_redapl_environments(label)
+    host = AgentEnvironments.fetch(label)[:host]
+    result = RedaplQuery.new(host: host, cookie_label: label, service: @service).call
+    {
+      environment: label,
+      host: result.host,
+      cookie_path: result.cookie_path,
+      query: result.query,
+      window_minutes: result.window_minutes,
+      rows: result.rows.map { |r| {service_name: r.service_name, language_name: r.language_name, env: r.env} },
+      error: result.error,
+    }
+  end
 
   def fetch_all_installed_probes
     @error = nil
@@ -227,6 +256,7 @@ class DiStatusController < ApplicationController
       pending: serialize_probes(@pending_probes),
       failed: serialize_probes(@failed_probes),
       error: @error,
+      redapl: @redapl,
     }
   end
 
