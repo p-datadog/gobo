@@ -20,10 +20,22 @@
   <div class="panel-heading"><h4 class="panel-title">Dynamic Instrumentation</h4></div>
   <div class="panel-body">
     <strong>DI Enabled:</strong>
-    <% if @di_enabled %>
-      <span class="text-success"><strong>✓ Yes</strong></span>
+    <% case @di_enabled %>
+    <% when :enabled_explicitly %>
+      <span class="text-success"><strong>✓ Yes — explicitly enabled</strong></span>
+      <span class="text-muted">(DD_DYNAMIC_INSTRUMENTATION_ENABLED=true)</span>
+    <% when :enabled_implicitly %>
+      <span class="text-success"><strong>✓ Yes — enabled remotely</strong></span>
+      <span class="text-muted">(turned on by Remote Configuration)</span>
+    <% when :disabled_explicitly %>
+      <span class="text-danger"><strong>✗ No — explicitly disabled</strong></span>
+      <span class="text-muted">(DD_DYNAMIC_INSTRUMENTATION_ENABLED=false; blocks remote enablement)</span>
+    <% when :can_enable_remotely %>
+      <span class="text-warning"><strong>✗ No — can be enabled remotely</strong></span>
+      <span class="text-muted">(not running; Remote Configuration may turn it on)</span>
     <% else %>
-      <span class="text-danger"><strong>✗ No</strong></span>
+      <span class="text-muted"><strong>✗ No — unavailable</strong></span>
+      <span class="text-muted">(dynamic instrumentation is not available in this environment)</span>
     <% end %>
   </div>
 </div>

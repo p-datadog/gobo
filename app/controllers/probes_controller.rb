@@ -98,17 +98,79 @@ class ProbesController < ApplicationController
     store.respond_to?(:failed_probes) ? store.failed_probes : {}
   end
 
+  # Resolves DI enablement into one of five states:
+  #   :enabled_explicitly   - running because DD_DYNAMIC_INSTRUMENTATION_ENABLED=true
+  #   :enabled_implicitly   - running because Remote Configuration turned it on
+  #   :disabled_explicitly  - DD_DYNAMIC_INSTRUMENTATION_ENABLED=false (also blocks RC)
+  #   :can_enable_remotely  - off, but Remote Configuration may turn it on
+  #   :unavailable          - DI absent or unsupported in this environment
   def fetch_di_enabled_status
-    return false unless defined?(Datadog::DI)
+    return :unavailable unless defined?(Datadog::DI) && Datadog::DI.respond_to?(:component)
+    return :disabled_explicitly if di_explicitly_disabled?
 
-    # With implicit enablement the DI component is built unconditionally
-    # on supported environments (so it can be started later by RC), so
-    # `!component.nil?` would always be true. `started?` reflects whether
-    # DI is actually running — set by env var at boot or by RC at runtime.
-    component = Datadog::DI.component
-    component&.started? || false
+    if di_component_running?(Datadog::DI.component)
+      return di_explicitly_enabled? ? :enabled_explicitly : :enabled_implicitly
+    end
+
+    di_supports_remote_enablement? && !di_unsupported? ? :can_enable_remotely : :unavailable
   rescue => e
     Rails.logger.error "Error fetching DI enabled status: #{e.class}: #{e}"
+    :unavailable
+  end
+
+  def di_component_running?(component)
+    return false unless component
+    return component.started? if component.respond_to?(:started?)
+
+    # Tracers without implicit enablement only build the component when DI is
+    # actually on, so a present component means DI is running.
+    true
+  end
+
+  def di_explicitly_enabled?
+    if defined?(Datadog::DI::Component) && Datadog::DI::Component.respond_to?(:explicitly_enabled?)
+      return Datadog::DI::Component.explicitly_enabled?(Datadog.configuration)
+    end
+
+    di_setting_explicitly?(true)
+  end
+
+  def di_explicitly_disabled?
+    if defined?(Datadog::DI::Remote) && Datadog::DI::Remote.respond_to?(:explicitly_disabled?)
+      return Datadog::DI::Remote.explicitly_disabled?(Datadog.configuration)
+    end
+
+    di_setting_explicitly?(false)
+  end
+
+  # Fallback for tracers that lack DI::Component.explicitly_enabled? /
+  # DI::Remote.explicitly_disabled?: read the setting directly and confirm it
+  # was set by the customer rather than left at its default.
+  def di_setting_explicitly?(value)
+    config = Datadog.configuration
+    return false unless config.respond_to?(:dynamic_instrumentation)
+
+    settings = config.dynamic_instrumentation
+    return false unless settings.respond_to?(:using_default?)
+
+    !settings.using_default?(:enabled) && settings.enabled == value
+  rescue => e
+    Rails.logger.error "Error reading DI setting: #{e.class}: #{e}"
+    false
+  end
+
+  # Remote enablement requires a tracer that can start DI at runtime, which is
+  # the same tracer that exposes Component#started?.
+  def di_supports_remote_enablement?
+    defined?(Datadog::DI::Component) && Datadog::DI::Component.method_defined?(:started?)
+  end
+
+  def di_unsupported?
+    return false unless Datadog::DI.respond_to?(:unsupported_reason)
+
+    !Datadog::DI.unsupported_reason(Datadog.configuration).nil?
+  rescue => e
+    Rails.logger.error "Error reading DI support status: #{e.class}: #{e}"
     false
   end
 
@@ -159,7 +221,7 @@ class ProbesController < ApplicationController
       git_repository_url: @git_repository_url,
       git_commit_sha: @git_commit_sha,
       agent_address: @agent_address,
-      di_enabled: @di_enabled,
+      di_enabled: @di_enabled.to_s,
       active: serialize_probes(@probes),
       disabled: serialize_probes(@disabled_probes),
       pending: serialize_probes(@pending_probes),
