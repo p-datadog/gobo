@@ -63,12 +63,7 @@
     <% if @probes.empty? && @disabled_probes.empty? && @pending_probes.empty? && @failed_probes.empty? %>
       <div class="alert alert-info">
         <p><strong>No probes found.</strong></p>
-        <p>This could mean:</p>
-        <ul>
-          <li>Dynamic instrumentation is not enabled</li>
-          <li>No probes have been configured yet</li>
-          <li>The Datadog agent is not connected</li>
-        </ul>
+        <p><%= probes_empty_state_reason(@di_enabled, @error) %></p>
       </div>
     <% end %>
 

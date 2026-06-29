@@ -76,6 +76,20 @@ RSpec.describe ProbesController, type: :controller do
     end
   end
 
+  describe 'empty-state root cause' do
+    render_views
+
+    before { allow(controller).to receive(:fetch_all_installed_probes).and_return({}) }
+
+    it 'states the accurate cause for the resolved DI state, not generic guesses' do
+      allow(controller).to receive(:fetch_di_enabled_status).and_return(:disabled_explicitly)
+      get :index
+      expect(response.body).to include('No probes found.')
+      expect(response.body).to include('explicitly disabled')
+      expect(response.body).not_to include('This could mean:')
+    end
+  end
+
   describe 'JSON di_enabled' do
     it 'serializes the state as a string' do
       allow(controller).to receive(:fetch_di_enabled_status).and_return(:can_enable_remotely)
