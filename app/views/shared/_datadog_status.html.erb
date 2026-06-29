@@ -33,6 +33,13 @@
           <% if local_assigns[:agent_environment_label].present? %>
             <span class="label label-default"><%= agent_environment_label %></span>
           <% end %>
+          <% if local_assigns[:agent_operational] %>
+            <% if agent_operational.operational? %>
+              <span class="label label-success">operational</span>
+            <% else %>
+              <span class="label label-danger" title="<%= agent_operational.error %>">not operational</span>
+            <% end %>
+          <% end %>
         <% else %>
           <span class="text-muted">Unknown</span>
         <% end %>

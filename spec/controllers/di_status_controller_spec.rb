@@ -90,6 +90,32 @@ RSpec.describe DiStatusController, type: :controller do
     end
   end
 
+  describe 'agent operational status' do
+    render_views
+
+    it 'shows the agent as operational when /info responds' do
+      allow(controller).to receive(:fetch_agent_operational)
+        .and_return(AgentInfo::Result.new(operational: true, error: nil))
+      get :index
+      expect(response.body).to include('operational')
+      expect(response.body).not_to include('not operational')
+    end
+
+    it 'shows the agent as not operational when /info fails' do
+      allow(controller).to receive(:fetch_agent_operational)
+        .and_return(AgentInfo::Result.new(operational: false, error: 'Errno::ECONNREFUSED: Connection refused'))
+      get :index
+      expect(response.body).to include('not operational')
+    end
+
+    it 'serializes the operational flag in JSON' do
+      allow(controller).to receive(:fetch_agent_operational)
+        .and_return(AgentInfo::Result.new(operational: true, error: nil))
+      get :index, format: :json
+      expect(JSON.parse(response.body)['agent_operational']).to be(true)
+    end
+  end
+
   describe 'REDAPL service_config query' do
     render_views
 

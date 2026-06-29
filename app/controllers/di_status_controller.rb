@@ -16,6 +16,7 @@ class DiStatusController < ApplicationController
     @di_enabled = fetch_di_enabled_status
     @agent_address = fetch_agent_address
     @agent_environment_label = fetch_agent_environment_label
+    @agent_operational = fetch_agent_operational
     @redapl_environments = AgentEnvironments.all.keys
     @redapl_env = redapl_env_param
     @redapl = fetch_redapl_environments(@redapl_env) if @redapl_env
@@ -257,6 +258,7 @@ class DiStatusController < ApplicationController
       failed: serialize_probes(@failed_probes),
       error: @error,
       redapl: @redapl,
+      agent_operational: @agent_operational&.operational?,
     }
   end
 

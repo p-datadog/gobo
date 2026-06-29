@@ -1,3 +1,5 @@
+require_relative '../../lib/agent_info'
+
 class ApplicationController < ActionController::Base
   # Protect from CSRF attacks by raising an exception
   protect_from_forgery with: :exception
@@ -13,6 +15,16 @@ class ApplicationController < ActionController::Base
       "#{settings.agent.host}:#{settings.agent.port}"
     rescue => e
       "error: #{e.class}: #{e}"
+    end
+
+    def fetch_agent_operational
+      return nil unless defined?(Datadog)
+
+      settings = Datadog.configuration
+      AgentInfo.new(host: settings.agent.host, port: settings.agent.port).call
+    rescue => e
+      Rails.logger.error "Error checking agent /info: #{e.class}: #{e}"
+      nil
     end
 
     def fetch_agent_environment_label
