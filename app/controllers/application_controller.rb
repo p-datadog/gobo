@@ -21,7 +21,8 @@ class ApplicationController < ActionController::Base
       return nil unless defined?(Datadog)
 
       settings = Datadog.configuration
-      AgentInfo.new(host: settings.agent.host, port: settings.agent.port).call
+      host = settings.agent.host.presence || '127.0.0.1'
+      AgentInfo.new(host: host, port: settings.agent.port).call
     rescue => e
       Rails.logger.error "Error checking agent /info: #{e.class}: #{e}"
       nil

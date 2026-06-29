@@ -108,6 +108,14 @@ RSpec.describe DiStatusController, type: :controller do
       expect(response.body).to include('not operational')
     end
 
+    it 'defaults the agent host to 127.0.0.1 when the setting is unset' do
+      agent = double('agent', host: nil, port: 18126)
+      allow(Datadog.configuration).to receive(:agent).and_return(agent)
+      expect(AgentInfo).to receive(:new).with(host: '127.0.0.1', port: 18126)
+        .and_return(instance_double(AgentInfo, call: AgentInfo::Result.new(operational: true)))
+      controller.send(:fetch_agent_operational)
+    end
+
     it 'serializes the operational flag in JSON' do
       allow(controller).to receive(:fetch_agent_operational)
         .and_return(AgentInfo::Result.new(operational: true, error: nil))
