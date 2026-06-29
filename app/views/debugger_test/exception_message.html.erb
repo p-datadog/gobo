@@ -14,7 +14,7 @@
         In Datadog, set a <strong>method probe</strong> on <code>ExceptionDemo#raise_exception</code>
         with <strong>capture snapshot</strong> enabled.
       </li>
-      <li>Wait for the probe to appear as active on <%= link_to "DI Probes", probes_path %></li>
+      <li>Wait for the probe to appear as active on <%= link_to "DI Status", probes_path %></li>
       <li>Click each button below &mdash; all three call the same method with a different parameter</li>
       <li>
         In Datadog, open the snapshot for each invocation and check the

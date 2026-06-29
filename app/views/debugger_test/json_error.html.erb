@@ -10,11 +10,11 @@
   <div class="panel-body">
     <ol>
       <li>In Datadog, set a <strong>method probe</strong> on <code>BinaryDataModel#process</code></li>
-      <li>Wait for the probe to appear as active on <%= link_to "DI Probes", probes_path %></li>
+      <li>Wait for the probe to appear as active on <%= link_to "DI Status", probes_path %></li>
       <li>Click <strong>Normal Operation</strong> — snapshot captures and serializes successfully</li>
       <li>Click <strong>Binary data</strong> — binary string passed as method argument, DI serializes it natively without error</li>
       <li>Click <strong>Custom serializer returns binary data</strong> — custom serializer produces a non-UTF-8 binary string, JSON encoding fails, probe is automatically disabled with ERROR status</li>
-      <li>Return to <%= link_to "DI Probes", probes_path %> to see the probe status change</li>
+      <li>Return to <%= link_to "DI Status", probes_path %> to see the probe status change</li>
     </ol>
   </div>
 </div>
