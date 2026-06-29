@@ -1,6 +1,6 @@
 require 'rails_helper'
 
-RSpec.describe ProbesController, type: :controller do
+RSpec.describe DiStatusController, type: :controller do
   describe 'GET #index DI enablement state' do
     # Drives the decision table in #fetch_di_enabled_status by stubbing the
     # individual predicate helpers, so each branch is exercised independently

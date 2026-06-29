@@ -1,4 +1,4 @@
-class ProbesController < ApplicationController
+class DiStatusController < ApplicationController
   def index
     # Get active dynamic instrumentation probes from Datadog
     all_probes = fetch_all_installed_probes
