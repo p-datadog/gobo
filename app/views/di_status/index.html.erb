@@ -50,12 +50,6 @@
   </div>
   <div class="panel-body">
     <p>
-      Queries the Live Debugger REDAPL <code>service_config</code> dataset (the source
-      for the web-ui per-service environment list) for
-      <% if @service %><code><%= @service %></code><% else %>all services<% end %>.
-      Cookies are read fresh from wclip on each query and never stored.
-    </p>
-    <p>
       Query against:
       <% @redapl_environments.each do |env| %>
         <%= link_to "#{env} (cookies-#{env}.json)", di_status_path(redapl: env),
@@ -67,7 +61,7 @@
       <dl class="dl-horizontal">
         <dt>Environment:</dt><dd><code><%= @redapl[:environment] %></code></dd>
         <dt>Host:</dt><dd><code><%= @redapl[:host] %></code></dd>
-        <dt>Cookies:</dt><dd>wclip <code><%= @redapl[:cookie_path] %></code></dd>
+        <dt>Cookies:</dt><dd><code><%= @redapl[:cookie_path] %></code></dd>
         <dt>Lookback:</dt><dd><%= @redapl[:window_minutes] %> minute(s)</dd>
         <dt>Query:</dt><dd><pre><%= @redapl[:query] %></pre></dd>
       </dl>
@@ -81,8 +75,7 @@
         <div class="alert alert-warning">
           No <code>service_config</code> rows for
           <% if @service %><code><%= @service %></code><% else %>any service<% end %>
-          in the last <%= @redapl[:window_minutes] %> minute(s) — the service is not
-          delivering instrumentation telemetry to this org within the window.
+          in the last <%= @redapl[:window_minutes] %> minute(s).
         </div>
       <% else %>
         <table class="table table-striped table-condensed">
