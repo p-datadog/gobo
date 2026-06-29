@@ -25,6 +25,62 @@ RSpec.describe RedaplQuery do
     end
   end
 
+  describe '#fetch_csrf_token' do
+    subject(:redapl) { described_class.new(host: 'squirrel.datadoghq.com', cookie_label: 'dogfood') }
+
+    it 'reads csrf_token from the legacy_current_user JSON endpoint' do
+      expect(redapl).to receive(:http_get)
+        .with(URI('https://squirrel.datadoghq.com/api/v1/legacy_current_user'), anything)
+        .and_return([nil, '{"id":1,"csrf_token":"0d6ac09d603a"}'])
+      expect(redapl.send(:fetch_csrf_token, [])).to eq('0d6ac09d603a')
+    end
+
+    it 'raises when the user payload carries no csrf_token (unauthenticated)' do
+      allow(redapl).to receive(:http_get).and_return([nil, '{"user_status":"not-logged-in"}'])
+      expect { redapl.send(:fetch_csrf_token, []) }
+        .to raise_error(/not authenticated/)
+    end
+  end
+
+  describe '#http_get' do
+    subject(:redapl) { described_class.new(host: host, cookie_label: 'staging') }
+
+    def response(klass, code, body: '', location: nil)
+      r = klass.new('1.1', code, 'msg')
+      r['location'] = location if location
+      allow(r).to receive(:body).and_return(body)
+      r
+    end
+
+    it 'returns the body on success' do
+      allow(redapl).to receive(:perform).and_return(response(Net::HTTPOK, '200', body: 'hi'))
+      _, body = redapl.send(:http_get, URI('https://x/'))
+      expect(body).to eq('hi')
+    end
+
+    it 'follows a non-login redirect' do
+      allow(redapl).to receive(:perform).and_return(
+        response(Net::HTTPFound, '302', location: 'https://x/apm/home'),
+        response(Net::HTTPOK, '200', body: 'landed')
+      )
+      _, body = redapl.send(:http_get, URI('https://x/'))
+      expect(body).to eq('landed')
+    end
+
+    it 'raises when redirected to login' do
+      allow(redapl).to receive(:perform)
+        .and_return(response(Net::HTTPFound, '302', location: 'https://x/account/login?next=%2F'))
+      expect { redapl.send(:http_get, URI('https://x/')) }
+        .to raise_error(/not authenticated/)
+    end
+
+    it 'raises on a non-success, non-redirect response' do
+      allow(redapl).to receive(:perform).and_return(response(Net::HTTPInternalServerError, '500', body: 'boom'))
+      expect { redapl.send(:http_get, URI('https://x/')) }
+        .to raise_error(/HTTP 500/)
+    end
+  end
+
   describe '#call' do
     subject(:redapl) { described_class.new(host: host, cookie_label: 'staging', service: 'gobo') }
 

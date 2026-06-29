@@ -13,11 +13,11 @@ class RedaplQuery
   WCLIP_HOST = 'localhost'.freeze
   WCLIP_PORT = 8093
   BEAGLE_PATH = '/api/ui/beagle/table'.freeze
+  CURRENT_USER_PATH = '/api/v1/legacy_current_user'.freeze
   LOGIN_PATH = '/account/login'.freeze
   QUERY_SOURCE = 'live-debugger'.freeze
   BASE_QUERY =
     'SELECT DISTINCT(service_name), language_name, service_env as env FROM service_config'.freeze
-  CSRF_TOKEN_RE = /"csrf_token"\s*:\s*"([0-9a-fA-F]+)"/
   USER_AGENT = (
     'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 ' \
     '(KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36'
@@ -86,15 +86,20 @@ class RedaplQuery
     cookies.map { |c| "#{c['name']}=#{c['value']}" }.join('; ')
   end
 
+  # The web-ui landing page differs per host (staging embeds the token in HTML,
+  # dogfood serves a JS shell), but both expose user.csrf_token via the
+  # legacy_current_user JSON endpoint, so read it from there.
   def fetch_csrf_token(cookies)
     _, body = http_get(
-      URI("https://#{@host}/"),
-      'cookie' => cookie_header(cookies), 'user-agent' => USER_AGENT
+      URI("https://#{@host}#{CURRENT_USER_PATH}"),
+      'cookie' => cookie_header(cookies),
+      'accept' => 'application/json',
+      'user-agent' => USER_AGENT
     )
-    match = CSRF_TOKEN_RE.match(body)
-    raise "no csrf_token found on https://#{@host}/" unless match
+    token = JSON.parse(body)['csrf_token']
+    raise "no csrf_token for #{@host} — session is not authenticated" if token.to_s.empty?
 
-    match[1]
+    token
   end
 
   def run_query(cookies, csrf_token)
