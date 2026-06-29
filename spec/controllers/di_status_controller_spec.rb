@@ -141,6 +141,13 @@ RSpec.describe DiStatusController, type: :controller do
       expect(assigns(:redapl)).to be_nil
     end
 
+    it 'offers a single query link for the agent environment, not a choice of environments' do
+      allow(controller).to receive(:fetch_agent_environment_label).and_return('staging')
+      get :index
+      expect(response.body).to include('Query REDAPL service_config for staging')
+      expect(response.body).not_to include('cookies-dogfood.json')
+    end
+
     it 'runs the query for the requested environment and renders the rows' do
       expect(RedaplQuery).to receive(:new)
         .with(host: 'dd.datad0g.com', cookie_label: 'staging', service: anything)

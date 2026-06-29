@@ -50,13 +50,11 @@
     </h4>
   </div>
   <div class="panel-body">
-    <p>
-      Query against:
-      <% @redapl_environments.each do |env| %>
-        <%= link_to "#{env} (cookies-#{env}.json)", di_status_path(redapl: env),
-              class: ("label label-primary" if env == @redapl_env) || "label label-default" %>
-      <% end %>
-    </p>
+    <% if @redapl_target %>
+      <p>
+        <%= link_to "Query REDAPL service_config for #{@redapl_target} &rarr;".html_safe, di_status_path(redapl: @redapl_target) %>
+      </p>
+    <% end %>
 
     <% if @redapl %>
       <dl class="dl-horizontal">

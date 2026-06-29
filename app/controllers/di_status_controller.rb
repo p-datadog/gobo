@@ -17,7 +17,7 @@ class DiStatusController < ApplicationController
     @agent_address = fetch_agent_address
     @agent_environment_label = fetch_agent_environment_label
     @agent_operational = fetch_agent_operational
-    @redapl_environments = AgentEnvironments.all.keys
+    @redapl_target = fetch_agent_environment_label
     @redapl_env = redapl_env_param
     @redapl = fetch_redapl_environments(@redapl_env) if @redapl_env
 
