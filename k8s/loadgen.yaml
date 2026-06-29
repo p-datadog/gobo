@@ -33,7 +33,7 @@ spec:
               /debugger_test/binary_data_param
               /debugger_test/binary_data
               /debugger_test/json_error
-              /probes
+              /di_status
               "
               while true; do
                 for path in $ENDPOINTS; do

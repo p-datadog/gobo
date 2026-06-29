@@ -1,6 +1,6 @@
 require 'rails_helper'
 
-RSpec.describe ProbesHelper, type: :helper do
+RSpec.describe DiStatusHelper, type: :helper do
   describe '#probes_empty_state_reason' do
     it 'reports a fetch error above all else' do
       reason = helper.probes_empty_state_reason(:enabled_explicitly, 'RuntimeError: boom')

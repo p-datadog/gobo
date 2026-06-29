@@ -1,5 +1,5 @@
 <% provide(:title, 'DI Status') %>
-<h1>DI Status <small><%= link_to "JSON", probes_path(format: :json) %></small></h1>
+<h1>DI Status <small><%= link_to "JSON", di_status_path(format: :json) %></small></h1>
 
 <p>
   <a href="https://<%= AgentEnvironments.fetch('dogfood')[:ui_host] %>/debugging/sessions" target="_blank">
@@ -130,10 +130,10 @@
 
                 <div style="margin-top: 20px;">
                   <strong>Send Status:</strong>
-                  <%= button_to 'Emitting', send_probe_status_path(id), method: :post, params: {status: 'emitting'}, class: 'btn btn-sm btn-info', form: {style: 'display: inline-block; margin-left: 10px;'} %>
-                  <%= button_to 'Disabled', send_probe_status_path(id), method: :post, params: {status: 'disabled'}, class: 'btn btn-sm btn-warning', form: {style: 'display: inline-block; margin-left: 5px;'} %>
-                  <%= button_to 'Error', send_probe_status_path(id), method: :post, params: {status: 'error'}, class: 'btn btn-sm btn-danger', form: {style: 'display: inline-block; margin-left: 5px;'} %>
-                  <%= button_to 'Error with Exception', send_probe_status_path(id), method: :post, params: {status: 'error_with_exception'}, class: 'btn btn-sm btn-danger', form: {style: 'display: inline-block; margin-left: 5px;'} %>
+                  <%= button_to 'Emitting', di_status_send_status_path(id), method: :post, params: {status: 'emitting'}, class: 'btn btn-sm btn-info', form: {style: 'display: inline-block; margin-left: 10px;'} %>
+                  <%= button_to 'Disabled', di_status_send_status_path(id), method: :post, params: {status: 'disabled'}, class: 'btn btn-sm btn-warning', form: {style: 'display: inline-block; margin-left: 5px;'} %>
+                  <%= button_to 'Error', di_status_send_status_path(id), method: :post, params: {status: 'error'}, class: 'btn btn-sm btn-danger', form: {style: 'display: inline-block; margin-left: 5px;'} %>
+                  <%= button_to 'Error with Exception', di_status_send_status_path(id), method: :post, params: {status: 'error_with_exception'}, class: 'btn btn-sm btn-danger', form: {style: 'display: inline-block; margin-left: 5px;'} %>
                 </div>
 
               </div>
@@ -206,8 +206,8 @@
 
                 <div style="margin-top: 20px;">
                   <strong>Send Status:</strong>
-                  <%= button_to 'Error', send_probe_status_path(id), method: :post, params: {status: 'error'}, class: 'btn btn-sm btn-danger', form: {style: 'display: inline-block; margin-left: 10px;'} %>
-                  <%= button_to 'Error with Exception', send_probe_status_path(id), method: :post, params: {status: 'error_with_exception'}, class: 'btn btn-sm btn-danger', form: {style: 'display: inline-block; margin-left: 5px;'} %>
+                  <%= button_to 'Error', di_status_send_status_path(id), method: :post, params: {status: 'error'}, class: 'btn btn-sm btn-danger', form: {style: 'display: inline-block; margin-left: 10px;'} %>
+                  <%= button_to 'Error with Exception', di_status_send_status_path(id), method: :post, params: {status: 'error_with_exception'}, class: 'btn btn-sm btn-danger', form: {style: 'display: inline-block; margin-left: 5px;'} %>
                 </div>
 
               </div>
@@ -281,10 +281,10 @@
 
                 <div style="margin-top: 20px;">
                   <strong>Send Status:</strong>
-                  <%= button_to 'Installed', send_probe_status_path(id), method: :post, params: {status: 'installed'}, class: 'btn btn-sm btn-success', form: {style: 'display: inline-block; margin-left: 10px;'} %>
-                  <%= button_to 'Emitting', send_probe_status_path(id), method: :post, params: {status: 'emitting'}, class: 'btn btn-sm btn-info', form: {style: 'display: inline-block; margin-left: 5px;'} %>
-                  <%= button_to 'Error', send_probe_status_path(id), method: :post, params: {status: 'error'}, class: 'btn btn-sm btn-danger', form: {style: 'display: inline-block; margin-left: 5px;'} %>
-                  <%= button_to 'Error with Exception', send_probe_status_path(id), method: :post, params: {status: 'error_with_exception'}, class: 'btn btn-sm btn-danger', form: {style: 'display: inline-block; margin-left: 5px;'} %>
+                  <%= button_to 'Installed', di_status_send_status_path(id), method: :post, params: {status: 'installed'}, class: 'btn btn-sm btn-success', form: {style: 'display: inline-block; margin-left: 10px;'} %>
+                  <%= button_to 'Emitting', di_status_send_status_path(id), method: :post, params: {status: 'emitting'}, class: 'btn btn-sm btn-info', form: {style: 'display: inline-block; margin-left: 5px;'} %>
+                  <%= button_to 'Error', di_status_send_status_path(id), method: :post, params: {status: 'error'}, class: 'btn btn-sm btn-danger', form: {style: 'display: inline-block; margin-left: 5px;'} %>
+                  <%= button_to 'Error with Exception', di_status_send_status_path(id), method: :post, params: {status: 'error_with_exception'}, class: 'btn btn-sm btn-danger', form: {style: 'display: inline-block; margin-left: 5px;'} %>
                 </div>
 
               </div>

@@ -33,7 +33,7 @@ class DiStatusController < ApplicationController
       flash[:danger] = "Failed to send status: #{result[:error]}"
     end
 
-    redirect_to probes_path
+    redirect_to di_status_path
   end
 
   private

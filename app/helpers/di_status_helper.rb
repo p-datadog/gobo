@@ -1,4 +1,4 @@
-module ProbesHelper
+module DiStatusHelper
   # Accurate root cause for an empty DI Status page, derived from the resolved
   # DI enablement state and any probe-fetch error, instead of guessing.
   def probes_empty_state_reason(di_enabled, error = nil)
