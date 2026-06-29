@@ -25,6 +25,7 @@ Always prefix Ruby/Rails commands with `bundle exec`. Never run `ruby`, `rails`,
 | `-d` | `DD_TRACE_DEBUG=1` |
 | `-D` | Development env (default is production) |
 | `-S` | Staging agent on port 28126 (default: dogfood on 18126) |
+| `-I` | Leave `DD_DYNAMIC_INSTRUMENTATION_ENABLED` / `DD_SYMBOL_DATABASE_UPLOAD_ENABLED` unset (test RC-driven enablement) |
 
 **Common invocations:**
 
@@ -36,7 +37,7 @@ bin/run -r -D -S -d -s gobo -e staging
 bin/run -u -w 2 -S -d -s gobo -e staging
 ```
 
-**Limitation — implicit DI enablement testing:** `bin/run` exports `DD_DYNAMIC_INSTRUMENTATION_ENABLED=1` and `DD_SYMBOL_DATABASE_UPLOAD_ENABLED=1` unconditionally. Tests that require these env vars to be **unset** (for example, verifying DI is turned on by Remote Configuration rather than by env var) cannot use `bin/run` as-is. Either add a `-I` flag to `bin/run` (so it leaves DI/SymDB env vars unset) or document the manual launch with the full env block in the test plan that requires it.
+**Implicit DI enablement testing:** by default `bin/run` exports `DD_DYNAMIC_INSTRUMENTATION_ENABLED=1` and `DD_SYMBOL_DATABASE_UPLOAD_ENABLED=1`. To verify DI is turned on by Remote Configuration rather than by env var, pass `-I` so these vars are left unset. Remote Configuration itself stays enabled (on by default in production; add `-D` for development, which also enables RC and telemetry).
 
 ## Scripts
 
@@ -69,6 +70,7 @@ end
 - Never use `display: none` on content the user will need. Show a default state instead (e.g. "Click to trigger" instead of hiding).
 - AJAX error responses must always be shown to the user, never swallowed.
 - Never collapse UI elements by default. Always use `open` attribute on `<details>` tags and `in` class on Bootstrap collapse elements.
+- Keep AI slop out of the UI. Do not write explanatory prose, marketing blurbs, or editorializing/interpretive text in user-facing pages. Show only functional content: labels, controls, data, and errors. State facts, not inferences about what the facts mean.
 
 ## UI Navigation
 
