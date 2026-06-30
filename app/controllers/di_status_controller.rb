@@ -255,7 +255,7 @@ class DiStatusController < ApplicationController
       active: serialize_probes(@probes),
       disabled: serialize_probes(@disabled_probes),
       pending: serialize_probes(@pending_probes),
-      failed: serialize_probes(@failed_probes),
+      failed: serialize_failed_probes(@failed_probes),
       error: @error,
       redapl: @redapl,
       agent_operational: @agent_operational&.operational?,
@@ -278,6 +278,11 @@ class DiStatusController < ApplicationController
       method_name: probe.method_name,
       rate_limit: probe.rate_limit,
     }.compact
+  end
+
+  def serialize_failed_probes(failed)
+    return [] unless failed
+    failed.map { |id, message| {id: id, error: message} }
   end
 
   def create_sample_exception

@@ -357,60 +357,23 @@
       <p class="text-muted">These probes failed to install or encountered errors.</p>
 
       <div class="panel-group" id="failed-probes-accordion">
-        <% @failed_probes.each_with_index do |(id, probe), index| %>
+        <% @failed_probes.each_with_index do |(id, message), index| %>
           <div class="panel panel-danger">
             <div class="panel-heading">
               <h4 class="panel-title">
                 <a data-toggle="collapse" data-parent="#failed-probes-accordion" href="#failed-probe-<%= index %>">
-                  <% if probe.file && probe.line_no %>
-                    <strong><%= probe.file %>:<%= probe.line_no %></strong>
-                  <% elsif probe.type_name && probe.method_name %>
-                    <strong><%= probe.type_name %>#<%= probe.method_name %></strong>
-                  <% else %>
-                    <strong>Probe ID:</strong> <%= id %>
-                  <% end %>
-                  <span class="badge pull-right"><%= probe.type %></span>
+                  <strong>Probe ID:</strong> <%= id %>
                 </a>
               </h4>
             </div>
             <div id="failed-probe-<%= index %>" class="panel-collapse collapse in">
               <div class="panel-body">
                 <dl class="dl-horizontal">
-                  <dt>Type:</dt>
-                  <dd><code><%= probe.type %></code></dd>
+                  <dt>Probe ID:</dt>
+                  <dd><code><%= id %></code></dd>
 
-                  <% if probe.file %>
-                    <dt>File:</dt>
-                    <dd><code><%= probe.file %></code></dd>
-                  <% end %>
-
-                  <% if probe.line_no %>
-                    <dt>Line Number:</dt>
-                    <dd><%= probe.line_no %></dd>
-                  <% end %>
-
-                  <% if probe.type_name %>
-                    <dt>Class/Module:</dt>
-                    <dd><code><%= probe.type_name %></code></dd>
-                  <% end %>
-
-                  <% if probe.method_name %>
-                    <dt>Method:</dt>
-                    <dd><code><%= probe.method_name %></code></dd>
-                  <% end %>
-
-                  <% if probe.template %>
-                    <dt>Template:</dt>
-                    <dd><pre><%= probe.template %></pre></dd>
-                  <% end %>
-
-                  <% if probe.condition %>
-                    <dt>Condition:</dt>
-                    <dd><code><%= probe.condition %></code></dd>
-                  <% end %>
-
-                  <dt>Rate Limit:</dt>
-                  <dd><%= probe.rate_limit %></dd>
+                  <dt>Error:</dt>
+                  <dd><pre><%= message %></pre></dd>
                 </dl>
 
               </div>

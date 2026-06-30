@@ -124,6 +124,32 @@ RSpec.describe DiStatusController, type: :controller do
     end
   end
 
+  describe 'failed probes' do
+    render_views
+
+    let(:message) do
+      'Datadog::DI::Error::ProbeTargetForbidden: Method probes on Kernel#lambda are not permitted: Kernel#lambda'
+    end
+
+    before do
+      allow(controller).to receive(:fetch_failed_probes).and_return('probe-1' => message)
+    end
+
+    it 'does not raise when failed_probes contains error message strings' do
+      get :index
+      expect(response).to have_http_status(:success)
+      expect(response.body).to include('probe-1')
+      expect(response.body).to include('Method probes on Kernel#lambda are not permitted')
+    end
+
+    it 'serializes failed probes as id/error pairs in JSON' do
+      get :index, format: :json
+      expect(JSON.parse(response.body)['failed']).to eq(
+        [{'id' => 'probe-1', 'error' => message}]
+      )
+    end
+  end
+
   describe 'REDAPL service_config query' do
     render_views
 
