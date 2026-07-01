@@ -1,0 +1,29 @@
+<% if probe.respond_to?(:capture_expressions?) && probe.capture_expressions? %>
+  <dt>Capture Expressions:</dt>
+  <dd>
+    <% if probe.respond_to?(:evaluate_at) %>
+      Evaluated at: <code><%= probe.evaluate_at %></code>
+    <% end %>
+    <% if probe.respond_to?(:capture_snapshot?) && probe.capture_snapshot? %>
+      <span class="label label-default">captureSnapshot also set</span>
+    <% end %>
+    <table class="table table-condensed table-bordered" style="margin-top: 5px;">
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Expression (DSL)</th>
+          <th>Per-expression limits</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% probe.capture_expressions.each do |expression| %>
+          <tr>
+            <td><code><%= expression.name %></code></td>
+            <td><pre style="margin: 0;"><%= capture_expression_dsl_json(expression) %></pre></td>
+            <td><%= capture_expression_limits_text(expression) %></td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </dd>
+<% end %>

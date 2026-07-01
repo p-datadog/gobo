@@ -19,4 +19,31 @@ module DiStatusHelper
         "tracer does not support it or it is unsupported here."
     end
   end
+
+  # The original DI expression-language DSL for a capture expression, rendered
+  # as pretty JSON. nil when the tracer does not retain the source DSL.
+  def capture_expression_dsl_json(expression)
+    return nil unless expression.respond_to?(:expr)
+
+    expr = expression.expr
+    return nil unless expr.respond_to?(:dsl_expr)
+
+    JSON.pretty_generate(expr.dsl_expr)
+  end
+
+  # Per-expression capture-limit overrides as "key=value" text, or "none" when
+  # the expression sets no overrides (limits fall back to the probe/settings).
+  def capture_expression_limits_text(expression)
+    limits = expression.limits if expression.respond_to?(:limits)
+    return "none" unless limits
+
+    parts = {
+      "maxReferenceDepth" => limits.max_reference_depth,
+      "maxCollectionSize" => limits.max_collection_size,
+      "maxLength" => limits.max_length,
+      "maxFieldCount" => limits.max_field_count,
+    }.reject { |_, value| value.nil? }.map { |key, value| "#{key}=#{value}" }
+
+    parts.empty? ? "none" : parts.join(", ")
+  end
 end

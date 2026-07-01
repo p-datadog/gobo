@@ -150,6 +150,88 @@ RSpec.describe DiStatusController, type: :controller do
     end
   end
 
+  describe 'capture expressions' do
+    render_views
+
+    def build_capture_probe(evaluate_at: :exit, capture_snapshot: false)
+      limited = Datadog::DI::CaptureExpression.new(
+        name: 'user_id',
+        expr: Datadog::DI::EL::Expression.new({'ref' => 'user'}, 'nil'),
+        limits: Datadog::DI::CaptureLimits.new(max_length: 100, max_reference_depth: 3)
+      )
+      plain = Datadog::DI::CaptureExpression.new(
+        name: 'count',
+        expr: Datadog::DI::EL::Expression.new({'ref' => 'count'}, 'nil'),
+        limits: nil
+      )
+      Datadog::DI::Probe.new(
+        id: 'probe-ce', type: :log, file: 'app/x.rb', line_no: 10,
+        capture_expressions: [limited, plain],
+        evaluate_at: evaluate_at, capture_snapshot: capture_snapshot
+      )
+    end
+
+    before do
+      allow(controller).to receive(:fetch_all_installed_probes)
+        .and_return('probe-ce' => build_capture_probe)
+    end
+
+    it 'serializes each capture expression with name, DSL, and per-expression limits in JSON' do
+      get :index, format: :json
+      active = JSON.parse(response.body)['active']
+      expect(active.size).to eq(1)
+      expect(active.first['evaluate_at']).to eq('exit')
+      expect(active.first['capture_snapshot']).to be(false)
+      expect(active.first['capture_expressions']).to eq(
+        [
+          {'name' => 'user_id', 'dsl' => {'ref' => 'user'},
+           'limits' => {'max_reference_depth' => 3, 'max_length' => 100}},
+          {'name' => 'count', 'dsl' => {'ref' => 'count'}},
+        ]
+      )
+    end
+
+    it 'omits capture-expression fields for probes without capture expressions' do
+      plain = Datadog::DI::Probe.new(id: 'plain', type: :log, file: 'app/x.rb', line_no: 5)
+      allow(controller).to receive(:fetch_all_installed_probes).and_return('plain' => plain)
+      get :index, format: :json
+      active = JSON.parse(response.body)['active'].first
+      expect(active).not_to have_key('capture_expressions')
+      expect(active).not_to have_key('evaluate_at')
+    end
+
+    it 'renders each capture expression name, DSL, and limits in the HTML' do
+      get :index
+      expect(response.body).to include('Capture Expressions')
+      expect(response.body).to include('user_id')
+      expect(response.body).to include('count')
+      expect(response.body).to include('&quot;ref&quot;: &quot;user&quot;')
+      expect(response.body).to include('maxLength=100')
+      expect(response.body).to include('maxReferenceDepth=3')
+    end
+
+    it 'shows the evaluation timing for capture expressions' do
+      allow(controller).to receive(:fetch_all_installed_probes)
+        .and_return('probe-ce' => build_capture_probe(evaluate_at: :entry))
+      get :index
+      expect(response.body).to include('Evaluated at:')
+      expect(response.body).to include('entry')
+    end
+
+    it 'does not raise on a tracer whose probes lack capture-expression support' do
+      legacy = double('legacy_probe',
+        id: 'legacy', type: :log, file: 'app/x.rb', line_no: 5,
+        type_name: nil, method_name: nil, template: nil, condition: nil,
+        rate_limit: 5000, enabled?: true)
+      allow(controller).to receive(:fetch_all_installed_probes).and_return('legacy' => legacy)
+      get :index
+      expect(response).to have_http_status(:success)
+      expect(response.body).not_to include('Capture Expressions')
+      get :index, format: :json
+      expect(JSON.parse(response.body)['active'].first).not_to have_key('capture_expressions')
+    end
+  end
+
   describe 'REDAPL service_config query' do
     render_views
 

@@ -277,7 +277,46 @@ class DiStatusController < ApplicationController
       type_name: probe.type_name,
       method_name: probe.method_name,
       rate_limit: probe.rate_limit,
+    }.compact.merge(serialize_capture_expressions(probe))
+  end
+
+  # Capture-expression fields are emitted only on tracers new enough to carry
+  # them and only when the probe actually defines capture expressions.
+  def serialize_capture_expressions(probe)
+    return {} unless probe.respond_to?(:capture_expressions?) && probe.capture_expressions?
+
+    {
+      evaluate_at: (probe.evaluate_at.to_s if probe.respond_to?(:evaluate_at)),
+      capture_snapshot: (probe.capture_snapshot? if probe.respond_to?(:capture_snapshot?)),
+      capture_expressions: probe.capture_expressions.map { |expression| serialize_capture_expression(expression) },
     }.compact
+  end
+
+  def serialize_capture_expression(expression)
+    {
+      name: expression.name,
+      dsl: capture_expression_dsl(expression),
+      limits: capture_expression_limits(expression),
+    }.compact
+  end
+
+  def capture_expression_dsl(expression)
+    return nil unless expression.respond_to?(:expr)
+
+    expr = expression.expr
+    expr.dsl_expr if expr.respond_to?(:dsl_expr)
+  end
+
+  def capture_expression_limits(expression)
+    limits = expression.limits if expression.respond_to?(:limits)
+    return nil unless limits
+
+    {
+      max_reference_depth: limits.max_reference_depth,
+      max_collection_size: limits.max_collection_size,
+      max_length: limits.max_length,
+      max_field_count: limits.max_field_count,
+    }.compact.presence
   end
 
   def serialize_failed_probes(failed)
