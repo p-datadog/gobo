@@ -28,4 +28,20 @@ RSpec.describe ProbeDemo do
     expect(described_class.instance_method(:kw_args).parameters)
       .to eq([[:keyreq, :query], [:keyreq, :filter], [:keyreq, :limit]])
   end
+
+  describe '.demo_arguments' do
+    subject(:arguments) { described_class.demo_arguments(user: nil, count: 3) }
+
+    it 'provides a value for every parameter of each demo method' do
+      expect(arguments[:args].keys)
+        .to eq(described_class.instance_method(:args).parameters.map { |_, name| name })
+      expect(arguments[:kw_args].keys)
+        .to eq(described_class.instance_method(:kw_args).parameters.map { |_, name| name })
+    end
+
+    it 'sends a complex object for the account and filter arguments' do
+      expect(arguments[:args][:account]).to be_a(ProbeDemo::Account)
+      expect(arguments[:kw_args][:filter]).to be_a(ProbeDemo::SearchFilter)
+    end
+  end
 end

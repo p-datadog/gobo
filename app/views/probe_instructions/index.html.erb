@@ -28,12 +28,13 @@
 
       <table class="table table-condensed table-bordered">
         <thead>
-          <tr><th>Parameter</th><th>Kind</th></tr>
+          <tr><th>Parameter</th><th>Type</th><th>Kind</th></tr>
         </thead>
         <tbody>
           <% target[:parameters].each do |param| %>
             <tr>
               <td><code><%= param[:name] %></code></td>
+              <td><code><%= param[:value_type] %></code></td>
               <td><code><%= param[:type] %></code></td>
             </tr>
           <% end %>

@@ -38,6 +38,27 @@ class ProbeDemo
     end
   end
 
+  # The exact argument values sent to the demo methods on each home page load.
+  # Shared with the Probe Instructions page so it reports the real argument
+  # types. Keyed by method name, then parameter name.
+  def self.demo_arguments(user:, count:)
+    account = Account.new(
+      id: user&.id || 0,
+      name: user&.name || "guest",
+      roles: %w[reader commenter],
+      profile: Profile.new(
+        email: user&.email || "guest@example.com",
+        tier: "standard",
+        preferences: {theme: "dark", notifications: true}
+      )
+    )
+    filter = SearchFilter.new(field: "body", values: %w[home feed recent], case_sensitive: false)
+    {
+      args: {account: account, action: "view_home", count: count},
+      kw_args: {query: "home_feed", filter: filter, limit: 10},
+    }
+  end
+
   # Probe target exercising positional arguments; +account+ is a complex object.
   def args(account, action, count)
     "account=#{account.name} action=#{action} count=#{count}"

@@ -15,6 +15,13 @@ RSpec.describe ProbeInstructionsController, type: :controller do
       expect(response.body).to include('filter')
     end
 
+    it 'shows a Type column with the class of each argument value sent' do
+      get :index
+      expect(response.body).to include('<th>Type</th>')
+      expect(response.body).to include('ProbeDemo::Account')
+      expect(response.body).to include('ProbeDemo::SearchFilter')
+    end
+
     it 'serializes each target with source_location-derived coordinates in JSON' do
       get :index, format: :json
       targets = JSON.parse(response.body)['targets']
@@ -26,18 +33,18 @@ RSpec.describe ProbeInstructionsController, type: :controller do
       expect(pos['line']).to eq(line)
       expect(pos['parameters']).to eq(
         [
-          {'type' => 'req', 'name' => 'account'},
-          {'type' => 'req', 'name' => 'action'},
-          {'type' => 'req', 'name' => 'count'},
+          {'type' => 'req', 'name' => 'account', 'value_type' => 'ProbeDemo::Account'},
+          {'type' => 'req', 'name' => 'action', 'value_type' => 'String'},
+          {'type' => 'req', 'name' => 'count', 'value_type' => 'Integer'},
         ]
       )
 
       kw = targets.find { |t| t['method_name'] == 'kw_args' }
       expect(kw['parameters']).to eq(
         [
-          {'type' => 'keyreq', 'name' => 'query'},
-          {'type' => 'keyreq', 'name' => 'filter'},
-          {'type' => 'keyreq', 'name' => 'limit'},
+          {'type' => 'keyreq', 'name' => 'query', 'value_type' => 'String'},
+          {'type' => 'keyreq', 'name' => 'filter', 'value_type' => 'ProbeDemo::SearchFilter'},
+          {'type' => 'keyreq', 'name' => 'limit', 'value_type' => 'Integer'},
         ]
       )
     end
