@@ -35,6 +35,7 @@ Rails.application.routes.draw do
   post '/memory/run_gc', to: 'memory#run_gc'
   post '/memory/malloc_trim', to: 'memory#malloc_trim'
   get '/di_status', to: 'di_status#index', as: 'di_status'
+  get '/probe_instructions', to: 'probe_instructions#index', as: 'probe_instructions'
   get '/symdb', to: 'symdb#index'
   get '/code_tracker', to: 'code_tracker#index'
   get '/code_tracker/full', to: 'code_tracker#full'

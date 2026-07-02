@@ -1,6 +1,6 @@
 class StaticPagesController < ApplicationController
+  before_action :invoke_probe_demo, only: :home
 
-  # Padding
   # Padding
   # Padding
   # Padding
@@ -48,4 +48,17 @@ class StaticPagesController < ApplicationController
     vote = Vote.create!(micropost: post, job_id: job_id)
     render inline: "OK #{post.id} #{job_id}"
   end # line 50
+
+  private
+
+  # Invokes the probe-demo methods so a method probe set on either fires on
+  # every home page load. DI observes silently, so a failure here must not
+  # affect the page.
+  def invoke_probe_demo
+    demo = ProbeDemo.new
+    demo.positional_args(current_user&.id || 0, 'view_home', Micropost.count)
+    demo.keyword_args(query: 'home_feed', limit: 10, offset: 0)
+  rescue => e
+    Rails.logger.error "Error invoking probe demo: #{e.class}: #{e}"
+  end
 end

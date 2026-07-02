@@ -7,6 +7,27 @@ RSpec.describe "StaticPages", type: :request do
     expect(response.body).to include("<title>Gobo</title>")
   end
 
+  it "invokes both probe-demo methods on every home load" do
+    expect_any_instance_of(ProbeDemo).to receive(:positional_args)
+      .with(anything, 'view_home', kind_of(Integer)).and_call_original
+    expect_any_instance_of(ProbeDemo).to receive(:keyword_args)
+      .with(query: 'home_feed', limit: 10, offset: 0).and_call_original
+    get root_path
+    expect(response).to have_http_status(:success)
+  end
+
+  it "renders a link to the probe instructions page on home" do
+    get root_path
+    expect(response.body).to include(probe_instructions_path)
+    expect(response.body).to include('Probe instructions')
+  end
+
+  it "still renders home when the probe demo raises" do
+    allow_any_instance_of(ProbeDemo).to receive(:positional_args).and_raise(StandardError, 'boom')
+    get root_path
+    expect(response).to have_http_status(:success)
+  end
+
   it "should get help" do
     get help_path
     expect(response).to have_http_status(:success)

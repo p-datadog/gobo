@@ -1,0 +1,52 @@
+<% provide(:title, 'Probe Instructions') %>
+<h1>Probe Instructions <small><%= link_to "JSON", probe_instructions_path(format: :json) %></small></h1>
+
+<dl class="dl-horizontal">
+  <dt>Service:</dt><dd><code><%= @service %></code></dd>
+  <dt>Env:</dt><dd><code><%= @env %></code></dd>
+</dl>
+
+<p>
+  Both methods below are invoked on every home page load. Set a method probe on
+  a method, then load the <%= link_to "home page", root_path %> to make the probe fire.
+</p>
+
+<% @targets.each do |target| %>
+  <div class="panel panel-default">
+    <div class="panel-heading">
+      <h4 class="panel-title">
+        <%= target[:label] %>: <code><%= target[:class_name] %>#<%= target[:method_name] %></code>
+      </h4>
+    </div>
+    <div class="panel-body">
+      <dl class="dl-horizontal">
+        <dt>Class:</dt><dd><code><%= target[:class_name] %></code></dd>
+        <dt>Method:</dt><dd><code><%= target[:method_name] %></code></dd>
+        <dt>File:</dt><dd><code><%= target[:file] %></code></dd>
+        <dt>Line:</dt><dd><%= target[:line] %></dd>
+      </dl>
+
+      <table class="table table-condensed table-bordered">
+        <thead>
+          <tr><th>Parameter</th><th>Kind</th></tr>
+        </thead>
+        <tbody>
+          <% target[:parameters].each do |param| %>
+            <tr>
+              <td><code><%= param[:name] %></code></td>
+              <td><code><%= param[:type] %></code></td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+
+      <ol>
+        <li>In the Datadog UI, open Dynamic Instrumentation and create a log probe for service <code><%= @service %></code> in env <code><%= @env %></code>.</li>
+        <li>Target method <code><%= target[:method_name] %></code> of class <code><%= target[:class_name] %></code>.</li>
+        <li>To capture the arguments above, enable <code>captureSnapshot</code> or add capture expressions referencing the parameter names.</li>
+        <li>Load the <%= link_to "home page", root_path %>; the method runs on every load, so the probe fires.</li>
+        <li>Confirm the probe on the <%= link_to "DI Status page", di_status_path %>.</li>
+      </ol>
+    </div>
+  </div>
+<% end %>
