@@ -55,9 +55,21 @@ class StaticPagesController < ApplicationController
   # every home page load. DI observes silently, so a failure here must not
   # affect the page.
   def invoke_probe_demo
+    account = ProbeDemo::Account.new(
+      id: current_user&.id || 0,
+      name: current_user&.name || 'guest',
+      roles: %w[reader commenter],
+      profile: ProbeDemo::Profile.new(
+        email: current_user&.email || 'guest@example.com',
+        tier: 'standard',
+        preferences: {theme: 'dark', notifications: true}
+      )
+    )
+    filter = ProbeDemo::SearchFilter.new(field: 'body', values: %w[home feed recent], case_sensitive: false)
+
     demo = ProbeDemo.new
-    demo.positional_args(current_user&.id || 0, 'view_home', Micropost.count)
-    demo.keyword_args(query: 'home_feed', limit: 10, offset: 0)
+    demo.args(account, 'view_home', Micropost.count)
+    demo.kw_args(query: 'home_feed', filter: filter, limit: 10)
   rescue => e
     Rails.logger.error "Error invoking probe demo: #{e.class}: #{e}"
   end

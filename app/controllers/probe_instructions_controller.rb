@@ -14,8 +14,8 @@ class ProbeInstructionsController < ApplicationController
 
   def probe_targets
     [
-      describe_target('Positional arguments', ProbeDemo.instance_method(:positional_args)),
-      describe_target('Keyword arguments', ProbeDemo.instance_method(:keyword_args)),
+      describe_target('Positional arguments', ProbeDemo.instance_method(:args)),
+      describe_target('Keyword arguments', ProbeDemo.instance_method(:kw_args)),
     ]
   end
 
