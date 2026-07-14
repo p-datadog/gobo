@@ -50,10 +50,17 @@ RSpec.describe DiStatusController, type: :controller do
       expect(assigns(:di_enabled)).to eq(:unavailable)
     end
 
-    it 'resolves to one of the five known states against the real tracer' do
+    it 'reports :explicitly_enabled_rc_disabled when explicitly enabled but not running' do
+      stub_di_predicates(running: false, explicitly_enabled: true)
+      get :index
+      expect(assigns(:di_enabled)).to eq(:explicitly_enabled_rc_disabled)
+    end
+
+    it 'resolves to one of the six known states against the real tracer' do
       get :index
       expect(assigns(:di_enabled)).to be_in(
-        %i[enabled_explicitly enabled_implicitly disabled_explicitly can_enable_remotely unavailable]
+        %i[enabled_explicitly enabled_implicitly disabled_explicitly
+          explicitly_enabled_rc_disabled can_enable_remotely unavailable]
       )
     end
   end
@@ -65,6 +72,7 @@ RSpec.describe DiStatusController, type: :controller do
       enabled_explicitly: 'Yes — explicitly enabled',
       enabled_implicitly: 'Yes — enabled remotely',
       disabled_explicitly: 'No — explicitly disabled',
+      explicitly_enabled_rc_disabled: 'No — disabled by Remote Configuration',
       can_enable_remotely: 'No — can be enabled remotely',
       unavailable: 'No — unavailable',
     }.each do |state, text|

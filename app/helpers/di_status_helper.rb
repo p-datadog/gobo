@@ -11,6 +11,10 @@ module DiStatusHelper
     when :disabled_explicitly
       "Dynamic instrumentation is explicitly disabled " \
         "(DD_DYNAMIC_INSTRUMENTATION_ENABLED=false), so the tracer receives no probes."
+    when :explicitly_enabled_rc_disabled
+      "Dynamic instrumentation was explicitly enabled " \
+        "(DD_DYNAMIC_INSTRUMENTATION_ENABLED=true) but Remote Configuration has turned " \
+        "it off, so the tracer currently receives no probes."
     when :can_enable_remotely
       "Dynamic instrumentation is not running. It can be turned on by Remote " \
         "Configuration; until it starts, the tracer receives no probes."

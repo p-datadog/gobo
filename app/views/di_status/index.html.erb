@@ -31,6 +31,9 @@
     <% when :disabled_explicitly %>
       <span class="text-danger"><strong>✗ No — explicitly disabled</strong></span>
       <span class="text-muted">(DD_DYNAMIC_INSTRUMENTATION_ENABLED=false; blocks remote enablement)</span>
+    <% when :explicitly_enabled_rc_disabled %>
+      <span class="text-danger"><strong>✗ No — disabled by Remote Configuration</strong></span>
+      <span class="text-muted">(DD_DYNAMIC_INSTRUMENTATION_ENABLED=true, but RC turned DI off)</span>
     <% when :can_enable_remotely %>
       <span class="text-warning"><strong>✗ No — can be enabled remotely</strong></span>
     <% else %>
