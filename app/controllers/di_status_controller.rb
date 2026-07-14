@@ -22,6 +22,7 @@ class DiStatusController < ApplicationController
     @redapl_env = redapl_env_param
     @redapl = fetch_redapl_environments(@redapl_env) if @redapl_env
     @instances = fetch_service_instances(@redapl_env) if @redapl_env
+    @redapl_connection = @redapl&.slice(:environment, :host, :cookie_path)
 
     respond_to do |format|
       format.html

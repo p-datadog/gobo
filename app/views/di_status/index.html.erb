@@ -44,9 +44,6 @@
   <div class="panel-heading">
     <h4 class="panel-title">
       REDAPL <code>service_config</code> environments
-      <% if @redapl_env %>
-        <small><%= link_to "JSON", di_status_path(format: :json, redapl: @redapl_env) %></small>
-      <% end %>
     </h4>
   </div>
   <div class="panel-body">
@@ -58,9 +55,6 @@
 
     <% if @redapl %>
       <dl class="dl-horizontal">
-        <dt>Environment:</dt><dd><code><%= @redapl[:environment] %></code></dd>
-        <dt>Host:</dt><dd><code><%= @redapl[:host] %></code></dd>
-        <dt>Cookies:</dt><dd><code><%= @redapl[:cookie_path] %></code></dd>
         <dt>Lookback:</dt><dd><%= @redapl[:window_minutes] %> minute(s)</dd>
         <dt>Query:</dt><dd><pre><%= @redapl[:query] %></pre></dd>
       </dl>
@@ -100,9 +94,6 @@
   <div class="panel-heading">
     <h4 class="panel-title">
       Live service instances
-      <% if @redapl_env %>
-        <small><%= link_to "JSON", di_status_path(format: :json, redapl: @redapl_env) %></small>
-      <% end %>
     </h4>
   </div>
   <div class="panel-body">
@@ -120,11 +111,6 @@
 
     <% if @instances %>
       <dl class="dl-horizontal">
-        <dt>Environment:</dt><dd><code><%= @instances[:environment] %></code></dd>
-        <dt>Host:</dt><dd><code><%= @instances[:host] %></code></dd>
-        <dt>Cookies:</dt><dd><code><%= @instances[:cookie_path] %></code></dd>
-        <dt>Service:</dt><dd><code><%= @instances[:service] %></code></dd>
-        <dt>Env:</dt><dd><code><%= @instances[:env] %></code></dd>
         <dt>Endpoint:</dt><dd><pre><%= @instances[:endpoint] %></pre></dd>
       </dl>
 
@@ -175,6 +161,24 @@
     <% end %>
   </div>
 </div>
+
+<% if @redapl_connection %>
+<div class="panel panel-info">
+  <div class="panel-heading">
+    <h4 class="panel-title">
+      Datadog API session
+      <small><%= link_to "JSON", di_status_path(format: :json, redapl: @redapl_env) %></small>
+    </h4>
+  </div>
+  <div class="panel-body">
+    <dl class="dl-horizontal">
+      <dt>Environment:</dt><dd><code><%= @redapl_connection[:environment] %></code></dd>
+      <dt>Host:</dt><dd><code><%= @redapl_connection[:host] %></code></dd>
+      <dt>Cookies:</dt><dd><code><%= @redapl_connection[:cookie_path] %></code></dd>
+    </dl>
+  </div>
+</div>
+<% end %>
 
 <% if @error %>
   <div class="alert alert-danger">
