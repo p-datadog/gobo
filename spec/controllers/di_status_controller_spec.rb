@@ -486,6 +486,30 @@ RSpec.describe DiStatusController, type: :controller do
       expect(response.body).to include('No active instances for')
     end
 
+    it 'notes that an empty result is expected when querying the staging datacenter' do
+      empty = LiveServiceInstancesQuery::Result.new(
+        active: [], inactive: [], error: nil, endpoint: '/x',
+        host: 'dd.datad0g.com', cookie_path: '/cookies-staging.json',
+        service: 'gobo', env: 'staging'
+      )
+      allow(LiveServiceInstancesQuery).to receive(:new)
+        .and_return(instance_double(LiveServiceInstancesQuery, call: empty))
+      get :index, params: {redapl: 'staging'}
+      expect(response.body).to include('expected to be empty in staging (move to ddstaging)')
+    end
+
+    it 'does not show the staging note when querying the dogfood datacenter' do
+      empty = LiveServiceInstancesQuery::Result.new(
+        active: [], inactive: [], error: nil, endpoint: '/x',
+        host: 'squirrel.datadoghq.com', cookie_path: '/cookies-dogfood.json',
+        service: 'gobo', env: 'staging'
+      )
+      allow(LiveServiceInstancesQuery).to receive(:new)
+        .and_return(instance_double(LiveServiceInstancesQuery, call: empty))
+      get :index, params: {redapl: 'dogfood'}
+      expect(response.body).not_to include('expected to be empty in staging')
+    end
+
     it 'shows the query error to the user when the lookup fails' do
       failed = LiveServiceInstancesQuery::Result.new(
         active: [], inactive: [], error: 'RuntimeError: no cookies staged at /cookies-dogfood.json',
