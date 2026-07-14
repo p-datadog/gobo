@@ -24,6 +24,16 @@ module DiStatusHelper
     end
   end
 
+  # Human "N ago" for an ISO8601 timestamp string, or nil when blank/unparseable.
+  def time_ago_since(timestamp)
+    return nil if timestamp.blank?
+
+    parsed = Time.zone.parse(timestamp.to_s)
+    parsed && "#{time_ago_in_words(parsed)} ago"
+  rescue ArgumentError
+    nil
+  end
+
   # The original DI expression-language DSL for a capture expression, rendered
   # as pretty JSON. nil when the tracer does not retain the source DSL.
   def capture_expression_dsl_json(expression)

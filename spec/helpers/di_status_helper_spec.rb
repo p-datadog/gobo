@@ -35,5 +35,27 @@ RSpec.describe DiStatusHelper, type: :helper do
       reason = helper.probes_empty_state_reason(:unavailable)
       expect(reason).to include('not available in this environment')
     end
+
+    it 'attributes the empty state to RC disabling an explicitly-enabled DI' do
+      reason = helper.probes_empty_state_reason(:explicitly_enabled_rc_disabled)
+      expect(reason).to include('Remote Configuration has turned')
+      expect(reason).to include('DD_DYNAMIC_INSTRUMENTATION_ENABLED=true')
+    end
+  end
+
+  describe '#time_ago_since' do
+    it 'returns a "… ago" string for a parseable ISO8601 timestamp' do
+      result = helper.time_ago_since(90.minutes.ago.utc.iso8601(3))
+      expect(result).to be_a(String).and(end_with('ago'))
+    end
+
+    it 'returns nil for blank input' do
+      expect(helper.time_ago_since(nil)).to be_nil
+      expect(helper.time_ago_since('')).to be_nil
+    end
+
+    it 'returns nil for an unparseable timestamp' do
+      expect(helper.time_ago_since('not-a-timestamp')).to be_nil
+    end
   end
 end

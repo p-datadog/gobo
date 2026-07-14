@@ -109,8 +109,15 @@
 
     <% if @heartbeats %>
       <dl class="dl-horizontal">
-        <dt>Endpoint:</dt><dd><pre>/api/ui/debugger/heartbeats/details/<%= @heartbeats[:service] %></pre></dd>
-        <dt>Service last seen:</dt><dd><code><%= @heartbeats[:last_seen] || '(none)' %></code></dd>
+        <dt>Endpoint:</dt>
+        <dd><pre><%= link_to "/api/ui/debugger/heartbeats/details/#{@heartbeats[:service]}", "https://#{@heartbeats[:host]}/api/ui/debugger/heartbeats/details/#{@heartbeats[:service]}", target: "_blank", rel: "noopener" %></pre></dd>
+        <dt>Service last seen:</dt>
+        <dd>
+          <code><%= @heartbeats[:last_seen] || '(none)' %></code>
+          <% if (ago = time_ago_since(@heartbeats[:last_seen])) %>
+            <span class="text-muted">(<%= ago %>)</span>
+          <% end %>
+        </dd>
       </dl>
 
       <% if @heartbeats[:error] %>
@@ -171,7 +178,8 @@
 
     <% if @instances %>
       <dl class="dl-horizontal">
-        <dt>Endpoint:</dt><dd><pre><%= @instances[:endpoint] %></pre></dd>
+        <dt>Endpoint:</dt>
+        <dd><pre><%= link_to @instances[:endpoint], "https://#{@instances[:host]}#{@instances[:endpoint]}", target: "_blank", rel: "noopener" %></pre></dd>
       </dl>
 
       <% if @instances[:error] %>
