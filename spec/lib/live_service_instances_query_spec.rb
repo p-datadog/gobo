@@ -1,5 +1,6 @@
 require 'rails_helper'
 require_relative '../../lib/live_service_instances_query'
+require_relative '../../lib/datadog_session'
 
 RSpec.describe LiveServiceInstancesQuery do
   let(:host) { 'dd.datad0g.com' }
@@ -31,47 +32,12 @@ RSpec.describe LiveServiceInstancesQuery do
     end
   end
 
-  describe '#http_get' do
-    subject(:query) { build }
-
-    def response(klass, code, body: '', location: nil)
-      r = klass.new('1.1', code, 'msg')
-      r['location'] = location if location
-      allow(r).to receive(:body).and_return(body)
-      r
-    end
-
-    it 'returns the body on success' do
-      allow(query).to receive(:perform).and_return(response(Net::HTTPOK, '200', body: 'hi'))
-      _, body = query.send(:http_get, URI('https://x/'))
-      expect(body).to eq('hi')
-    end
-
-    it 'follows a non-login redirect' do
-      allow(query).to receive(:perform).and_return(
-        response(Net::HTTPFound, '302', location: 'https://x/apm/home'),
-        response(Net::HTTPOK, '200', body: 'landed')
-      )
-      _, body = query.send(:http_get, URI('https://x/'))
-      expect(body).to eq('landed')
-    end
-
-    it 'raises when redirected to login' do
-      allow(query).to receive(:perform)
-        .and_return(response(Net::HTTPFound, '302', location: 'https://x/account/login?next=%2F'))
-      expect { query.send(:http_get, URI('https://x/')) }
-        .to raise_error(/not authenticated/)
-    end
-
-    it 'raises on a non-success, non-redirect response' do
-      allow(query).to receive(:perform).and_return(response(Net::HTTPInternalServerError, '500', body: 'boom'))
-      expect { query.send(:http_get, URI('https://x/')) }
-        .to raise_error(/HTTP 500/)
-    end
-  end
-
   describe '#call' do
-    subject(:query) { build(env: 'staging') }
+    let(:session) do
+      instance_double(DatadogSession, host: host, cookie_path: '/cookies-staging.json')
+    end
+
+    subject(:query) { build(env: 'staging', session: session) }
 
     let(:api_response) do
       {
@@ -103,12 +69,8 @@ RSpec.describe LiveServiceInstancesQuery do
       }
     end
 
-    before do
-      allow(query).to receive(:fetch_cookies).and_return([{'name' => 'dogweb', 'value' => 'x'}])
-    end
-
     it 'returns parsed active and inactive instances on success' do
-      allow(query).to receive(:run_query).and_return(api_response)
+      allow(session).to receive(:get_json).and_return(api_response)
       result = query.call
       expect(result).to be_ok
       expect(result.active.size).to eq(1)
@@ -126,8 +88,15 @@ RSpec.describe LiveServiceInstancesQuery do
       expect(result.env).to eq('staging')
     end
 
+    it 'requests the live-service-instances endpoint for the service and env' do
+      expect(session).to receive(:get_json)
+        .with('/api/unstable/live-service-instances?service_name=gobo&service_env=staging')
+        .and_return('data' => {'attributes' => {}})
+      query.call
+    end
+
     it 'returns empty instance sets when the backend reports none' do
-      allow(query).to receive(:run_query).and_return(
+      allow(session).to receive(:get_json).and_return(
         'data' => {'attributes' => {
           'active_service_instances' => [], 'inactive_service_instances' => []
         }}
@@ -139,7 +108,7 @@ RSpec.describe LiveServiceInstancesQuery do
     end
 
     it 'captures any error into the result instead of raising' do
-      allow(query).to receive(:fetch_cookies)
+      allow(session).to receive(:get_json)
         .and_raise(RuntimeError, 'no cookies staged at /cookies-staging.json')
       result = query.call
       expect(result).not_to be_ok
