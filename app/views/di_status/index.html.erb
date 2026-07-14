@@ -44,15 +44,12 @@
   <div class="panel-heading">
     <h4 class="panel-title">
       REDAPL <code>service_config</code> environments
+      <% if @redapl_target %>
+        <small><%= link_to "Query REDAPL service_config for #{@redapl_target} &rarr;".html_safe, di_status_path(redapl: @redapl_target) %></small>
+      <% end %>
     </h4>
   </div>
   <div class="panel-body">
-    <% if @redapl_target %>
-      <p>
-        <%= link_to "Query REDAPL service_config for #{@redapl_target} &rarr;".html_safe, di_status_path(redapl: @redapl_target) %>
-      </p>
-    <% end %>
-
     <% if @redapl %>
       <dl class="dl-horizontal">
         <dt>Lookback:</dt><dd><%= @redapl[:window_minutes] %> minute(s)</dd>
@@ -94,6 +91,9 @@
   <div class="panel-heading">
     <h4 class="panel-title">
       Live service instances
+      <% if @redapl_target %>
+        <small><%= link_to "Query live-service-instances for #{@redapl_target} &rarr;".html_safe, di_status_path(redapl: @redapl_target) %></small>
+      <% end %>
     </h4>
   </div>
   <div class="panel-body">
@@ -102,12 +102,6 @@
       When there are no active instances, the UI shows
       "No instances found for this service".
     </p>
-
-    <% if @redapl_target %>
-      <p>
-        <%= link_to "Query live-service-instances for #{@redapl_target} &rarr;".html_safe, di_status_path(redapl: @redapl_target) %>
-      </p>
-    <% end %>
 
     <% if @instances %>
       <dl class="dl-horizontal">
