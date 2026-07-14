@@ -235,6 +235,17 @@ RSpec.describe DiStatusController, type: :controller do
   describe 'REDAPL service_config query' do
     render_views
 
+    # This page also runs the live-service-instances lookup for the same env;
+    # stub it so these REDAPL tests never touch wclip or the network.
+    before do
+      allow(LiveServiceInstancesQuery).to receive(:new).and_return(
+        instance_double(LiveServiceInstancesQuery, call: LiveServiceInstancesQuery::Result.new(
+          active: [], inactive: [], error: nil, endpoint: '/x', host: 'h',
+          cookie_path: '/c', service: 'gobo', env: 'staging'
+        ))
+      )
+    end
+
     let(:result) do
       RedaplQuery::Result.new(
         rows: [RedaplQuery::Row.new(service_name: 'gobo', language_name: 'ruby', env: 'staging')],
@@ -283,6 +294,95 @@ RSpec.describe DiStatusController, type: :controller do
       expect(RedaplQuery).not_to receive(:new)
       get :index, params: {redapl: 'bogus'}
       expect(assigns(:redapl)).to be_nil
+    end
+  end
+
+  describe 'live service instances' do
+    render_views
+
+    # This page also runs the REDAPL lookup for the same env; stub it so these
+    # instance tests never touch wclip or the network.
+    before do
+      allow(RedaplQuery).to receive(:new).and_return(
+        instance_double(RedaplQuery, call: RedaplQuery::Result.new(
+          rows: [], error: nil, query: 'SELECT ...', host: 'h',
+          cookie_path: '/c', window_minutes: 10
+        ))
+      )
+    end
+
+    let(:result) do
+      LiveServiceInstancesQuery::Result.new(
+        active: [LiveServiceInstancesQuery::Instance.new(
+          runtime_id: 'rid-1', hostname: 'host-a', service_env: 'staging',
+          service_version: '7cd00b1', client_library_version: '2.20.0',
+          agent_version: '7.55.0', di_enabled: true,
+          remote_config_products: %w[LIVE_DEBUGGING], language_name: 'ruby'
+        )],
+        inactive: [], error: nil,
+        endpoint: '/api/unstable/live-service-instances?service_name=gobo&service_env=staging',
+        host: 'dd.datad0g.com', cookie_path: '/cookies-staging.json',
+        service: 'gobo', env: 'staging'
+      )
+    end
+
+    it 'does not run the query on a plain page load' do
+      expect(LiveServiceInstancesQuery).not_to receive(:new)
+      get :index
+      expect(assigns(:instances)).to be_nil
+    end
+
+    it 'runs the query for the requested environment and renders active instances' do
+      expect(LiveServiceInstancesQuery).to receive(:new)
+        .with(host: 'dd.datad0g.com', cookie_label: 'staging', service: anything, env: anything)
+        .and_return(instance_double(LiveServiceInstancesQuery, call: result))
+      get :index, params: {redapl: 'staging'}
+      expect(assigns(:instances)[:active].first[:runtime_id]).to eq('rid-1')
+      expect(response.body).to include('rid-1')
+      expect(response.body).to include('2.20.0')
+      expect(response.body).to include('LIVE_DEBUGGING')
+    end
+
+    it 'shows the No instances condition when the active list is empty' do
+      empty = LiveServiceInstancesQuery::Result.new(
+        active: [], inactive: [], error: nil,
+        endpoint: '/api/unstable/live-service-instances?service_name=gobo&service_env=staging',
+        host: 'dd.datad0g.com', cookie_path: '/cookies-staging.json',
+        service: 'gobo', env: 'staging'
+      )
+      allow(LiveServiceInstancesQuery).to receive(:new)
+        .and_return(instance_double(LiveServiceInstancesQuery, call: empty))
+      get :index, params: {redapl: 'staging'}
+      expect(response.body).to include('No instances found for this service')
+    end
+
+    it 'shows the query error to the user when the lookup fails' do
+      failed = LiveServiceInstancesQuery::Result.new(
+        active: [], inactive: [], error: 'RuntimeError: no cookies staged at /cookies-dogfood.json',
+        endpoint: '/api/unstable/live-service-instances?service_name=gobo',
+        host: 'squirrel.datadoghq.com', cookie_path: '/cookies-dogfood.json',
+        service: 'gobo', env: nil
+      )
+      allow(LiveServiceInstancesQuery).to receive(:new)
+        .and_return(instance_double(LiveServiceInstancesQuery, call: failed))
+      get :index, params: {redapl: 'dogfood'}
+      expect(response.body).to include('live-service-instances query failed')
+      expect(response.body).to include('no cookies staged at /cookies-dogfood.json')
+    end
+
+    it 'ignores an unknown environment without running the query' do
+      expect(LiveServiceInstancesQuery).not_to receive(:new)
+      get :index, params: {redapl: 'bogus'}
+      expect(assigns(:instances)).to be_nil
+    end
+
+    it 'serializes instances in JSON' do
+      allow(LiveServiceInstancesQuery).to receive(:new)
+        .and_return(instance_double(LiveServiceInstancesQuery, call: result))
+      get :index, params: {redapl: 'staging'}, format: :json
+      json = JSON.parse(response.body)
+      expect(json['instances']['active'].first['runtime_id']).to eq('rid-1')
+      expect(json['instances']['env']).to eq('staging')
     end
   end
 

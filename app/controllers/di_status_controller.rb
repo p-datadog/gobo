@@ -1,4 +1,5 @@
 require_relative '../../lib/redapl_query'
+require_relative '../../lib/live_service_instances_query'
 
 class DiStatusController < ApplicationController
   def index
@@ -20,6 +21,7 @@ class DiStatusController < ApplicationController
     @redapl_target = fetch_agent_environment_label
     @redapl_env = redapl_env_param
     @redapl = fetch_redapl_environments(@redapl_env) if @redapl_env
+    @instances = fetch_service_instances(@redapl_env) if @redapl_env
 
     respond_to do |format|
       format.html
@@ -64,6 +66,27 @@ class DiStatusController < ApplicationController
       query: result.query,
       window_minutes: result.window_minutes,
       rows: result.rows.map { |r| {service_name: r.service_name, language_name: r.language_name, env: r.env} },
+      error: result.error,
+    }
+  end
+
+  # Reads cookies fresh from wclip and runs the live-service-instances lookup
+  # for the current service/env. An empty active list is the backend condition
+  # behind the DI UI's "No instances found for this service" message.
+  def fetch_service_instances(label)
+    host = AgentEnvironments.fetch(label)[:host]
+    result = LiveServiceInstancesQuery.new(
+      host: host, cookie_label: label, service: @service, env: @env
+    ).call
+    {
+      environment: label,
+      host: result.host,
+      cookie_path: result.cookie_path,
+      endpoint: result.endpoint,
+      service: result.service,
+      env: result.env,
+      active: result.active.map(&:to_h),
+      inactive: result.inactive.map(&:to_h),
       error: result.error,
     }
   end
@@ -258,6 +281,7 @@ class DiStatusController < ApplicationController
       failed: serialize_failed_probes(@failed_probes),
       error: @error,
       redapl: @redapl,
+      instances: @instances,
       agent_operational: @agent_operational&.operational?,
     }
   end

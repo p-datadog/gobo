@@ -96,6 +96,86 @@
   </div>
 </div>
 
+<div class="panel panel-info">
+  <div class="panel-heading">
+    <h4 class="panel-title">
+      Live service instances
+      <% if @redapl_env %>
+        <small><%= link_to "JSON", di_status_path(format: :json, redapl: @redapl_env) %></small>
+      <% end %>
+    </h4>
+  </div>
+  <div class="panel-body">
+    <p class="text-muted">
+      Reproduces the <code>live-service-instances</code> lookup the DI UI uses.
+      When there are no active instances, the UI shows
+      "No instances found for this service".
+    </p>
+
+    <% if @redapl_target %>
+      <p>
+        <%= link_to "Query live-service-instances for #{@redapl_target} &rarr;".html_safe, di_status_path(redapl: @redapl_target) %>
+      </p>
+    <% end %>
+
+    <% if @instances %>
+      <dl class="dl-horizontal">
+        <dt>Environment:</dt><dd><code><%= @instances[:environment] %></code></dd>
+        <dt>Host:</dt><dd><code><%= @instances[:host] %></code></dd>
+        <dt>Cookies:</dt><dd><code><%= @instances[:cookie_path] %></code></dd>
+        <dt>Service:</dt><dd><code><%= @instances[:service] %></code></dd>
+        <dt>Env:</dt><dd><code><%= @instances[:env] %></code></dd>
+        <dt>Endpoint:</dt><dd><pre><%= @instances[:endpoint] %></pre></dd>
+      </dl>
+
+      <% if @instances[:error] %>
+        <div class="alert alert-danger">
+          <strong>live-service-instances query failed:</strong>
+          <pre><%= @instances[:error] %></pre>
+        </div>
+      <% elsif @instances[:active].empty? %>
+        <div class="alert alert-warning">
+          No active instances for <code><%= @instances[:service] %></code>
+          in <code><%= @instances[:env] %></code>.
+          This is the backend condition behind "No instances found for this service".
+          <% unless @instances[:inactive].empty? %>
+            (<%= pluralize(@instances[:inactive].size, 'inactive instance') %> present.)
+          <% end %>
+        </div>
+      <% end %>
+
+      <% [['Active', @instances[:active]], ['Inactive', @instances[:inactive]]].each do |label, rows| %>
+        <% next if rows.empty? %>
+        <h4><%= label %> (<%= rows.size %>)</h4>
+        <table class="table table-striped table-condensed">
+          <thead>
+            <tr>
+              <th>runtime_id</th><th>hostname</th><th>env</th><th>version</th>
+              <th>tracer</th><th>agent</th><th>di_enabled</th>
+              <th>rc_products</th><th>language</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% rows.each do |i| %>
+              <tr>
+                <td><code><%= i[:runtime_id] %></code></td>
+                <td><%= i[:hostname] %></td>
+                <td><code><%= i[:service_env] %></code></td>
+                <td><%= i[:service_version] %></td>
+                <td><%= i[:client_library_version] %></td>
+                <td><%= i[:agent_version] %></td>
+                <td><%= i[:di_enabled] %></td>
+                <td><%= Array(i[:remote_config_products]).join(', ') %></td>
+                <td><%= i[:language_name] %></td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      <% end %>
+    <% end %>
+  </div>
+</div>
+
 <% if @error %>
   <div class="alert alert-danger">
     <h4><strong>Error Fetching Probes</strong></h4>
