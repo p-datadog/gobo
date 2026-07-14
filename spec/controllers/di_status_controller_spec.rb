@@ -235,12 +235,19 @@ RSpec.describe DiStatusController, type: :controller do
   describe 'REDAPL service_config query' do
     render_views
 
-    # This page also runs the live-service-instances lookup for the same env;
-    # stub it so these REDAPL tests never touch wclip or the network.
+    # This page also runs the heartbeats and live-service-instances lookups for
+    # the same env; stub them so these REDAPL tests never touch wclip or the
+    # network.
     before do
       allow(LiveServiceInstancesQuery).to receive(:new).and_return(
         instance_double(LiveServiceInstancesQuery, call: LiveServiceInstancesQuery::Result.new(
           active: [], inactive: [], error: nil, endpoint: '/x', host: 'h',
+          cookie_path: '/c', service: 'gobo', env: 'staging'
+        ))
+      )
+      allow(DebuggerHeartbeatsQuery).to receive(:new).and_return(
+        instance_double(DebuggerHeartbeatsQuery, call: DebuggerHeartbeatsQuery::Result.new(
+          instances: [], last_seen: nil, error: nil, host: 'h',
           cookie_path: '/c', service: 'gobo', env: 'staging'
         ))
       )
@@ -297,16 +304,115 @@ RSpec.describe DiStatusController, type: :controller do
     end
   end
 
-  describe 'live service instances' do
+  describe 'debugger heartbeats' do
     render_views
 
-    # This page also runs the REDAPL lookup for the same env; stub it so these
-    # instance tests never touch wclip or the network.
+    # This page also runs the REDAPL and live-service-instances lookups for the
+    # same env; stub them so these heartbeat tests never touch wclip or the
+    # network.
     before do
       allow(RedaplQuery).to receive(:new).and_return(
         instance_double(RedaplQuery, call: RedaplQuery::Result.new(
           rows: [], error: nil, query: 'SELECT ...', host: 'h',
           cookie_path: '/c', window_minutes: 10
+        ))
+      )
+      allow(LiveServiceInstancesQuery).to receive(:new).and_return(
+        instance_double(LiveServiceInstancesQuery, call: LiveServiceInstancesQuery::Result.new(
+          active: [], inactive: [], error: nil, endpoint: '/x', host: 'h',
+          cookie_path: '/c', service: 'gobo', env: 'staging'
+        ))
+      )
+    end
+
+    let(:result) do
+      DebuggerHeartbeatsQuery::Result.new(
+        instances: [DebuggerHeartbeatsQuery::Instance.new(
+          runtime_id: 'rid-1', service_env: 'staging', service_version: '5e97551',
+          tracer_version: '2.38.0-dev', language: 'ruby', agent_id: 'big-test-docker',
+          hostname: nil, last_seen: '2026-07-14T14:49:26.888Z'
+        )],
+        last_seen: '2026-07-14T14:49:28.019Z', error: nil,
+        host: 'dd.datad0g.com', cookie_path: '/cookies-staging.json',
+        service: 'gobo', env: 'staging'
+      )
+    end
+
+    it 'does not run the query on a plain page load' do
+      expect(DebuggerHeartbeatsQuery).not_to receive(:new)
+      get :index
+      expect(assigns(:heartbeats)).to be_nil
+    end
+
+    it 'runs the query for the requested environment and renders instances' do
+      expect(DebuggerHeartbeatsQuery).to receive(:new)
+        .with(host: 'dd.datad0g.com', cookie_label: 'staging', service: anything, env: anything)
+        .and_return(instance_double(DebuggerHeartbeatsQuery, call: result))
+      get :index, params: {redapl: 'staging'}
+      expect(assigns(:heartbeats)[:instances].first[:runtime_id]).to eq('rid-1')
+      expect(response.body).to include('rid-1')
+      expect(response.body).to include('2.38.0-dev')
+      expect(response.body).to include('NOT DETECTED')
+    end
+
+    it 'shows the empty condition when there are no heartbeats' do
+      empty = DebuggerHeartbeatsQuery::Result.new(
+        instances: [], last_seen: nil, error: nil,
+        host: 'dd.datad0g.com', cookie_path: '/cookies-staging.json',
+        service: 'gobo', env: 'staging'
+      )
+      allow(DebuggerHeartbeatsQuery).to receive(:new)
+        .and_return(instance_double(DebuggerHeartbeatsQuery, call: empty))
+      get :index, params: {redapl: 'staging'}
+      expect(response.body).to include('No debugger heartbeats for')
+    end
+
+    it 'shows the query error to the user when the lookup fails' do
+      failed = DebuggerHeartbeatsQuery::Result.new(
+        instances: [], last_seen: nil,
+        error: 'RuntimeError: no cookies staged at /cookies-dogfood.json',
+        host: 'squirrel.datadoghq.com', cookie_path: '/cookies-dogfood.json',
+        service: 'gobo', env: nil
+      )
+      allow(DebuggerHeartbeatsQuery).to receive(:new)
+        .and_return(instance_double(DebuggerHeartbeatsQuery, call: failed))
+      get :index, params: {redapl: 'dogfood'}
+      expect(response.body).to include('debugger heartbeats query failed')
+      expect(response.body).to include('no cookies staged at /cookies-dogfood.json')
+    end
+
+    it 'ignores an unknown environment without running the query' do
+      expect(DebuggerHeartbeatsQuery).not_to receive(:new)
+      get :index, params: {redapl: 'bogus'}
+      expect(assigns(:heartbeats)).to be_nil
+    end
+
+    it 'serializes heartbeats in JSON' do
+      allow(DebuggerHeartbeatsQuery).to receive(:new)
+        .and_return(instance_double(DebuggerHeartbeatsQuery, call: result))
+      get :index, params: {redapl: 'staging'}, format: :json
+      json = JSON.parse(response.body)
+      expect(json['heartbeats']['instances'].first['runtime_id']).to eq('rid-1')
+      expect(json['heartbeats']['env']).to eq('staging')
+    end
+  end
+
+  describe 'live service instances' do
+    render_views
+
+    # This page also runs the REDAPL and heartbeats lookups for the same env;
+    # stub them so these instance tests never touch wclip or the network.
+    before do
+      allow(RedaplQuery).to receive(:new).and_return(
+        instance_double(RedaplQuery, call: RedaplQuery::Result.new(
+          rows: [], error: nil, query: 'SELECT ...', host: 'h',
+          cookie_path: '/c', window_minutes: 10
+        ))
+      )
+      allow(DebuggerHeartbeatsQuery).to receive(:new).and_return(
+        instance_double(DebuggerHeartbeatsQuery, call: DebuggerHeartbeatsQuery::Result.new(
+          instances: [], last_seen: nil, error: nil, host: 'h',
+          cookie_path: '/c', service: 'gobo', env: 'staging'
         ))
       )
     end
@@ -343,7 +449,7 @@ RSpec.describe DiStatusController, type: :controller do
       expect(response.body).to include('LIVE_DEBUGGING')
     end
 
-    it 'shows the No instances condition when the active list is empty' do
+    it 'shows the empty condition when the active list is empty' do
       empty = LiveServiceInstancesQuery::Result.new(
         active: [], inactive: [], error: nil,
         endpoint: '/api/unstable/live-service-instances?service_name=gobo&service_env=staging',
@@ -353,7 +459,7 @@ RSpec.describe DiStatusController, type: :controller do
       allow(LiveServiceInstancesQuery).to receive(:new)
         .and_return(instance_double(LiveServiceInstancesQuery, call: empty))
       get :index, params: {redapl: 'staging'}
-      expect(response.body).to include('No instances found for this service')
+      expect(response.body).to include('No active instances for')
     end
 
     it 'shows the query error to the user when the lookup fails' do

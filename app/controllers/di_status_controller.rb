@@ -1,5 +1,6 @@
 require_relative '../../lib/redapl_query'
 require_relative '../../lib/live_service_instances_query'
+require_relative '../../lib/debugger_heartbeats_query'
 
 class DiStatusController < ApplicationController
   def index
@@ -21,6 +22,7 @@ class DiStatusController < ApplicationController
     @redapl_target = fetch_agent_environment_label
     @redapl_env = redapl_env_param
     @redapl = fetch_redapl_environments(@redapl_env) if @redapl_env
+    @heartbeats = fetch_service_heartbeats(@redapl_env) if @redapl_env
     @instances = fetch_service_instances(@redapl_env) if @redapl_env
     @redapl_connection = @redapl&.slice(:environment, :host, :cookie_path)
 
@@ -71,9 +73,31 @@ class DiStatusController < ApplicationController
     }
   end
 
-  # Reads cookies fresh from wclip and runs the live-service-instances lookup
-  # for the current service/env. An empty active list is the backend condition
-  # behind the DI UI's "No instances found for this service" message.
+  # Reads cookies fresh from wclip and queries the debugger edge-api heartbeats
+  # endpoints. This is the source of the DI service page's instance-coverage
+  # panel ("N instances active") — one row per tracer runtime (e.g. per Puma
+  # worker).
+  def fetch_service_heartbeats(label)
+    host = AgentEnvironments.fetch(label)[:host]
+    result = DebuggerHeartbeatsQuery.new(
+      host: host, cookie_label: label, service: @service, env: @env
+    ).call
+    {
+      environment: label,
+      host: result.host,
+      cookie_path: result.cookie_path,
+      service: result.service,
+      env: result.env,
+      last_seen: result.last_seen,
+      instances: result.instances.map(&:to_h),
+      error: result.error,
+    }
+  end
+
+  # Reads cookies fresh from wclip and runs the APM-domain live-service-instances
+  # lookup (instrumentation telemetry + REDAPL join). Distinct from the DI
+  # heartbeat instance coverage above: a service can heartbeat for DI yet be
+  # absent here when its APM instrumentation telemetry is not landing.
   def fetch_service_instances(label)
     host = AgentEnvironments.fetch(label)[:host]
     result = LiveServiceInstancesQuery.new(
@@ -152,12 +176,13 @@ class DiStatusController < ApplicationController
     store.respond_to?(:failed_probes) ? store.failed_probes : {}
   end
 
-  # Resolves DI enablement into one of five states:
-  #   :enabled_explicitly   - running because DD_DYNAMIC_INSTRUMENTATION_ENABLED=true
-  #   :enabled_implicitly   - running because Remote Configuration turned it on
-  #   :disabled_explicitly  - DD_DYNAMIC_INSTRUMENTATION_ENABLED=false (also blocks RC)
-  #   :can_enable_remotely  - off, but Remote Configuration may turn it on
-  #   :unavailable          - DI absent or unsupported in this environment
+  # Resolves DI enablement into one of six states:
+  #   :enabled_explicitly            - running because DD_DYNAMIC_INSTRUMENTATION_ENABLED=true
+  #   :enabled_implicitly            - running because Remote Configuration turned it on
+  #   :disabled_explicitly           - DD_DYNAMIC_INSTRUMENTATION_ENABLED=false (also blocks RC)
+  #   :explicitly_enabled_rc_disabled - env var enabled it, but RC later turned DI off
+  #   :can_enable_remotely           - off, but Remote Configuration may turn it on
+  #   :unavailable                   - DI absent or unsupported in this environment
   def fetch_di_enabled_status
     return :unavailable unless defined?(Datadog::DI) && Datadog::DI.respond_to?(:component)
     return :disabled_explicitly if di_explicitly_disabled?
@@ -165,6 +190,11 @@ class DiStatusController < ApplicationController
     if di_component_running?(Datadog::DI.component)
       return di_explicitly_enabled? ? :enabled_explicitly : :enabled_implicitly
     end
+
+    # Explicitly enabled by env var but not running: DI started at boot and was
+    # later stopped by an RC disable. RC-disable overrides an explicit enable on
+    # every tracer but .NET (see enablement protocol spec).
+    return :explicitly_enabled_rc_disabled if di_explicitly_enabled?
 
     di_supports_remote_enablement? && !di_unsupported? ? :can_enable_remotely : :unavailable
   rescue => e
@@ -282,6 +312,7 @@ class DiStatusController < ApplicationController
       failed: serialize_failed_probes(@failed_probes),
       error: @error,
       redapl: @redapl,
+      heartbeats: @heartbeats,
       instances: @instances,
       agent_operational: @agent_operational&.operational?,
     }
