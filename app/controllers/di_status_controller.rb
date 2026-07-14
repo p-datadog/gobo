@@ -16,6 +16,7 @@ class DiStatusController < ApplicationController
     @git_repository_url = fetch_git_repository_url
     @git_commit_sha = fetch_git_commit_sha
     @di_enabled = fetch_di_enabled_status
+    @di_unavailable_reason = di_unavailable_reason if @di_enabled == :unavailable
     @agent_address = fetch_agent_address
     @agent_environment_label = fetch_agent_environment_label
     @agent_operational = fetch_agent_operational
@@ -199,7 +200,31 @@ class DiStatusController < ApplicationController
     di_supports_remote_enablement? && !di_unsupported? ? :can_enable_remotely : :unavailable
   rescue => e
     Rails.logger.error "Error fetching DI enabled status: #{e.class}: #{e}"
-    :unavailable
+    @di_status_error = "#{e.class}: #{e}"
+    :error
+  end
+
+  # The specific reason DI is unavailable, so the UI can show it instead of a
+  # generic "unsupported here". Distinguishes the three causes folded into the
+  # :unavailable state: DI absent from the tracer, a tracer-reported
+  # unsupported reason (RC off, dev env, platform, C extension), or a tracer
+  # too old to support remote enablement. nil when none applies.
+  def di_unavailable_reason
+    unless defined?(Datadog::DI) && Datadog::DI.respond_to?(:component)
+      return "the installed tracer does not include dynamic instrumentation"
+    end
+
+    if Datadog::DI.respond_to?(:unsupported_reason)
+      reason = Datadog::DI.unsupported_reason(Datadog.configuration)
+      return reason if reason
+    end
+
+    return "the installed tracer does not support remote enablement" unless di_supports_remote_enablement?
+
+    nil
+  rescue => e
+    Rails.logger.error "Error reading DI unavailable reason: #{e.class}: #{e}"
+    nil
   end
 
   def di_component_running?(component)
@@ -306,6 +331,8 @@ class DiStatusController < ApplicationController
       git_commit_sha: @git_commit_sha,
       agent_address: @agent_address,
       di_enabled: @di_enabled.to_s,
+      di_unavailable_reason: @di_unavailable_reason,
+      di_status_error: @di_status_error,
       active: serialize_probes(@probes),
       disabled: serialize_probes(@disabled_probes),
       pending: serialize_probes(@pending_probes),

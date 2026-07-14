@@ -56,11 +56,26 @@ RSpec.describe DiStatusController, type: :controller do
       expect(assigns(:di_enabled)).to eq(:explicitly_enabled_rc_disabled)
     end
 
-    it 'resolves to one of the six known states against the real tracer' do
+    it 'captures the specific unavailable reason from the tracer' do
+      stub_di_predicates(running: false, supports_remote: true, unsupported: true)
+      allow(Datadog::DI).to receive(:unsupported_reason).and_return('C extension is not available')
+      get :index
+      expect(assigns(:di_enabled)).to eq(:unavailable)
+      expect(assigns(:di_unavailable_reason)).to eq('C extension is not available')
+    end
+
+    it 'reports :error and captures the message when the status check raises' do
+      allow(controller).to receive(:di_explicitly_disabled?).and_raise(RuntimeError, 'boom')
+      get :index
+      expect(assigns(:di_enabled)).to eq(:error)
+      expect(assigns(:di_status_error)).to eq('RuntimeError: boom')
+    end
+
+    it 'resolves to one of the known states against the real tracer' do
       get :index
       expect(assigns(:di_enabled)).to be_in(
         %i[enabled_explicitly enabled_implicitly disabled_explicitly
-          explicitly_enabled_rc_disabled can_enable_remotely unavailable]
+          explicitly_enabled_rc_disabled can_enable_remotely unavailable error]
       )
     end
   end
@@ -75,6 +90,7 @@ RSpec.describe DiStatusController, type: :controller do
       explicitly_enabled_rc_disabled: 'No — disabled by Remote Configuration',
       can_enable_remotely: 'No — can be enabled remotely',
       unavailable: 'No — unavailable',
+      error: 'Unknown — status check failed',
     }.each do |state, text|
       it "shows '#{text}' for #{state}" do
         allow(controller).to receive(:fetch_di_enabled_status).and_return(state)

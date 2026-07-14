@@ -36,6 +36,18 @@ RSpec.describe DiStatusHelper, type: :helper do
       expect(reason).to include('not available in this environment')
     end
 
+    it 'includes the specific reason when DI is unavailable and one is given' do
+      reason = helper.probes_empty_state_reason(:unavailable, nil, 'C extension is not available')
+      expect(reason).to include('not available in this environment')
+      expect(reason).to include('C extension is not available')
+    end
+
+    it 'attributes the empty state to a failed status check' do
+      reason = helper.probes_empty_state_reason(:error)
+      expect(reason).to include('could not be determined')
+      expect(reason).to include('error occurred')
+    end
+
     it 'attributes the empty state to RC disabling an explicitly-enabled DI' do
       reason = helper.probes_empty_state_reason(:explicitly_enabled_rc_disabled)
       expect(reason).to include('Remote Configuration has turned')

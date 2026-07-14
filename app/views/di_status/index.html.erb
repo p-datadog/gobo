@@ -36,9 +36,16 @@
       <span class="text-muted">(DD_DYNAMIC_INSTRUMENTATION_ENABLED=true, but RC turned DI off)</span>
     <% when :can_enable_remotely %>
       <span class="text-warning"><strong>✗ No — can be enabled remotely</strong></span>
+    <% when :error %>
+      <span class="text-danger"><strong>✗ Unknown — status check failed</strong></span>
+      <span class="text-muted">(an error occurred while checking DI status; see below)</span>
     <% else %>
       <span class="text-muted"><strong>✗ No — unavailable</strong></span>
-      <span class="text-muted">(dynamic instrumentation is not available in this environment)</span>
+      <% if @di_unavailable_reason.present? %>
+        <span class="text-muted">(<%= @di_unavailable_reason %>)</span>
+      <% else %>
+        <span class="text-muted">(dynamic instrumentation is not available in this environment)</span>
+      <% end %>
     <% end %>
   </div>
 </div>
@@ -256,6 +263,13 @@
   </div>
 <% end %>
 
+<% if @di_status_error %>
+  <div class="alert alert-danger">
+    <h4><strong>Error Checking DI Status</strong></h4>
+    <pre><%= @di_status_error %></pre>
+  </div>
+<% end %>
+
 <div class="alert alert-info">
   <strong>Debug Info:</strong> Active: <%= @probes.size %>, Disabled: <%= @disabled_probes.size %>, Pending: <%= @pending_probes.size %>, Failed: <%= @failed_probes.size %>
 </div>
@@ -267,7 +281,7 @@
     <% if @probes.empty? && @disabled_probes.empty? && @pending_probes.empty? && @failed_probes.empty? %>
       <div class="alert alert-info">
         <p><strong>No probes found.</strong></p>
-        <p><%= probes_empty_state_reason(@di_enabled, @error) %></p>
+        <p><%= probes_empty_state_reason(@di_enabled, @error, @di_unavailable_reason) %></p>
       </div>
     <% end %>
 

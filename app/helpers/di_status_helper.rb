@@ -1,7 +1,7 @@
 module DiStatusHelper
   # Accurate root cause for an empty DI Status page, derived from the resolved
   # DI enablement state and any probe-fetch error, instead of guessing.
-  def probes_empty_state_reason(di_enabled, error = nil)
+  def probes_empty_state_reason(di_enabled, error = nil, unavailable_reason = nil)
     return "Probes could not be fetched from the tracer (see the error above)." if error.present?
 
     case di_enabled
@@ -18,9 +18,16 @@ module DiStatusHelper
     when :can_enable_remotely
       "Dynamic instrumentation is not running. It can be turned on by Remote " \
         "Configuration; until it starts, the tracer receives no probes."
+    when :error
+      "Dynamic instrumentation status could not be determined — an error occurred " \
+        "while checking it (see the error above)."
     else
-      "Dynamic instrumentation is not available in this environment — the installed " \
-        "tracer does not support it or it is unsupported here."
+      if unavailable_reason.present?
+        "Dynamic instrumentation is not available in this environment: #{unavailable_reason}."
+      else
+        "Dynamic instrumentation is not available in this environment — the installed " \
+          "tracer does not support it or it is unsupported here."
+      end
     end
   end
 
