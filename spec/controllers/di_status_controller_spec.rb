@@ -495,7 +495,7 @@ RSpec.describe DiStatusController, type: :controller do
       allow(LiveServiceInstancesQuery).to receive(:new)
         .and_return(instance_double(LiveServiceInstancesQuery, call: empty))
       get :index, params: {redapl: 'staging'}
-      expect(response.body).to include('expected to be empty in staging (move to ddstaging)')
+      expect(response.body).to include('Expected to be empty in staging (move to ddstaging)')
     end
 
     it 'does not show the staging note when querying the dogfood datacenter' do
@@ -507,7 +507,7 @@ RSpec.describe DiStatusController, type: :controller do
       allow(LiveServiceInstancesQuery).to receive(:new)
         .and_return(instance_double(LiveServiceInstancesQuery, call: empty))
       get :index, params: {redapl: 'dogfood'}
-      expect(response.body).not_to include('expected to be empty in staging')
+      expect(response.body).not_to include('Expected to be empty in staging')
     end
 
     it 'shows the query error to the user when the lookup fails' do

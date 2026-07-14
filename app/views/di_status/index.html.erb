@@ -202,7 +202,7 @@
             (<%= pluralize(@instances[:inactive].size, 'inactive instance') %> present.)
           <% end %>
           <% if @instances[:environment] == 'staging' %>
-            <strong>expected to be empty in staging (move to ddstaging)</strong>
+            <strong>Expected to be empty in staging (move to ddstaging)</strong>
           <% end %>
         </div>
       <% end %>
