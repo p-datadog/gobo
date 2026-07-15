@@ -6,7 +6,7 @@ set -eu
 script_dir="$(cd "$(dirname "$0")" && pwd)"
 
 usage() {
-    echo "Usage: $0 [-r | -u] [-p PORT] [-w WORKERS] [-s SERVICE] [-e ENV] [-d] [-D] [-S] [-I]"
+    echo "Usage: $0 [-r | -u] [-p PORT] [-w WORKERS] [-s SERVICE] [-e ENV] [-d] [-D] [-S] [-i]"
     echo "  -r            Run Rails server in production mode"
     echo "  -u            Run Puma server in production mode"
     echo "  -p PORT       Override port number (default: 3000)"
@@ -17,7 +17,7 @@ usage() {
     echo "  -D            Use development environment (default: production)"
     echo "  -S            Use staging agent (port 28126; default: dogfood on 18126)"
     echo "                (ports duplicated from config/agent_environments.yml — keep in sync)"
-    echo "  -I            Leave DD_DYNAMIC_INSTRUMENTATION_ENABLED and DD_SYMBOL_DATABASE_UPLOAD_ENABLED unset (test RC-driven enablement)"
+    echo "  -i            Set DD_DYNAMIC_INSTRUMENTATION_ENABLED and DD_SYMBOL_DATABASE_UPLOAD_ENABLED (default: unset, RC-driven enablement)"
     exit 1
 }
 
@@ -28,11 +28,11 @@ env_flag=""
 debug=""
 dev_mode=""
 agent_port=""
-implicit_di=""
+explicit_di=""
 mode="rails"
 
 # Parse options
-while getopts "rup:w:s:e:dDSI" opt; do
+while getopts "rup:w:s:e:dDSi" opt; do
     case $opt in
         r)
             mode="rails"
@@ -62,8 +62,8 @@ while getopts "rup:w:s:e:dDSI" opt; do
             # Source of truth: config/agent_environments.yml (staging.agent_port).
             agent_port="28126"
             ;;
-        I)
-            implicit_di="1"
+        i)
+            explicit_di="1"
             ;;
         *)
             usage
@@ -125,8 +125,9 @@ if [ -z "$dev_mode" ]; then
   fi
 fi
 
-# Enable Datadog Dynamic Instrumentation (unless -I: leave unset for RC-driven enablement)
-if [ -z "$implicit_di" ]; then
+# Enable Datadog Dynamic Instrumentation only when -i is given. By default the
+# env vars are left unset so enablement is driven by Remote Configuration.
+if [ -n "$explicit_di" ]; then
     export DD_DYNAMIC_INSTRUMENTATION_ENABLED=1
     export DD_SYMBOL_DATABASE_UPLOAD_ENABLED=1
 fi

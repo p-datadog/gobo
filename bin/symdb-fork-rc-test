@@ -34,9 +34,10 @@ export SYMDB_FORK_TEST=1
 export PORT=$PORT
 export WEB_CONCURRENCY=$WORKERS
 
-# bin/run defaults to dogfood agent; production env; sets DD_DYNAMIC_INSTRUMENTATION_ENABLED + DD_SYMBOL_DATABASE_UPLOAD_ENABLED.
+# bin/run defaults to dogfood agent; production env. DI/SymDB env vars are unset
+# by default, so -i sets DD_DYNAMIC_INSTRUMENTATION_ENABLED + DD_SYMBOL_DATABASE_UPLOAD_ENABLED.
 # We pass -d for DD_TRACE_DEBUG and -s for service name.
-bin/run -u -w "$WORKERS" -p "$PORT" -s "$SERVICE" -d >"$LOG" 2>&1 &
+bin/run -u -w "$WORKERS" -p "$PORT" -s "$SERVICE" -d -i >"$LOG" 2>&1 &
 RUN_PID=$!
 echo "[runner] bin/run pid: $RUN_PID"
 

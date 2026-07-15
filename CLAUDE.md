@@ -10,7 +10,7 @@ Always prefix Ruby/Rails commands with `bundle exec`. Never run `ruby`, `rails`,
 
 ## Launching the App
 
-**Use `bin/run` as the entry point.** Do not invoke `bundle exec puma`, `bin/rails server`, or `unicorn` directly. `bin/run` handles every prerequisite the servers need: `bundle install`, `yarn install`, `rails db:migrate`, admin-user seed, `assets:precompile`, `webpacker:compile`, `SECRET_KEY_BASE` generation for production, and the standard Datadog env block (service, env, agent port, RC enablement in dev, DI/SymDB enablement).
+**Use `bin/run` as the entry point.** Do not invoke `bundle exec puma`, `bin/rails server`, or `unicorn` directly. `bin/run` handles every prerequisite the servers need: `bundle install`, `yarn install`, `rails db:migrate`, admin-user seed, `assets:precompile`, `webpacker:compile`, `SECRET_KEY_BASE` generation for production, and the standard Datadog env block (service, env, agent port, RC enablement in dev; DI/SymDB env vars are left unset by default and only set with `-i`).
 
 **Flags** (see `bin/run -h` for the live list):
 
@@ -25,7 +25,7 @@ Always prefix Ruby/Rails commands with `bundle exec`. Never run `ruby`, `rails`,
 | `-d` | `DD_TRACE_DEBUG=1` |
 | `-D` | Development env (default is production) |
 | `-S` | Staging agent on port 28126 (default: dogfood on 18126) |
-| `-I` | Leave `DD_DYNAMIC_INSTRUMENTATION_ENABLED` / `DD_SYMBOL_DATABASE_UPLOAD_ENABLED` unset (test RC-driven enablement) |
+| `-i` | Set `DD_DYNAMIC_INSTRUMENTATION_ENABLED` / `DD_SYMBOL_DATABASE_UPLOAD_ENABLED` (default: unset, RC-driven enablement) |
 
 **Common invocations:**
 
@@ -37,7 +37,7 @@ bin/run -r -D -S -d -s gobo -e staging
 bin/run -u -w 2 -S -d -s gobo -e staging
 ```
 
-**Implicit DI enablement testing:** by default `bin/run` exports `DD_DYNAMIC_INSTRUMENTATION_ENABLED=1` and `DD_SYMBOL_DATABASE_UPLOAD_ENABLED=1`. To verify DI is turned on by Remote Configuration rather than by env var, pass `-I` so these vars are left unset. Remote Configuration itself stays enabled (on by default in production; add `-D` for development, which also enables RC and telemetry).
+**Implicit DI enablement testing:** by default `bin/run` leaves `DD_DYNAMIC_INSTRUMENTATION_ENABLED` and `DD_SYMBOL_DATABASE_UPLOAD_ENABLED` unset, so DI is turned on by Remote Configuration rather than by env var. To force enablement by env var instead, pass `-i` so both are exported as `1`. Remote Configuration itself stays enabled (on by default in production; add `-D` for development, which also enables RC and telemetry).
 
 ## Scripts
 
