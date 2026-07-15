@@ -130,6 +130,28 @@ class DebuggerTestController < ApplicationController
     # Render the JSON encoding error demo page
   end
 
+  def regex_timeout
+    @target = RegexMatchDemo.probe_target
+    @pattern = RegexMatchDemo::PATTERN
+    @inputs = RegexMatchDemo.inputs
+
+    respond_to do |format|
+      format.html
+      format.json { render json: {target: @target, pattern: @pattern, inputs: @inputs} }
+    end
+  end
+
+  def regex_timeout_run
+    results = RegexMatchDemo.run
+    lines = results.map do |r|
+      detail = r[:error] ? "error=#{r[:error]}" : "length=#{r[:length]}"
+      "#{r[:label]} (#{r[:bytes]} bytes): #{detail} in #{r[:elapsed_ms]}ms"
+    end
+    render plain: lines.join("\n")
+  rescue => e
+    render plain: "#{e.class}: #{e}"
+  end
+
   def binary_data_param
     # Pass a real binary string (all 256 byte values) as a method argument.
     # The custom serializer condition checks value.metadata[:trigger_json_error]

@@ -1,0 +1,136 @@
+<% provide(:title, 'Regex Matches Timeout Demo') %>
+<h1>Regex Matches Timeout Demo <small><%= link_to "JSON", debugger_test_regex_timeout_path(format: :json) %></small></h1>
+
+<p class="lead">
+  Tests the per-match timeout added to the Dynamic Instrumentation expression
+  language <code>matches</code> operator in dd-trace-rb PR
+  <a href="https://github.com/DataDog/dd-trace-rb/pull/5908">#5908</a>.
+  Each <code>matches</code> evaluation is bounded to 500ms
+  (<code>Evaluator::MATCHES_TIMEOUT_SECONDS</code>).
+</p>
+
+<div class="panel panel-info">
+  <div class="panel-heading"><h4 class="panel-title">How to Test</h4></div>
+  <div class="panel-body">
+    <ol>
+      <li>
+        In Datadog, set a <strong>method probe</strong> on
+        <code><%= @target[:class_name] %>#<%= @target[:method_name] %></code>
+        with the condition below.
+      </li>
+      <li>
+        Condition (DSL):
+        <pre>matches(haystack, "<%= @pattern %>")</pre>
+        Condition (JSON AST):
+        <pre>{"matches": [{"ref": "haystack"}, "<%= @pattern %>"]}</pre>
+      </li>
+      <li>Wait for the probe to appear as active on <%= link_to "DI Status", di_status_path %>.</li>
+      <li>
+        Click <strong>Run</strong> below. It calls the method once per input.
+        DI evaluates the condition on each call, running the regexp against the
+        haystack.
+      </li>
+      <li>
+        Observe the per-input timing. The pathological input causes catastrophic
+        backtracking: with PR #5908 its evaluation is bounded to ~500ms; without
+        the fix the request hangs.
+      </li>
+    </ol>
+  </div>
+</div>
+
+<div class="panel panel-default">
+  <div class="panel-heading"><h4 class="panel-title">Probe Target</h4></div>
+  <div class="panel-body">
+    <dl class="dl-horizontal">
+      <dt>Class:</dt><dd><code><%= @target[:class_name] %></code></dd>
+      <dt>Method:</dt><dd><code><%= @target[:method_name] %></code></dd>
+      <dt>File:</dt><dd><code><%= @target[:file] %></code></dd>
+      <dt>Line:</dt><dd><%= @target[:line] %></dd>
+    </dl>
+
+    <table class="table table-condensed table-bordered">
+      <thead>
+        <tr><th>Input</th><th>Bytes</th><th>Haystack</th></tr>
+      </thead>
+      <tbody>
+        <% @inputs.each do |input| %>
+          <tr>
+            <td><%= input[:label] %></td>
+            <td><%= input[:haystack].bytesize %></td>
+            <td><code><%= input[:haystack] %></code></td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="well">
+  <h4>Run the Demo</h4>
+  <p class="text-muted" style="margin-bottom: 15px;">
+    Calls <code><%= @target[:class_name] %>#<%= @target[:method_name] %></code>
+    once per input above. Timing reflects DI condition evaluation only while a
+    probe is active. Without PR #5908 the pathological input will hang this
+    request.
+  </p>
+  <a href="<%= debugger_test_regex_timeout_run_path %>" class="di-demo-btn">
+    <strong>Run</strong><br>
+    <small>Call the method with every input</small>
+  </a>
+
+  <pre id="di-demo-result" style="margin-top: 15px;">Click Run to trigger the demo.</pre>
+</div>
+
+<script>
+  document.querySelectorAll('.di-demo-btn').forEach(function(btn) {
+    btn.addEventListener('click', function(e) {
+      e.preventDefault();
+      var url = this.getAttribute('href');
+      var resultEl = document.getElementById('di-demo-result');
+
+      resultEl.textContent = 'Running...';
+
+      fetch(url)
+        .then(function(res) {
+          return res.text().then(function(text) {
+            if (!res.ok) {
+              throw new Error('HTTP ' + res.status + ': ' + text.substring(0, 200));
+            }
+            return text;
+          });
+        })
+        .then(function(text) {
+          resultEl.textContent = text;
+        })
+        .catch(function(err) {
+          resultEl.textContent = 'Error: ' + err;
+        });
+    });
+  });
+</script>
+
+<div class="panel panel-default">
+  <div class="panel-heading"><h4 class="panel-title">Background</h4></div>
+  <div class="panel-body">
+    <p>
+      Regular expressions in DI probe conditions and capture expressions are
+      customer input. A catastrophic-backtracking pattern such as
+      <code><%= @pattern %></code> can take unbounded time on a crafted input,
+      so DI must cap each match. PR #5908 bounds every <code>matches</code>
+      evaluation to <code>Evaluator::MATCHES_TIMEOUT_SECONDS</code> (500ms).
+    </p>
+    <p>
+      The timeout mechanism differs by Ruby version. On Ruby 3.2+ the bound is
+      baked into the compiled <code>Regexp</code> via the in-engine
+      <code>timeout:</code> keyword. On Ruby &lt; 3.2 (this app runs
+      <code><%= RUBY_VERSION %></code>) the bound is applied with
+      <code>Timeout.timeout</code> around the match.
+    </p>
+    <p>
+      When the bound is hit, DI catches the timeout during condition evaluation
+      and treats the condition as unsatisfied. The instrumented method returns
+      normally, so this page works whether or not a probe is set.
+    </p>
+  </div>
+</div>

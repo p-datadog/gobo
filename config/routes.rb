@@ -29,6 +29,8 @@ Rails.application.routes.draw do
   get '/debugger_test/exception_overridden', to: 'debugger_test#exception_overridden'
   get '/debugger_test/exception_non_string', to: 'debugger_test#exception_non_string'
   get '/debugger_test/json_error', to: 'debugger_test#json_error', as: 'debugger_test_json_error'
+  get '/debugger_test/regex_timeout', to: 'debugger_test#regex_timeout', as: 'debugger_test_regex_timeout'
+  get '/debugger_test/regex_timeout_run', to: 'debugger_test#regex_timeout_run', as: 'debugger_test_regex_timeout_run'
   post '/debugger_test/reconfigure', to: 'debugger_test#reconfigure', as: 'debugger_test_reconfigure'
   get '/memory', to: 'memory#index'
   get '/memory/fast', to: 'memory#fast', as: 'memory_fast'

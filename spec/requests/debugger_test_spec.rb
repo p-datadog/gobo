@@ -89,4 +89,35 @@ RSpec.describe "DebuggerTest", type: :request do
     expect(response).to have_http_status(:success)
     expect(response.body).to include("Digest::SHA256")
   end
+
+  it "regex_timeout page shows the probe target, condition, and pattern" do
+    get debugger_test_regex_timeout_path
+    expect(response).to have_http_status(:success)
+    expect(response.body).to include("Regex Matches Timeout Demo")
+    expect(response.body).to include("RegexMatchDemo#check")
+    expect(response.body).to include("matches(haystack,")
+    expect(response.body).to include(RegexMatchDemo::PATTERN)
+  end
+
+  it "regex_timeout JSON reports the target coordinates, pattern, and inputs" do
+    get debugger_test_regex_timeout_path(format: :json)
+    json = JSON.parse(response.body)
+
+    file, line = RegexMatchDemo.instance_method(:check).source_location
+    expect(json["pattern"]).to eq(RegexMatchDemo::PATTERN)
+    expect(json["target"]["class_name"]).to eq("RegexMatchDemo")
+    expect(json["target"]["method_name"]).to eq("check")
+    expect(json["target"]["file"]).to eq(file)
+    expect(json["target"]["line"]).to eq(line)
+    expect(json["inputs"].map { |i| i["label"] }).to eq(RegexMatchDemo.inputs.map { |i| i[:label] })
+  end
+
+  it "regex_timeout_run reports per-input timing for every input" do
+    get debugger_test_regex_timeout_run_path
+    expect(response).to have_http_status(:success)
+    RegexMatchDemo.inputs.each do |input|
+      expect(response.body).to include(input[:label])
+    end
+    expect(response.body).to match(/in \d/)
+  end
 end
