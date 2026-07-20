@@ -604,6 +604,97 @@ RSpec.describe DiStatusController, type: :controller do
     end
   end
 
+  describe 'remote enablement (DI enable state)' do
+    render_views
+
+    # This page also runs the REDAPL, heartbeats and live-service lookups for
+    # the same env; stub them so these tests never touch wclip or the network.
+    before do
+      allow(RedaplQuery).to receive(:new).and_return(
+        instance_double(RedaplQuery, call: RedaplQuery::Result.new(
+          rows: [], error: nil, query: 'SELECT ...', host: 'h',
+          cookie_path: '/c', window_minutes: 10
+        ))
+      )
+      allow(DebuggerHeartbeatsQuery).to receive(:new).and_return(
+        instance_double(DebuggerHeartbeatsQuery, call: DebuggerHeartbeatsQuery::Result.new(
+          instances: [], last_seen: nil, error: nil, host: 'h',
+          cookie_path: '/c', service: 'gobo', env: 'production'
+        ))
+      )
+      allow(LiveServiceInstancesQuery).to receive(:new).and_return(
+        instance_double(LiveServiceInstancesQuery, call: LiveServiceInstancesQuery::Result.new(
+          active: [], inactive: [], error: nil, endpoint: '/x', host: 'h',
+          cookie_path: '/c', service: 'gobo', env: 'production'
+        ))
+      )
+    end
+
+    let(:result) do
+      RemoteEnablementQuery::Result.new(
+        configs: [RemoteEnablementQuery::Config.new(
+          service: 'gobo', env: 'production', config_exists: true,
+          dynamic_instrumentation_enabled: true, language: 'ruby',
+          client_library_version: '2.39.0', modified_time: 1_760_000_000
+        )],
+        error: nil, host: 'squirrel.datadoghq.com', cookie_path: '/cookies-dogfood.json',
+        service: 'gobo', env: 'production',
+        path: '/api/unstable/remote_config/products/apm_tracing/debugger_configs/envs/production/services/gobo'
+      )
+    end
+
+    it 'does not run the query on a plain page load' do
+      expect(RemoteEnablementQuery).not_to receive(:new)
+      get :index
+      expect(assigns(:remote_enablement)).to be_nil
+    end
+
+    it 'runs the query for the requested environment and renders the enable state' do
+      expect(RemoteEnablementQuery).to receive(:new)
+        .with(host: 'squirrel.datadoghq.com', cookie_label: 'dogfood', service: anything, env: anything)
+        .and_return(instance_double(RemoteEnablementQuery, call: result))
+      get :index, params: {redapl: 'dogfood'}
+      expect(assigns(:remote_enablement)[:configs].first[:dynamic_instrumentation_enabled]).to be(true)
+      expect(response.body).to include('Remote enablement (DI enable state)')
+      expect(response.body).to include('enabled')
+      expect(response.body).to include('2.39.0')
+    end
+
+    it 'shows the never-enabled condition when there is no config' do
+      empty = RemoteEnablementQuery::Result.new(
+        configs: [], error: nil, host: 'squirrel.datadoghq.com',
+        cookie_path: '/cookies-dogfood.json', service: 'gobo', env: 'production',
+        path: '/api/unstable/remote_config/products/apm_tracing/debugger_configs/envs/production/services/gobo'
+      )
+      allow(RemoteEnablementQuery).to receive(:new)
+        .and_return(instance_double(RemoteEnablementQuery, call: empty))
+      get :index, params: {redapl: 'dogfood'}
+      expect(response.body).to include('DI has never been enabled')
+    end
+
+    it 'shows the query error to the user when the lookup fails' do
+      failed = RemoteEnablementQuery::Result.new(
+        configs: [], error: 'RuntimeError: no cookies staged at /cookies-dogfood.json',
+        host: 'squirrel.datadoghq.com', cookie_path: '/cookies-dogfood.json',
+        service: 'gobo', env: 'production', path: '/api/x'
+      )
+      allow(RemoteEnablementQuery).to receive(:new)
+        .and_return(instance_double(RemoteEnablementQuery, call: failed))
+      get :index, params: {redapl: 'dogfood'}
+      expect(response.body).to include('remote enablement query failed')
+      expect(response.body).to include('no cookies staged at /cookies-dogfood.json')
+    end
+
+    it 'serializes remote enablement in JSON' do
+      allow(RemoteEnablementQuery).to receive(:new)
+        .and_return(instance_double(RemoteEnablementQuery, call: result))
+      get :index, params: {redapl: 'dogfood'}, format: :json
+      json = JSON.parse(response.body)
+      expect(json['remote_enablement']['configs'].first['dynamic_instrumentation_enabled']).to be(true)
+      expect(json['remote_enablement']['env']).to eq('production')
+    end
+  end
+
   describe 'JSON di_enabled' do
     it 'serializes the state as a string' do
       allow(controller).to receive(:fetch_di_enabled_status).and_return(:can_enable_remotely)

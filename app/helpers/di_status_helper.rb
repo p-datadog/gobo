@@ -1,4 +1,17 @@
 module DiStatusHelper
+  # Renders the stored DI remote-enable toggle as a labelled badge. The backend
+  # value is tri-state: true (on), false (off), or nil (never written).
+  def di_enable_state_label(enabled)
+    case enabled
+    when true
+      content_tag(:span, 'enabled', class: 'label label-success')
+    when false
+      content_tag(:span, 'disabled', class: 'label label-danger')
+    else
+      content_tag(:span, 'not set', class: 'label label-default')
+    end
+  end
+
   # True when runtime_id belongs to one of this server's live worker
   # processes, i.e. the backend row describes the currently running process.
   def di_local_runtime?(local_runtime_ids, runtime_id)

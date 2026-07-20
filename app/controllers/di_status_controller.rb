@@ -2,6 +2,7 @@ require 'set'
 require_relative '../../lib/redapl_query'
 require_relative '../../lib/live_service_instances_query'
 require_relative '../../lib/debugger_heartbeats_query'
+require_relative '../../lib/remote_enablement_query'
 require_relative '../../lib/runtime_id_registry'
 
 class DiStatusController < ApplicationController
@@ -28,6 +29,7 @@ class DiStatusController < ApplicationController
     @redapl = fetch_redapl_environments(@redapl_env) if @redapl_env
     @heartbeats = fetch_service_heartbeats(@redapl_env) if @redapl_env
     @instances = fetch_service_instances(@redapl_env) if @redapl_env
+    @remote_enablement = fetch_remote_enablement(@redapl_env) if @redapl_env
     @redapl_connection = @redapl&.slice(:environment, :host, :cookie_path)
 
     respond_to do |format|
@@ -73,6 +75,27 @@ class DiStatusController < ApplicationController
       query: result.query,
       window_minutes: result.window_minutes,
       rows: result.rows.map { |r| {service_name: r.service_name, language_name: r.language_name, env: r.env} },
+      error: result.error,
+    }
+  end
+
+  # Reads cookies fresh from wclip and queries the APM_TRACING remote-config
+  # debugger_configs endpoint for the DI remote-enablement state stored for this
+  # service+env — the state that decides whether RC turns DI on when the tracer
+  # reports :can_enable_remotely.
+  def fetch_remote_enablement(label)
+    host = AgentEnvironments.fetch(label)[:host]
+    result = RemoteEnablementQuery.new(
+      host: host, cookie_label: label, service: @service, env: @env
+    ).call
+    {
+      environment: label,
+      host: result.host,
+      cookie_path: result.cookie_path,
+      path: result.path,
+      service: result.service,
+      env: result.env,
+      configs: result.configs.map(&:to_h),
       error: result.error,
     }
   end
@@ -372,6 +395,7 @@ class DiStatusController < ApplicationController
       redapl: @redapl,
       heartbeats: @heartbeats,
       instances: @instances,
+      remote_enablement: @remote_enablement,
       agent_operational: @agent_operational&.operational?,
     }
   end

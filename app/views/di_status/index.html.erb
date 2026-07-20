@@ -100,6 +100,72 @@
 <div class="panel panel-info">
   <div class="panel-heading">
     <h4 class="panel-title">
+      Remote enablement (DI enable state)
+      <% if @redapl_target %>
+        <small><%= link_to "Query remote enablement for #{@redapl_target} &rarr;".html_safe, di_status_path(redapl: @redapl_target) %></small>
+      <% end %>
+    </h4>
+  </div>
+  <div class="panel-body">
+    <p class="text-muted">
+      The DI enable state the backend stores for this service and env, in the
+      <code>apm_tracing</code> remote-config product. This decides whether
+      Remote Configuration turns DI on when the tracer reports
+      <code>can_enable_remotely</code>.
+    </p>
+
+    <% if @remote_enablement %>
+      <dl class="dl-horizontal">
+        <dt>Endpoint:</dt>
+        <dd><pre><%= link_to @remote_enablement[:path], "https://#{@remote_enablement[:host]}#{@remote_enablement[:path]}", target: "_blank", rel: "noopener" %></pre></dd>
+      </dl>
+
+      <% if @remote_enablement[:error] %>
+        <div class="alert alert-danger">
+          <strong>remote enablement query failed:</strong>
+          <pre><%= @remote_enablement[:error] %></pre>
+        </div>
+      <% elsif @remote_enablement[:configs].empty? %>
+        <div class="alert alert-warning">
+          No <code>apm_tracing</code> debugger config for
+          <code><%= @remote_enablement[:service] %></code> in
+          <code><%= @remote_enablement[:env] %></code>. DI has never been enabled
+          remotely for this service and env.
+        </div>
+      <% else %>
+        <table class="table table-striped table-condensed">
+          <thead>
+            <tr>
+              <th>dynamic_instrumentation_enabled</th><th>config_exists</th>
+              <th>client_library_version</th><th>language</th><th>last modified</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% @remote_enablement[:configs].each do |c| %>
+              <tr>
+                <td><%= di_enable_state_label(c[:dynamic_instrumentation_enabled]) %></td>
+                <td><%= c[:config_exists] %></td>
+                <td><%= c[:client_library_version] %></td>
+                <td><%= c[:language] %></td>
+                <td>
+                  <% if c[:modified_time].to_i > 0 %>
+                    <code><%= Time.at(c[:modified_time].to_i).utc.iso8601 %></code>
+                  <% else %>
+                    (none)
+                  <% end %>
+                </td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      <% end %>
+    <% end %>
+  </div>
+</div>
+
+<div class="panel panel-info">
+  <div class="panel-heading">
+    <h4 class="panel-title">
       Debugger heartbeats (instance coverage)
       <% if @redapl_target %>
         <small><%= link_to "Query debugger heartbeats for #{@redapl_target} &rarr;".html_safe, di_status_path(redapl: @redapl_target) %></small>
