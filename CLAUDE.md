@@ -115,3 +115,10 @@ The test command is:
 ```
 DD_TRACER=~/dtr bundle exec rspec
 ```
+
+The suite runs against whatever branch `~/dtr` is currently checked out on. A red
+suite caused by missing DI constants (e.g. `Datadog::DI::CaptureExpression`,
+`Datadog::DI::CaptureLimits`) is NOT broken gobo code — it means the checked-out
+tracer lacks that feature. Before reporting the suite red, verify which branch
+`~/dtr` is on, point it at the branch the specs require, and re-run. Report the
+real result, not the environment artifact.
