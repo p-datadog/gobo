@@ -313,6 +313,134 @@
   </div>
 </div>
 
+<div class="panel panel-info">
+  <div class="panel-heading">
+    <h4 class="panel-title">
+      Debugger sessions (for this service)
+      <% if @redapl_target %>
+        <small><%= link_to "Query debugger sessions for #{@redapl_target} &rarr;".html_safe, di_status_path(redapl: @redapl_target) %></small>
+      <% end %>
+    </h4>
+  </div>
+  <div class="panel-body">
+    <p class="text-muted">
+      Live Debugger sessions whose <code>serviceNames</code> include
+      <code><%= @service %></code>, from
+      <code>/api/ui/debugger/live-debugger/sessions</code>.
+    </p>
+
+    <% if @debugger_sessions %>
+      <dl class="dl-horizontal">
+        <dt>Endpoint:</dt>
+        <dd><pre><%= link_to "/api/ui/debugger/live-debugger/sessions", "https://#{@debugger_sessions[:host]}/api/ui/debugger/live-debugger/sessions", target: "_blank", rel: "noopener" %></pre></dd>
+      </dl>
+
+      <% if @debugger_sessions[:error] %>
+        <div class="alert alert-danger">
+          <strong>debugger sessions query failed:</strong>
+          <pre><%= @debugger_sessions[:error] %></pre>
+        </div>
+      <% elsif @debugger_sessions[:sessions].empty? %>
+        <div class="alert alert-warning">
+          No debugger sessions target <code><%= @debugger_sessions[:service] %></code>.
+        </div>
+      <% else %>
+        <h4><%= pluralize(@debugger_sessions[:sessions].size, 'session') %></h4>
+        <table class="table table-striped table-condensed">
+          <thead>
+            <tr>
+              <th>id</th><th>name</th><th>probes</th><th>disabled</th>
+              <th>expires</th><th>created by</th><th>services</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% @debugger_sessions[:sessions].each do |s| %>
+              <tr>
+                <td><code><%= s[:id] %></code></td>
+                <td><%= s[:name] %></td>
+                <td><%= s[:num_probes] %></td>
+                <td><%= s[:disabled] %></td>
+                <td>
+                  <% if s[:expires].to_i > 0 %>
+                    <code><%= Time.at(s[:expires].to_i / 1000).utc.iso8601 %></code>
+                  <% else %>
+                    never
+                  <% end %>
+                </td>
+                <td><%= s[:created_by] %></td>
+                <td><%= Array(s[:service_names]).join(', ') %></td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      <% end %>
+    <% end %>
+  </div>
+</div>
+
+<div class="panel panel-info">
+  <div class="panel-heading">
+    <h4 class="panel-title">
+      Backend probes and statuses (for this service)
+      <% if @redapl_target %>
+        <small><%= link_to "Query backend probes for #{@redapl_target} &rarr;".html_safe, di_status_path(redapl: @redapl_target) %></small>
+      <% end %>
+    </h4>
+  </div>
+  <div class="panel-body">
+    <p class="text-muted">
+      Probes the backend holds for <code><%= @service %></code> and their
+      aggregate status, from <code>/api/ui/debugger/probe-statuses</code>. The
+      backend's view across all runtimes, distinct from the in-process probe
+      list at the top of this page.
+    </p>
+
+    <% if @backend_probes %>
+      <dl class="dl-horizontal">
+        <dt>Endpoint:</dt>
+        <dd><pre><%= link_to "/api/ui/debugger/probe-statuses", "https://#{@backend_probes[:host]}/api/ui/debugger/probe-statuses", target: "_blank", rel: "noopener" %></pre></dd>
+      </dl>
+
+      <% if @backend_probes[:error] %>
+        <div class="alert alert-danger">
+          <strong>probe statuses query failed:</strong>
+          <pre><%= @backend_probes[:error] %></pre>
+        </div>
+      <% elsif @backend_probes[:probes].empty? %>
+        <div class="alert alert-warning">
+          No backend probes for <code><%= @backend_probes[:service] %></code>.
+        </div>
+      <% else %>
+        <h4><%= pluralize(@backend_probes[:probes].size, 'probe') %></h4>
+        <table class="table table-striped table-condensed">
+          <thead>
+            <tr>
+              <th>id</th><th>status</th><th>summary</th>
+              <th>last captured</th><th>updated</th><th>diagnostics</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% @backend_probes[:probes].each do |p| %>
+              <tr>
+                <td><code><%= p[:id] %></code></td>
+                <td><%= di_probe_status_label(p[:status]) %></td>
+                <td><%= Array(p[:summary]).join(' ') %></td>
+                <td><%= p[:last_captured] || '(none)' %></td>
+                <td><%= p[:probe_updated_at] %></td>
+                <td>
+                  <% Array(p[:diagnostics]).each do |d| %>
+                    <div><code><%= d[:runtime_id] %></code>: <%= d[:status] %><% if d[:exception] %> (<%= d[:exception][:type] %>)<% end %></div>
+                  <% end %>
+                </td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      <% end %>
+    <% end %>
+  </div>
+</div>
+
 <% if @redapl_connection %>
 <div class="panel panel-info">
   <div class="panel-heading">

@@ -1,4 +1,17 @@
 module DiStatusHelper
+  # Renders a backend probe status (from /api/ui/debugger/probe-statuses) as a
+  # coloured badge. Green when ACTIVE, red on ERROR, amber while WAITING or
+  # without agents, grey otherwise (DISABLED/EXPIRED/OVER_LIMIT).
+  def di_probe_status_label(status)
+    klass = case status
+            when 'ACTIVE' then 'label-success'
+            when 'ERROR' then 'label-danger'
+            when 'WAITING', 'NO_AGENTS' then 'label-warning'
+            else 'label-default'
+            end
+    content_tag(:span, status || 'unknown', class: "label #{klass}")
+  end
+
   # Renders the stored DI remote-enable toggle as a labelled badge. The backend
   # value is tri-state: true (on), false (off), or nil (never written).
   def di_enable_state_label(enabled)

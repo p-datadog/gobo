@@ -695,6 +695,123 @@ RSpec.describe DiStatusController, type: :controller do
     end
   end
 
+  describe 'debugger sessions and backend probes' do
+    render_views
+
+    # These panels share the redapl env with the other backend lookups; stub
+    # the rest so the tests never touch wclip or the network.
+    before do
+      allow(RedaplQuery).to receive(:new).and_return(
+        instance_double(RedaplQuery, call: RedaplQuery::Result.new(
+          rows: [], error: nil, query: 'SELECT ...', host: 'h',
+          cookie_path: '/c', window_minutes: 10
+        ))
+      )
+      allow(DebuggerHeartbeatsQuery).to receive(:new).and_return(
+        instance_double(DebuggerHeartbeatsQuery, call: DebuggerHeartbeatsQuery::Result.new(
+          instances: [], last_seen: nil, error: nil, host: 'h',
+          cookie_path: '/c', service: 'gobo', env: 'production'
+        ))
+      )
+      allow(LiveServiceInstancesQuery).to receive(:new).and_return(
+        instance_double(LiveServiceInstancesQuery, call: LiveServiceInstancesQuery::Result.new(
+          active: [], inactive: [], error: nil, endpoint: '/x', host: 'h',
+          cookie_path: '/c', service: 'gobo', env: 'production'
+        ))
+      )
+      allow(RemoteEnablementQuery).to receive(:new).and_return(
+        instance_double(RemoteEnablementQuery, call: RemoteEnablementQuery::Result.new(
+          configs: [], error: nil, host: 'h', cookie_path: '/c',
+          service: 'gobo', env: 'production', path: '/x'
+        ))
+      )
+    end
+
+    let(:sessions_result) do
+      DebuggerSessionsQuery::Result.new(
+        sessions: [DebuggerSessionsQuery::Session.new(
+          id: 'sess-1', name: 'debug gobo', num_probes: 1, disabled: false,
+          expires: 0, created_by: 'alice', created_at: 1, service_names: %w[gobo],
+          git_repositories: []
+        )],
+        error: nil, host: 'squirrel.datadoghq.com',
+        cookie_path: '/cookies-dogfood.json', service: 'gobo'
+      )
+    end
+
+    let(:probes_result) do
+      ProbeStatusesQuery::Result.new(
+        probes: [ProbeStatusesQuery::ProbeStatus.new(
+          id: 'probe-1', service: 'gobo', status: 'ACTIVE',
+          summary: ['log probe at static_pages_controller.rb:30'],
+          last_captured: nil, probe_updated_at: '2026-07-20T14:00:00Z',
+          diagnostics: [ProbeStatusesQuery::Diagnostic.new(
+            runtime_id: 'rid-1', status: 'INSTALLED', exception: nil, timestamp: 't'
+          )],
+          stale: false
+        )],
+        error: nil, host: 'squirrel.datadoghq.com',
+        cookie_path: '/cookies-dogfood.json', service: 'gobo'
+      )
+    end
+
+    before do
+      allow(DebuggerSessionsQuery).to receive(:new)
+        .and_return(instance_double(DebuggerSessionsQuery, call: sessions_result))
+      allow(ProbeStatusesQuery).to receive(:new)
+        .and_return(instance_double(ProbeStatusesQuery, call: probes_result))
+    end
+
+    it 'does not run the queries on a plain page load' do
+      expect(DebuggerSessionsQuery).not_to receive(:new)
+      expect(ProbeStatusesQuery).not_to receive(:new)
+      get :index
+      expect(assigns(:debugger_sessions)).to be_nil
+      expect(assigns(:backend_probes)).to be_nil
+    end
+
+    it 'renders sessions that target the running service' do
+      get :index, params: {redapl: 'dogfood'}
+      expect(assigns(:debugger_sessions)[:sessions].first[:id]).to eq('sess-1')
+      expect(response.body).to include('Debugger sessions (for this service)')
+      expect(response.body).to include('sess-1')
+      expect(response.body).to include('debug gobo')
+    end
+
+    it 'renders backend probes with their status and diagnostics' do
+      get :index, params: {redapl: 'dogfood'}
+      expect(assigns(:backend_probes)[:probes].first[:status]).to eq('ACTIVE')
+      expect(response.body).to include('Backend probes and statuses (for this service)')
+      expect(response.body).to include('probe-1')
+      expect(response.body).to include('ACTIVE')
+      expect(response.body).to include('rid-1')
+    end
+
+    it 'serializes sessions and backend probes in JSON' do
+      get :index, params: {redapl: 'dogfood'}, format: :json
+      json = JSON.parse(response.body)
+      expect(json['debugger_sessions']['sessions'].first['id']).to eq('sess-1')
+      expect(json['backend_probes']['probes'].first['status']).to eq('ACTIVE')
+      expect(json['backend_probes']['probes'].first['diagnostics'].first['runtime_id']).to eq('rid-1')
+    end
+
+    it 'shows the empty states when nothing targets the service' do
+      allow(DebuggerSessionsQuery).to receive(:new).and_return(
+        instance_double(DebuggerSessionsQuery, call: DebuggerSessionsQuery::Result.new(
+          sessions: [], error: nil, host: 'h', cookie_path: '/c', service: 'gobo'
+        ))
+      )
+      allow(ProbeStatusesQuery).to receive(:new).and_return(
+        instance_double(ProbeStatusesQuery, call: ProbeStatusesQuery::Result.new(
+          probes: [], error: nil, host: 'h', cookie_path: '/c', service: 'gobo'
+        ))
+      )
+      get :index, params: {redapl: 'dogfood'}
+      expect(response.body).to include('No debugger sessions target')
+      expect(response.body).to include('No backend probes for')
+    end
+  end
+
   describe 'JSON di_enabled' do
     it 'serializes the state as a string' do
       allow(controller).to receive(:fetch_di_enabled_status).and_return(:can_enable_remotely)

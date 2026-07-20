@@ -3,6 +3,8 @@ require_relative '../../lib/redapl_query'
 require_relative '../../lib/live_service_instances_query'
 require_relative '../../lib/debugger_heartbeats_query'
 require_relative '../../lib/remote_enablement_query'
+require_relative '../../lib/debugger_sessions_query'
+require_relative '../../lib/probe_statuses_query'
 require_relative '../../lib/runtime_id_registry'
 
 class DiStatusController < ApplicationController
@@ -30,6 +32,8 @@ class DiStatusController < ApplicationController
     @heartbeats = fetch_service_heartbeats(@redapl_env) if @redapl_env
     @instances = fetch_service_instances(@redapl_env) if @redapl_env
     @remote_enablement = fetch_remote_enablement(@redapl_env) if @redapl_env
+    @debugger_sessions = fetch_debugger_sessions(@redapl_env) if @redapl_env
+    @backend_probes = fetch_backend_probes(@redapl_env) if @redapl_env
     @redapl_connection = @redapl&.slice(:environment, :host, :cookie_path)
 
     respond_to do |format|
@@ -75,6 +79,40 @@ class DiStatusController < ApplicationController
       query: result.query,
       window_minutes: result.window_minutes,
       rows: result.rows.map { |r| {service_name: r.service_name, language_name: r.language_name, env: r.env} },
+      error: result.error,
+    }
+  end
+
+  # Reads cookies fresh from wclip and lists Live Debugger sessions targeting
+  # the running service.
+  def fetch_debugger_sessions(label)
+    host = AgentEnvironments.fetch(label)[:host]
+    result = DebuggerSessionsQuery.new(
+      host: host, cookie_label: label, service: @service
+    ).call
+    {
+      environment: label,
+      host: result.host,
+      cookie_path: result.cookie_path,
+      service: result.service,
+      sessions: result.sessions.map(&:to_h),
+      error: result.error,
+    }
+  end
+
+  # Reads cookies fresh from wclip and lists the backend's probes and their
+  # aggregate status for the running service.
+  def fetch_backend_probes(label)
+    host = AgentEnvironments.fetch(label)[:host]
+    result = ProbeStatusesQuery.new(
+      host: host, cookie_label: label, service: @service
+    ).call
+    {
+      environment: label,
+      host: result.host,
+      cookie_path: result.cookie_path,
+      service: result.service,
+      probes: result.probes.map { |p| p.to_h.merge(diagnostics: p.diagnostics.map(&:to_h)) },
       error: result.error,
     }
   end
@@ -396,6 +434,8 @@ class DiStatusController < ApplicationController
       heartbeats: @heartbeats,
       instances: @instances,
       remote_enablement: @remote_enablement,
+      debugger_sessions: @debugger_sessions,
+      backend_probes: @backend_probes,
       agent_operational: @agent_operational&.operational?,
     }
   end
