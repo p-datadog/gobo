@@ -1,4 +1,6 @@
 require 'rails_helper'
+require 'set'
+require_relative '../../lib/runtime_id_registry'
 
 RSpec.describe DiStatusController, type: :controller do
   describe 'GET #index DI enablement state' do
@@ -537,6 +539,68 @@ RSpec.describe DiStatusController, type: :controller do
       json = JSON.parse(response.body)
       expect(json['instances']['active'].first['runtime_id']).to eq('rid-1')
       expect(json['instances']['env']).to eq('staging')
+    end
+  end
+
+  describe 'local runtime id highlighting' do
+    it 'exposes live worker runtime ids plus the current process id in JSON' do
+      registry = instance_double(RuntimeIdRegistry, live_runtime_ids: Set['rid-worker'])
+      allow(RuntimeIdRegistry).to receive(:new).and_return(registry)
+      allow(controller).to receive(:current_runtime_id).and_return('rid-self')
+      get :index, format: :json
+      expect(JSON.parse(response.body)['local_runtime_ids'])
+        .to contain_exactly('rid-worker', 'rid-self')
+    end
+
+    it 'falls back to an empty list when the registry raises' do
+      allow(RuntimeIdRegistry).to receive(:new).and_raise(StandardError, 'boom')
+      get :index, format: :json
+      expect(JSON.parse(response.body)['local_runtime_ids']).to eq([])
+    end
+
+    context 'rendering the heartbeats table' do
+      render_views
+
+      before do
+        allow(RedaplQuery).to receive(:new).and_return(
+          instance_double(RedaplQuery, call: RedaplQuery::Result.new(
+            rows: [], error: nil, query: 'SELECT ...', host: 'h',
+            cookie_path: '/c', window_minutes: 10
+          ))
+        )
+        allow(LiveServiceInstancesQuery).to receive(:new).and_return(
+          instance_double(LiveServiceInstancesQuery, call: LiveServiceInstancesQuery::Result.new(
+            active: [], inactive: [], error: nil, endpoint: '/x', host: 'h',
+            cookie_path: '/c', service: 'gobo', env: 'staging'
+          ))
+        )
+        allow(DebuggerHeartbeatsQuery).to receive(:new).and_return(
+          instance_double(DebuggerHeartbeatsQuery, call: DebuggerHeartbeatsQuery::Result.new(
+            instances: [DebuggerHeartbeatsQuery::Instance.new(
+              runtime_id: 'rid-here', service_env: 'staging', service_version: 'v',
+              tracer_version: 't', language: 'ruby', agent_id: 'a',
+              hostname: nil, last_seen: nil
+            )],
+            last_seen: nil, error: nil, host: 'h', cookie_path: '/c',
+            service: 'gobo', env: 'staging'
+          ))
+        )
+        allow(controller).to receive(:current_runtime_id).and_return(nil)
+      end
+
+      it 'labels the row whose runtime id belongs to this process' do
+        allow(RuntimeIdRegistry).to receive(:new)
+          .and_return(instance_double(RuntimeIdRegistry, live_runtime_ids: Set['rid-here']))
+        get :index, params: {redapl: 'staging'}
+        expect(response.body).to include('this process')
+      end
+
+      it 'does not label rows for other runtime ids' do
+        allow(RuntimeIdRegistry).to receive(:new)
+          .and_return(instance_double(RuntimeIdRegistry, live_runtime_ids: Set['rid-other']))
+        get :index, params: {redapl: 'staging'}
+        expect(response.body).not_to include('this process')
+      end
     end
   end
 

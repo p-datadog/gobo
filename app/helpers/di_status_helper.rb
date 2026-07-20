@@ -1,4 +1,12 @@
 module DiStatusHelper
+  # True when runtime_id belongs to one of this server's live worker
+  # processes, i.e. the backend row describes the currently running process.
+  def di_local_runtime?(local_runtime_ids, runtime_id)
+    return false if runtime_id.blank?
+
+    Array(local_runtime_ids).include?(runtime_id)
+  end
+
   # Accurate root cause for an empty DI Status page, derived from the resolved
   # DI enablement state and any probe-fetch error, instead of guessing.
   def probes_empty_state_reason(di_enabled, error = nil, unavailable_reason = nil)

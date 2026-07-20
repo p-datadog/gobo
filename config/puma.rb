@@ -15,6 +15,19 @@ on_worker_boot do
     ::Stress::ExtractionLoop.start!
   end
 
+  # Record this worker's DI runtime id so the DI Status page can highlight the
+  # backend-reported runtime ids that belong to this running process.
+  begin
+    require ::Rails.root.join('lib/runtime_id_registry').to_s
+    if defined?(Datadog::Core::Environment::Identity)
+      RuntimeIdRegistry.new(::Rails.root.join('tmp/di_runtime_ids')).record(
+        runtime_id: Datadog::Core::Environment::Identity.id
+      )
+    end
+  rescue => e
+    warn "Failed to record DI runtime id: #{e.class}: #{e}"
+  end
+
   # Re-open appenders after forking the process
   begin
     ::SemanticLogger.reopen

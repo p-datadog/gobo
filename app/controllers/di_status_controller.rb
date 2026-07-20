@@ -1,6 +1,8 @@
+require 'set'
 require_relative '../../lib/redapl_query'
 require_relative '../../lib/live_service_instances_query'
 require_relative '../../lib/debugger_heartbeats_query'
+require_relative '../../lib/runtime_id_registry'
 
 class DiStatusController < ApplicationController
   def index
@@ -17,6 +19,7 @@ class DiStatusController < ApplicationController
     @git_commit_sha = fetch_git_commit_sha
     @di_enabled = fetch_di_enabled_status
     @di_unavailable_reason = di_unavailable_reason if @di_enabled == :unavailable
+    @local_runtime_ids = fetch_local_runtime_ids
     @agent_address = fetch_agent_address
     @agent_environment_label = fetch_agent_environment_label
     @agent_operational = fetch_agent_operational
@@ -115,6 +118,33 @@ class DiStatusController < ApplicationController
       inactive: result.inactive.map(&:to_h),
       error: result.error,
     }
+  end
+
+  # Runtime ids of this server's live worker processes, used to highlight the
+  # matching backend-reported rows. Always includes the runtime id of the
+  # worker handling this request, so it is highlighted even if the on-boot
+  # registry write was skipped (e.g. single-process mode).
+  def fetch_local_runtime_ids
+    ids = runtime_id_registry.live_runtime_ids
+    own = current_runtime_id
+    ids << own if own
+    ids
+  rescue => e
+    Rails.logger.error "Error fetching local runtime ids: #{e.class}: #{e}"
+    Set.new
+  end
+
+  def runtime_id_registry
+    RuntimeIdRegistry.new(Rails.root.join('tmp/di_runtime_ids'))
+  end
+
+  def current_runtime_id
+    return nil unless defined?(Datadog::Core::Environment::Identity)
+
+    Datadog::Core::Environment::Identity.id
+  rescue => e
+    Rails.logger.error "Error reading current runtime id: #{e.class}: #{e}"
+    nil
   end
 
   def fetch_all_installed_probes
@@ -333,6 +363,7 @@ class DiStatusController < ApplicationController
       di_enabled: @di_enabled.to_s,
       di_unavailable_reason: @di_unavailable_reason,
       di_status_error: @di_status_error,
+      local_runtime_ids: @local_runtime_ids.to_a,
       active: serialize_probes(@probes),
       disabled: serialize_probes(@disabled_probes),
       pending: serialize_probes(@pending_probes),

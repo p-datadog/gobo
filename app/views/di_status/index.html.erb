@@ -148,8 +148,12 @@
           </thead>
           <tbody>
             <% @heartbeats[:instances].each do |i| %>
-              <tr>
-                <td><code><%= i[:runtime_id] %></code></td>
+              <% local = di_local_runtime?(@local_runtime_ids, i[:runtime_id]) %>
+              <tr class="<%= 'success' if local %>">
+                <td>
+                  <code><%= i[:runtime_id] %></code>
+                  <% if local %><span class="label label-success">this process</span><% end %>
+                </td>
                 <td><%= i[:hostname] || 'NOT DETECTED' %></td>
                 <td><code><%= i[:service_env] %></code></td>
                 <td><%= i[:service_version] %></td>
@@ -220,8 +224,12 @@
           </thead>
           <tbody>
             <% rows.each do |i| %>
-              <tr>
-                <td><code><%= i[:runtime_id] %></code></td>
+              <% local = di_local_runtime?(@local_runtime_ids, i[:runtime_id]) %>
+              <tr class="<%= 'success' if local %>">
+                <td>
+                  <code><%= i[:runtime_id] %></code>
+                  <% if local %><span class="label label-success">this process</span><% end %>
+                </td>
                 <td><%= i[:hostname] %></td>
                 <td><code><%= i[:service_env] %></code></td>
                 <td><%= i[:service_version] %></td>
