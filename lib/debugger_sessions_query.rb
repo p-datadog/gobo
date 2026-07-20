@@ -5,8 +5,9 @@ require_relative 'datadog_session'
 #   GET /api/ui/debugger/live-debugger/sessions
 #
 # The endpoint returns every session in the org (JSON:API "session" objects);
-# each carries the services it targets in serviceNames, so the running service
-# is selected client-side. A session groups probes under a name with an
+# each carries the services it targets in service_names, so the running service
+# is selected client-side. Note the wire attributes are snake_case here, unlike
+# the camelCase debugger heartbeats/probe-statuses endpoints. A session groups probes under a name with an
 # optional expiry (expires is Unix ms; 0 = never).
 #
 # Transport (wclip cookies, HTTP) is handled by DatadogSession.
@@ -61,19 +62,19 @@ class DebuggerSessionsQuery
   def sessions_for_service(response)
     list_from(response).filter_map do |row|
       attrs = row['attributes'] || {}
-      service_names = Array(attrs['serviceNames'])
+      service_names = Array(attrs['service_names'])
       next unless service_names.include?(@service)
 
       Session.new(
         id: row['id'],
         name: attrs['name'],
-        num_probes: attrs['numProbes'],
-        disabled: attrs['isDisabled'],
+        num_probes: attrs['num_probes'],
+        disabled: attrs['disabled'],
         expires: attrs['expires'],
-        created_by: attrs['createdBy'],
-        created_at: attrs['createdAt'],
+        created_by: attrs['created_by'],
+        created_at: attrs['created_at'],
         service_names: service_names,
-        git_repositories: Array(attrs['gitRepositories'])
+        git_repositories: Array(attrs['git_repositories'])
       )
     end
   end

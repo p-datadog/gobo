@@ -18,14 +18,14 @@ RSpec.describe DebuggerSessionsQuery do
     {
       'data' => [
         {'id' => 'sess-gobo', 'type' => 'session', 'attributes' => {
-          'name' => 'debug gobo', 'numProbes' => 2, 'isDisabled' => false,
-          'expires' => 0, 'createdBy' => 'alice', 'createdAt' => 1_760_000_000_000,
-          'gitRepositories' => ['github.com/p-datadog/gobo'],
-          'serviceNames' => %w[gobo other]
+          'name' => 'debug gobo', 'num_probes' => 2, 'disabled' => false,
+          'expires' => 0, 'created_by' => 'alice', 'created_at' => 1_760_000_000_000,
+          'git_repositories' => ['github.com/p-datadog/gobo'],
+          'service_names' => %w[gobo other]
         }},
         {'id' => 'sess-other', 'type' => 'session', 'attributes' => {
-          'name' => 'debug other', 'numProbes' => 1, 'isDisabled' => false,
-          'expires' => 0, 'serviceNames' => %w[other]
+          'name' => 'debug other', 'num_probes' => 1, 'disabled' => false,
+          'expires' => 0, 'service_names' => %w[other]
         }},
       ],
     }
@@ -47,7 +47,7 @@ RSpec.describe DebuggerSessionsQuery do
 
     it 'returns an empty list when no session targets the service' do
       allow(session).to receive(:get_json).and_return(
-        {'data' => [{'id' => 'x', 'attributes' => {'serviceNames' => %w[other]}}]}
+        {'data' => [{'id' => 'x', 'attributes' => {'service_names' => %w[other]}}]}
       )
       expect(build.call.sessions).to eq([])
     end
