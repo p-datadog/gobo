@@ -111,3 +111,31 @@ gobo runs with live instances, so **creating a probe will not enable DI** for it
 - **Remotely:** set the backend flag `true` for gobo + its env via the Remote
   Enablement toggle in the Datadog UI. The tracer then receives the `APM_TRACING`
   enable and starts DI on the next Remote Config poll.
+
+## Sequences that do NOT enable DI (and the one that does)
+
+- **Creating a probe while gobo is running does not enable DI.** The implicit
+  one-click enable is skipped because the env has live instances
+  (`isSelectedEnvConfigured = envInstances.length > 0`). The backend flag stays
+  unset, so nothing enables DI. The probe erroring is irrelevant — enablement is
+  written (or not) at creation time via the PUT, independent of install status.
+- **Stopping and restarting gobo does not enable DI either.** Restart creates no
+  probe and sets no flag; the tracer polls Remote Config and, with the flag
+  unset, receives no enable. So "create a probe, stop gobo, restart gobo" does
+  **not** turn DI on automatically.
+- **The only implicit-path sequence that works:** stop gobo → wait for its
+  instances to age out of the backend (so the env shows zero live instances) →
+  create the probe (now the one-click enable fires and sets the flag `true`) →
+  start gobo (Remote Config delivers the `APM_TRACING` enable →
+  `component.start!`, then the pending probe reconciles/installs). Order and the
+  zero-instances condition are both required.
+
+### Verifying from the tracer log (`-d`)
+
+With `DD_TRACE_DEBUG=1`, DI is enabled only if the log shows the enable being
+received. When DI is not being enabled you will see the Remote Config worker
+reporting `remote: no changes` / `remote: empty response => NOOP` on every poll,
+and **no** `handle_rc_enablement`, `received … probe`, `component.start!`, or
+`di: installed` lines. Note the `apm_tracing/debugger_configs` URLs that appear
+as trace spans are gobo's own `RemoteEnablementQuery` calls, not the tracer's
+Remote Config receiving an enable.
