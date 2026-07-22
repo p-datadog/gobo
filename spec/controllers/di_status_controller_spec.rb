@@ -258,6 +258,45 @@ RSpec.describe DiStatusController, type: :controller do
     end
   end
 
+  describe 'REDAPL query execution' do
+    def stub_query(klass, result)
+      allow(klass).to receive(:new).and_return(instance_double(klass, call: result))
+    end
+
+    it 'builds one shared Datadog session and passes it to every backend query' do
+      session = instance_double(DatadogSession)
+      expect(DatadogSession).to receive(:new)
+        .with(host: 'squirrel.datadoghq.com', cookie_label: 'dogfood').once
+        .and_return(session)
+
+      stub_query(RedaplQuery, RedaplQuery::Result.new(
+        rows: [], error: nil, query: 'q', host: 'h', cookie_path: '/c', window_minutes: 10
+      ))
+      stub_query(DebuggerHeartbeatsQuery, DebuggerHeartbeatsQuery::Result.new(
+        instances: [], last_seen: nil, error: nil, host: 'h', cookie_path: '/c', service: 'gobo', env: 'production'
+      ))
+      stub_query(LiveServiceInstancesQuery, LiveServiceInstancesQuery::Result.new(
+        active: [], inactive: [], error: nil, endpoint: '/e', host: 'h', cookie_path: '/c', service: 'gobo', env: 'production'
+      ))
+      stub_query(RemoteEnablementQuery, RemoteEnablementQuery::Result.new(
+        configs: [], error: nil, host: 'h', cookie_path: '/c', service: 'gobo', env: 'production', path: '/p'
+      ))
+      stub_query(DebuggerSessionsQuery, DebuggerSessionsQuery::Result.new(
+        sessions: [], error: nil, host: 'h', cookie_path: '/c', service: 'gobo'
+      ))
+      stub_query(ProbeStatusesQuery, ProbeStatusesQuery::Result.new(
+        probes: [], error: nil, host: 'h', cookie_path: '/c', service: 'gobo'
+      ))
+
+      get :index, params: {redapl: 'dogfood'}
+
+      [RedaplQuery, DebuggerHeartbeatsQuery, LiveServiceInstancesQuery,
+        RemoteEnablementQuery, DebuggerSessionsQuery, ProbeStatusesQuery].each do |klass|
+        expect(klass).to have_received(:new).with(hash_including(session: session))
+      end
+    end
+  end
+
   describe 'REDAPL service_config query' do
     render_views
 
@@ -302,7 +341,7 @@ RSpec.describe DiStatusController, type: :controller do
 
     it 'runs the query for the requested environment and renders the rows' do
       expect(RedaplQuery).to receive(:new)
-        .with(host: 'dd.datad0g.com', cookie_label: 'staging', service: anything)
+        .with(host: 'dd.datad0g.com', cookie_label: 'staging', service: anything, session: anything)
         .and_return(instance_double(RedaplQuery, call: result))
       get :index, params: {redapl: 'staging'}
       expect(assigns(:redapl)[:rows]).to eq([{service_name: 'gobo', language_name: 'ruby', env: 'staging'}])
@@ -372,7 +411,7 @@ RSpec.describe DiStatusController, type: :controller do
 
     it 'runs the query for the requested environment and renders instances' do
       expect(DebuggerHeartbeatsQuery).to receive(:new)
-        .with(host: 'dd.datad0g.com', cookie_label: 'staging', service: anything, env: anything)
+        .with(host: 'dd.datad0g.com', cookie_label: 'staging', service: anything, env: anything, session: anything)
         .and_return(instance_double(DebuggerHeartbeatsQuery, call: result))
       get :index, params: {redapl: 'staging'}
       expect(assigns(:heartbeats)[:instances].first[:runtime_id]).to eq('rid-1')
@@ -466,7 +505,7 @@ RSpec.describe DiStatusController, type: :controller do
 
     it 'runs the query for the requested environment and renders active instances' do
       expect(LiveServiceInstancesQuery).to receive(:new)
-        .with(host: 'dd.datad0g.com', cookie_label: 'staging', service: anything, env: anything)
+        .with(host: 'dd.datad0g.com', cookie_label: 'staging', service: anything, env: anything, session: anything)
         .and_return(instance_double(LiveServiceInstancesQuery, call: result))
       get :index, params: {redapl: 'staging'}
       expect(assigns(:instances)[:active].first[:runtime_id]).to eq('rid-1')
@@ -651,7 +690,7 @@ RSpec.describe DiStatusController, type: :controller do
 
     it 'runs the query for the requested environment and renders the enable state' do
       expect(RemoteEnablementQuery).to receive(:new)
-        .with(host: 'squirrel.datadoghq.com', cookie_label: 'dogfood', service: anything, env: anything)
+        .with(host: 'squirrel.datadoghq.com', cookie_label: 'dogfood', service: anything, env: anything, session: anything)
         .and_return(instance_double(RemoteEnablementQuery, call: result))
       get :index, params: {redapl: 'dogfood'}
       expect(assigns(:remote_enablement)[:configs].first[:dynamic_instrumentation_enabled]).to be(true)

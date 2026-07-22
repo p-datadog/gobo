@@ -105,4 +105,23 @@ RSpec.describe DatadogSession do
       expect { session.csrf_token }.to raise_error(/not authenticated/)
     end
   end
+
+  describe 'memoization for a session shared across concurrent queries' do
+    subject(:session) { described_class.new(host: 'squirrel.datadoghq.com', cookie_label: 'dogfood') }
+
+    it 'reads the CSRF token once across repeated calls' do
+      allow(session).to receive(:get_json)
+        .with('/api/v1/legacy_current_user')
+        .and_return('csrf_token' => 'tok')
+      3.times { session.csrf_token }
+      expect(session).to have_received(:get_json).once
+    end
+
+    it 'loads the wclip cookies once across repeated requests' do
+      allow(session).to receive(:fetch_cookies).and_return([{'name' => 'dogweb', 'value' => 'x'}])
+      allow(session).to receive(:perform).and_return(response(Net::HTTPOK, '200', body: '{}'))
+      3.times { session.get_json('/api/thing') }
+      expect(session).to have_received(:fetch_cookies).once
+    end
+  end
 end

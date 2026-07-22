@@ -6,6 +6,7 @@ require_relative '../../lib/remote_enablement_query'
 require_relative '../../lib/debugger_sessions_query'
 require_relative '../../lib/probe_statuses_query'
 require_relative '../../lib/runtime_id_registry'
+require_relative '../../lib/datadog_session'
 
 class DiStatusController < ApplicationController
   def index
@@ -28,12 +29,15 @@ class DiStatusController < ApplicationController
     @agent_operational = fetch_agent_operational
     @redapl_target = fetch_agent_environment_label
     @redapl_env = redapl_env_param
-    @redapl = fetch_redapl_environments(@redapl_env) if @redapl_env
-    @heartbeats = fetch_service_heartbeats(@redapl_env) if @redapl_env
-    @instances = fetch_service_instances(@redapl_env) if @redapl_env
-    @remote_enablement = fetch_remote_enablement(@redapl_env) if @redapl_env
-    @debugger_sessions = fetch_debugger_sessions(@redapl_env) if @redapl_env
-    @backend_probes = fetch_backend_probes(@redapl_env) if @redapl_env
+    if @redapl_env
+      redapl = fetch_redapl_data(@redapl_env)
+      @redapl = redapl[:redapl]
+      @heartbeats = redapl[:heartbeats]
+      @instances = redapl[:instances]
+      @remote_enablement = redapl[:remote_enablement]
+      @debugger_sessions = redapl[:debugger_sessions]
+      @backend_probes = redapl[:backend_probes]
+    end
     @redapl_connection = @redapl&.slice(:environment, :host, :cookie_path)
 
     respond_to do |format|
@@ -66,12 +70,49 @@ class DiStatusController < ApplicationController
     requested if requested && AgentEnvironments.all.key?(requested)
   end
 
+  # Builds one authenticated Datadog session per request and runs the REDAPL and
+  # debugger-backend queries concurrently over it. The queries are independent
+  # blocking HTTP calls, so running them in parallel makes the action's wall
+  # time the slowest single query rather than their sum; sharing one session
+  # loads the wclip cookies and CSRF token once instead of once per query.
+  def fetch_redapl_data(label)
+    session = redapl_session(label)
+    run_in_parallel(
+      redapl: -> { fetch_redapl_environments(label, session) },
+      heartbeats: -> { fetch_service_heartbeats(label, session) },
+      instances: -> { fetch_service_instances(label, session) },
+      remote_enablement: -> { fetch_remote_enablement(label, session) },
+      debugger_sessions: -> { fetch_debugger_sessions(label, session) },
+      backend_probes: -> { fetch_backend_probes(label, session) }
+    )
+  end
+
+  def redapl_session(label)
+    DatadogSession.new(host: AgentEnvironments.fetch(label)[:host], cookie_label: label)
+  end
+
+  # Runs each task on its own thread and returns a hash of the same keys mapped
+  # to results. Thread#value re-raises a task's exception when joined, keeping
+  # the single-threaded error behavior (an unexpected failure 500s the action).
+  def run_in_parallel(tasks)
+    tasks.map do |key, task|
+      Thread.new do
+        result = nil
+        Rails.application.executor.wrap { result = task.call }
+        [key, result]
+      end
+    end.each_with_object({}) do |thread, out|
+      key, value = thread.value
+      out[key] = value
+    end
+  end
+
   # Reads cookies fresh from wclip (/cookies-<env>.json) on every request and
   # runs the REDAPL service_config query for the current service. Cookies are
   # never stored.
-  def fetch_redapl_environments(label)
+  def fetch_redapl_environments(label, session)
     host = AgentEnvironments.fetch(label)[:host]
-    result = RedaplQuery.new(host: host, cookie_label: label, service: @service).call
+    result = RedaplQuery.new(host: host, cookie_label: label, service: @service, session: session).call
     {
       environment: label,
       host: result.host,
@@ -85,10 +126,10 @@ class DiStatusController < ApplicationController
 
   # Reads cookies fresh from wclip and lists Live Debugger sessions targeting
   # the running service.
-  def fetch_debugger_sessions(label)
+  def fetch_debugger_sessions(label, session)
     host = AgentEnvironments.fetch(label)[:host]
     result = DebuggerSessionsQuery.new(
-      host: host, cookie_label: label, service: @service
+      host: host, cookie_label: label, service: @service, session: session
     ).call
     {
       environment: label,
@@ -102,10 +143,10 @@ class DiStatusController < ApplicationController
 
   # Reads cookies fresh from wclip and lists the backend's probes and their
   # aggregate status for the running service.
-  def fetch_backend_probes(label)
+  def fetch_backend_probes(label, session)
     host = AgentEnvironments.fetch(label)[:host]
     result = ProbeStatusesQuery.new(
-      host: host, cookie_label: label, service: @service
+      host: host, cookie_label: label, service: @service, session: session
     ).call
     {
       environment: label,
@@ -121,10 +162,10 @@ class DiStatusController < ApplicationController
   # debugger_configs endpoint for the DI remote-enablement state stored for this
   # service+env — the state that decides whether RC turns DI on when the tracer
   # reports :can_enable_remotely.
-  def fetch_remote_enablement(label)
+  def fetch_remote_enablement(label, session)
     host = AgentEnvironments.fetch(label)[:host]
     result = RemoteEnablementQuery.new(
-      host: host, cookie_label: label, service: @service, env: @env
+      host: host, cookie_label: label, service: @service, env: @env, session: session
     ).call
     {
       environment: label,
@@ -142,10 +183,10 @@ class DiStatusController < ApplicationController
   # endpoints. This is the source of the DI service page's instance-coverage
   # panel ("N instances active") — one row per tracer runtime (e.g. per Puma
   # worker).
-  def fetch_service_heartbeats(label)
+  def fetch_service_heartbeats(label, session)
     host = AgentEnvironments.fetch(label)[:host]
     result = DebuggerHeartbeatsQuery.new(
-      host: host, cookie_label: label, service: @service, env: @env
+      host: host, cookie_label: label, service: @service, env: @env, session: session
     ).call
     {
       environment: label,
@@ -163,10 +204,10 @@ class DiStatusController < ApplicationController
   # lookup (instrumentation telemetry + REDAPL join). Distinct from the DI
   # heartbeat instance coverage above: a service can heartbeat for DI yet be
   # absent here when its APM instrumentation telemetry is not landing.
-  def fetch_service_instances(label)
+  def fetch_service_instances(label, session)
     host = AgentEnvironments.fetch(label)[:host]
     result = LiveServiceInstancesQuery.new(
-      host: host, cookie_label: label, service: @service, env: @env
+      host: host, cookie_label: label, service: @service, env: @env, session: session
     ).call
     {
       environment: label,

@@ -11,6 +11,10 @@ require 'uri'
 # Cookies are read fresh from wclip on first use and memoized for the lifetime
 # of the instance (one instance per request). They are never written to disk,
 # logged, or returned.
+#
+# A single instance is shared across the concurrent DI Status queries, so cookie
+# loading and CSRF-token retrieval are memoized under mutexes to run once even
+# when several queries touch the session at the same time.
 class DatadogSession
   WCLIP_HOST = 'localhost'.freeze
   WCLIP_PORT = 8093
@@ -31,6 +35,8 @@ class DatadogSession
     @cookie_label = cookie_label
     @open_timeout = open_timeout
     @read_timeout = read_timeout
+    @cookies_mutex = Mutex.new
+    @csrf_mutex = Mutex.new
   end
 
   def cookie_path
@@ -67,16 +73,20 @@ class DatadogSession
   end
 
   def csrf_token
+    @csrf_mutex.synchronize { @csrf_token ||= fetch_csrf_token }
+  end
+
+  private
+
+  def fetch_csrf_token
     token = get_json(CURRENT_USER_PATH)['csrf_token']
     raise "no csrf_token for #{@host} — session is not authenticated" if token.to_s.empty?
 
     token
   end
 
-  private
-
   def cookies
-    @cookies ||= fetch_cookies
+    @cookies_mutex.synchronize { @cookies ||= fetch_cookies }
   end
 
   def cookie_header
