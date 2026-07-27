@@ -1,0 +1,64 @@
+<% provide(:title, 'Logs') %>
+<h1>Logs <small><%= link_to "JSON", logs_path(format: :json, q: @query, minutes: @window_minutes, limit: @limit) %></small></h1>
+
+<% if @agent_environment_label %>
+  <p>
+    <a href="https://<%= AgentEnvironments.fetch(@agent_environment_label)[:ui_host] %>/logs?query=<%= u(@query) %>" target="_blank">
+      View in Datadog Log Explorer &rarr;
+    </a>
+  </p>
+<% end %>
+
+<%= form_with(url: logs_path, method: :get, local: true) do |f| %>
+  <div class="form-group">
+    <%= f.label :q, "Query" %>
+    <%= f.text_field :q, value: @query, class: 'form-control' %>
+  </div>
+  <div class="form-group">
+    <%= f.label :minutes, "Window (minutes)" %>
+    <%= f.number_field :minutes, value: @window_minutes, min: 1, class: 'form-control' %>
+  </div>
+  <div class="form-group">
+    <%= f.label :limit, "Limit" %>
+    <%= f.number_field :limit, value: @limit, min: 1, max: LogsQuery::MAX_LIMIT, class: 'form-control' %>
+  </div>
+  <%= f.submit "Search", class: "btn btn-primary" %>
+<% end %>
+
+<dl class="dl-horizontal">
+  <dt>Service:</dt><dd><code><%= @service %></code></dd>
+  <dt>Env:</dt><dd><code><%= @env %></code></dd>
+  <dt>Query:</dt><dd><code><%= @query %></code></dd>
+  <dt>Window:</dt><dd><%= @window_minutes %> min</dd>
+  <dt>Limit:</dt><dd><%= @limit %></dd>
+  <% if @result&.hit_count %>
+    <dt>Total matches:</dt><dd><%= @result.hit_count %></dd>
+  <% end %>
+</dl>
+
+<% error = @result&.error || @no_environment_error %>
+<% if error %>
+  <div class="alert alert-danger">Error: <%= error %></div>
+<% end %>
+
+<% if @result&.ok? %>
+  <% if @result.events.empty? %>
+    <p class="text-muted">No log events matched.</p>
+  <% else %>
+    <table class="table table-condensed">
+      <thead>
+        <tr><th>Timestamp</th><th>Status</th><th>Service</th><th>Message</th></tr>
+      </thead>
+      <tbody>
+        <% @result.events.each do |event| %>
+          <tr>
+            <td><code><%= event.timestamp %></code></td>
+            <td><%= event.status %></td>
+            <td><code><%= event.service %></code></td>
+            <td><%= truncate(event.message.to_s, length: 300) %></td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  <% end %>
+<% end %>
