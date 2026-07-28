@@ -56,9 +56,13 @@ class StaticPagesController < ApplicationController
   # affect the page.
   def invoke_probe_demo
     arguments = ProbeDemo.demo_arguments(user: current_user, count: Micropost.count)
+    positional = arguments[:args]
+    keyword = arguments[:kw_args]
     demo = ProbeDemo.new
-    demo.args(*arguments[:args].values_at(:account, :action, :count))
-    demo.kw_args(**arguments[:kw_args])
+    demo.args(*positional.values_at(:account, :action, :count))
+    demo.args(positional[:account], "refresh_home", positional[:count] + 1)
+    demo.kw_args(**keyword)
+    demo.kw_args(query: "home_feed_refresh", filter: keyword[:filter], limit: keyword[:limit] * 2)
   rescue => e
     Rails.logger.error "Error invoking probe demo: #{e.class}: #{e}"
   end
