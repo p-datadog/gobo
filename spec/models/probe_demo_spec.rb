@@ -40,6 +40,21 @@ RSpec.describe ProbeDemo do
               [:keyreq, :query], [:keyreq, :filter], [:keyreq, :limit]])
   end
 
+  it 'accepts fixed positional arguments plus a keyword splat' do
+    expect(described_class.new.splat_kwargs(account, 'view_home', tag: 'x', page: 2))
+      .to eq('account=alice action=view_home opts=page,tag')
+  end
+
+  it 'defines splat_kwargs with required positionals then a keyword splat' do
+    expect(described_class.instance_method(:splat_kwargs).parameters)
+      .to eq([[:req, :account], [:req, :action], [:keyrest, :opts]])
+  end
+
+  it 'keeps a splat key that repeats a positional parameter name' do
+    expect(described_class.new.splat_kwargs(account, 'view_home', account: 'collision'))
+      .to eq('account=alice action=view_home opts=account')
+  end
+
   describe 'method_missing delegation' do
     it 'delegates args_* calls to args' do
       expect(described_class.new.args_home(account, 'view_home', 3))

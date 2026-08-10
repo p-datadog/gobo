@@ -69,6 +69,7 @@ class StaticPagesController < ApplicationController
       positional[:account], "fixed_home", positional[:count],
       query: keyword[:query], filter: keyword[:filter], limit: keyword[:limit]
     )
+    demo.splat_kwargs(positional[:account], "splat_home", account: "collision", tag: "live")
   rescue => e
     Rails.logger.error "Error invoking probe demo: #{e.class}: #{e}"
   end

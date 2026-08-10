@@ -47,6 +47,19 @@ RSpec.describe "StaticPages", type: :request do
     expect(fixed_calls.first[1]).to match(hash_including(query: kind_of(String), filter: kind_of(ProbeDemo::SearchFilter), limit: kind_of(Integer)))
   end
 
+  it "invokes the keyword-splat probe target once on every home load" do
+    splat_calls = []
+    allow_any_instance_of(ProbeDemo).to receive(:splat_kwargs).and_wrap_original do |orig, *a, **kw|
+      splat_calls << [a, kw]
+      orig.call(*a, **kw)
+    end
+    get root_path
+    expect(response).to have_http_status(:success)
+    expect(splat_calls.size).to eq(1)
+    expect(splat_calls.first[0]).to match([kind_of(ProbeDemo::Account), 'splat_home'])
+    expect(splat_calls.first[1]).to match(hash_including(account: kind_of(String), tag: kind_of(String)))
+  end
+
   it "still renders home when the probe demo raises" do
     allow_any_instance_of(ProbeDemo).to receive(:args).and_raise(StandardError, 'boom')
     get root_path
