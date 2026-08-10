@@ -78,8 +78,7 @@ class ProbeDemo
       "query=#{query} filter=#{filter.field} limit=#{limit}"
   end
 
-  # Probe target with fixed positional parameters plus a keyword splat. A
-  # method probe captures the positional +account+ and +action+ under their
+  # A method probe captures the positional +account+ and +action+ under their
   # real names and each splat key under its own name. When a splat key repeats
   # a positional parameter name, the captured snapshot keeps the positional
   # under arg1 and the keyword under its own name.
