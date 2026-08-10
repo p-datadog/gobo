@@ -29,6 +29,17 @@ RSpec.describe ProbeDemo do
       .to eq([[:keyreq, :query], [:keyreq, :filter], [:keyreq, :limit]])
   end
 
+  it 'accepts a fixed signature of positional then keyword arguments' do
+    expect(described_class.new.fixed_sig(account, 'view_home', 3, query: 'q', filter: filter, limit: 10))
+      .to eq('account=alice action=view_home count=3 query=q filter=body limit=10')
+  end
+
+  it 'defines fixed_sig with required positional then required keyword parameters' do
+    expect(described_class.instance_method(:fixed_sig).parameters)
+      .to eq([[:req, :account], [:req, :action], [:req, :count],
+              [:keyreq, :query], [:keyreq, :filter], [:keyreq, :limit]])
+  end
+
   describe 'method_missing delegation' do
     it 'delegates args_* calls to args' do
       expect(described_class.new.args_home(account, 'view_home', 3))

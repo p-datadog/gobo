@@ -34,6 +34,19 @@ RSpec.describe "StaticPages", type: :request do
     expect(response.body).to include('Probe instructions')
   end
 
+  it "invokes the fixed-signature probe target once on every home load" do
+    fixed_calls = []
+    allow_any_instance_of(ProbeDemo).to receive(:fixed_sig).and_wrap_original do |orig, *a, **kw|
+      fixed_calls << [a, kw]
+      orig.call(*a, **kw)
+    end
+    get root_path
+    expect(response).to have_http_status(:success)
+    expect(fixed_calls.size).to eq(1)
+    expect(fixed_calls.first[0]).to match([kind_of(ProbeDemo::Account), 'fixed_home', kind_of(Integer)])
+    expect(fixed_calls.first[1]).to match(hash_including(query: kind_of(String), filter: kind_of(ProbeDemo::SearchFilter), limit: kind_of(Integer)))
+  end
+
   it "still renders home when the probe demo raises" do
     allow_any_instance_of(ProbeDemo).to receive(:args).and_raise(StandardError, 'boom')
     get root_path

@@ -65,6 +65,10 @@ class StaticPagesController < ApplicationController
     demo.kw_args(query: "home_feed_refresh", filter: keyword[:filter], limit: keyword[:limit] * 2)
     demo.args_virtual(positional[:account], "virtual_home", positional[:count])
     demo.kw_args_virtual(query: "home_feed_virtual", filter: keyword[:filter], limit: keyword[:limit])
+    demo.fixed_sig(
+      positional[:account], "fixed_home", positional[:count],
+      query: keyword[:query], filter: keyword[:filter], limit: keyword[:limit]
+    )
   rescue => e
     Rails.logger.error "Error invoking probe demo: #{e.class}: #{e}"
   end

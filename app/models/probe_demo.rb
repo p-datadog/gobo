@@ -69,6 +69,15 @@ class ProbeDemo
     "query=#{query} filter=#{filter.field} limit=#{limit}"
   end
 
+  # Probe target with a fully fixed signature: required positional parameters
+  # followed by required keyword parameters. A method probe here captures every
+  # argument under its real parameter name, since the method is concretely
+  # defined (contrast the virtual +method_missing+ targets below).
+  def fixed_sig(account, action, count, query:, filter:, limit:)
+    "account=#{account.name} action=#{action} count=#{count} " \
+      "query=#{query} filter=#{filter.field} limit=#{limit}"
+  end
+
   # Dynamic probe targets: any +kw_args_*+ call delegates to +kw_args+ and any
   # +args_*+ call delegates to +args+, so a single method probe can be set on a
   # named alias without adding a dedicated method.
