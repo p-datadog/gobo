@@ -68,4 +68,23 @@ class ProbeDemo
   def kw_args(query:, filter:, limit:)
     "query=#{query} filter=#{filter.field} limit=#{limit}"
   end
+
+  # Dynamic probe targets: any +kw_args_*+ call delegates to +kw_args+ and any
+  # +args_*+ call delegates to +args+, so a single method probe can be set on a
+  # named alias without adding a dedicated method.
+  def method_missing(name, *args, **kwargs, &block)
+    method_name = name.to_s
+    if method_name.start_with?("kw_args_")
+      kw_args(**kwargs, &block)
+    elsif method_name.start_with?("args_")
+      args(*args, &block)
+    else
+      super
+    end
+  end
+
+  def respond_to_missing?(name, include_private = false)
+    method_name = name.to_s
+    method_name.start_with?("kw_args_", "args_") || super
+  end
 end

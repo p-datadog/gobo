@@ -29,6 +29,29 @@ RSpec.describe ProbeDemo do
       .to eq([[:keyreq, :query], [:keyreq, :filter], [:keyreq, :limit]])
   end
 
+  describe 'method_missing delegation' do
+    it 'delegates args_* calls to args' do
+      expect(described_class.new.args_home(account, 'view_home', 3))
+        .to eq('account=alice action=view_home count=3')
+    end
+
+    it 'delegates kw_args_* calls to kw_args' do
+      expect(described_class.new.kw_args_home(query: 'q', filter: filter, limit: 10))
+        .to eq('query=q filter=body limit=10')
+    end
+
+    it 'responds to args_* and kw_args_* names' do
+      instance = described_class.new
+      expect(instance).to respond_to(:args_home)
+      expect(instance).to respond_to(:kw_args_home)
+    end
+
+    it 'raises NoMethodError for unrelated missing methods' do
+      expect { described_class.new.something_else }.to raise_error(NoMethodError)
+      expect(described_class.new).not_to respond_to(:something_else)
+    end
+  end
+
   describe '.demo_arguments' do
     subject(:arguments) { described_class.demo_arguments(user: nil, count: 3) }
 
