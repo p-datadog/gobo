@@ -8,37 +8,6 @@ Commit after every logical change in the same response that makes the change —
 
 Always prefix Ruby/Rails commands with `bundle exec`. Never run `ruby`, `rails`, `rake`, `rspec`, or other gem-provided executables without `bundle exec`.
 
-## Launching the App
-
-**Use `bin/run` as the entry point.** Do not invoke `bundle exec puma`, `bin/rails server`, or `unicorn` directly. `bin/run` handles every prerequisite the servers need: `bundle install`, `yarn install`, `rails db:migrate`, admin-user seed, `assets:precompile`, `webpacker:compile`, `SECRET_KEY_BASE` generation for production, and the standard Datadog env block (service, env, agent port, RC enablement in dev; DI/SymDB env vars are left unset by default and only set with `-i`).
-
-**Flags** (see `bin/run -h` for the live list):
-
-| Flag | Meaning |
-|---|---|
-| `-r` | Rails server (default mode) |
-| `-u` | Puma server |
-| `-p PORT` | port (default 3000) |
-| `-w WORKERS` | Puma worker count (only with `-u`) |
-| `-s SERVICE` | `DD_SERVICE` |
-| `-e ENV` | `DD_ENV` |
-| `-d` | `DD_TRACE_DEBUG=1` |
-| `-D` | Development env (default is production) |
-| `-S` | Staging agent on port 28126 (default: dogfood on 18126) |
-| `-i` | Set `DD_DYNAMIC_INSTRUMENTATION_ENABLED` / `DD_SYMBOL_DATABASE_UPLOAD_ENABLED` (default: unset, RC-driven enablement) |
-
-**Common invocations:**
-
-```sh
-# Local dev against staging agent with debug logs
-bin/run -r -D -S -d -s gobo -e staging
-
-# Puma cluster (2 workers) in production env against staging
-bin/run -u -w 2 -S -d -s gobo -e staging
-```
-
-**Implicit DI enablement testing:** by default `bin/run` leaves `DD_DYNAMIC_INSTRUMENTATION_ENABLED` and `DD_SYMBOL_DATABASE_UPLOAD_ENABLED` unset, so DI is turned on by Remote Configuration rather than by env var. To force enablement by env var instead, pass `-i` so both are exported as `1`. Remote Configuration itself stays enabled (on by default in production; add `-D` for development, which also enables RC and telemetry).
-
 ## Scripts
 
 All script logic must live in files under `lib/` so it can be unit tested. `bin/` scripts are thin wrappers that parse CLI options and call into `lib/`. Add specs in `spec/lib/` for all lib code.
@@ -110,11 +79,6 @@ Exception: documentation-only changes (CLAUDE.md, README, comments) that cannot 
 Tests for diagnostic/status pages must verify that displayed values are correct, not just that they are present. `expect(json).to include('key')` only verifies the key exists. `expect(json['key']).to eq(expected)` verifies the value is truthful. Status pages that display wrong values with confidence are worse than pages that display nothing.
 
 When the controller integrates with dd-trace-rb, include a test context simulating a tracer version where the feature does not exist (e.g. stub `respond_to?(:symbol_database)` to return false) to verify graceful degradation.
-
-The test command is:
-```
-DD_TRACER=~/dtr bundle exec rspec
-```
 
 The suite runs against whatever branch `~/dtr` is currently checked out on. A red
 suite caused by missing DI constants (e.g. `Datadog::DI::CaptureExpression`,

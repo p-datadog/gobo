@@ -1,55 +1,89 @@
 # Ruby Live Debugger Demo
 
-A Ruby live debugger demo based on the [Rails Tutorial sample app](https://github.com/learnenough/rails_tutorial_sample_app_7th_ed).
+A Datadog Dynamic Instrumentation (DI) and Symbol Database (SymDB) demo, based on
+the [Rails Tutorial sample app](https://github.com/learnenough/rails_tutorial_sample_app_7th_ed).
+
+## Features (routes)
+
+- **DI probe demos** (`/debugger_test/*`) — method and line probes, exception
+  capture, binary data, stdlib probes, regex timeouts.
+- **Symbol Database** (`/symdb`) — symbol capture and upload; see also
+  `bin/capture_symbols`, `bin/extract_symbols`, `bin/verify_symbols`.
+- **Memory diagnostics** (`/memory`) — heap stats, GC, malloc trim.
+- **DI status** (`/di_status`) — backend view of debugger sessions and probes for
+  the service.
+- **Probe instructions** (`/probe_instructions`).
+- **Logs** (`/logs`) — query Datadog backend logs for the service.
+- **Code tracker** (`/code_tracker`) — DI code-tracking state.
+- **Stress** (`/stress/*`) — CPU/IO load endpoints.
 
 ## Getting started
 
-To get started with the app, first follow the setup steps in [Section 1.1 Up and running](https://www.railstutorial.org/book#sec-up_and_running).
+Clone the repo and `cd` into it:
 
-Next, clone the repo and `cd` into the directory:
-
-```
-$ git clone https://github.com/mhartl/sample_app_6th_ed.git
-$ cd sample_app_6th_ed
+```sh
+git clone https://github.com/p-datadog/gobo.git
+cd gobo
 ```
 
-Also make sure you’re using a compatible version of Node.js:
+`bin/run` is the entry point. It handles every prerequisite: `bundle install`,
+`yarn install`, `rails db:migrate`, admin-user seed, `assets:precompile`,
+`webpacker:compile`, `SECRET_KEY_BASE` generation for production, and the Datadog
+env block (service, env, agent port, RC enablement in dev; DI/SymDB env vars are
+left unset by default and only set with `-i`).
 
-```
-$ nvm install 16.13.0
-$ node -v
-v16.13.0
-```
-
-Then install the needed packages (while skipping any Ruby gems needed only in production):
-
-```
-$ yarn add jquery@3.5.1 bootstrap@3.4.1
-$ gem install bundler -v 2.2.17
-$ bundle _2.2.17_ config set --local without 'production'
-$ bundle _2.2.17_ install
+```sh
+bin/run
 ```
 
-Next, migrate the database:
+`bin/run` seeds an admin user `admin@example.com` / `admin`. Running
+`bundle exec rails db:seed` additionally creates the admin
+`example@railstutorial.org` / `foobar`, 99 more users (password `password`),
+microposts for the first several users, and follow relationships.
 
-```
-$ rails db:migrate
+## Launching the app
+
+Use `bin/run` to launch the app; run `puma`, `bin/rails server`, or `unicorn`
+through it rather than on their own so the setup above happens first. See
+`bin/run --help` for the live flag list.
+
+| Flag | Meaning |
+|---|---|
+| `-r` | Rails server (default mode) |
+| `-u` | Puma server |
+| `-p PORT` | port (default 3000) |
+| `-w WORKERS` | Puma worker count (only with `-u`) |
+| `-s SERVICE` | `DD_SERVICE` |
+| `-e ENV` | `DD_ENV` |
+| `-d` | `DD_TRACE_DEBUG=1` |
+| `-D` | Development env (default is production) |
+| `-S` | Staging agent on port 28126 (default: dogfood on 18126) |
+| `-i` | Set `DD_DYNAMIC_INSTRUMENTATION_ENABLED` / `DD_SYMBOL_DATABASE_UPLOAD_ENABLED` (default: unset, RC-driven enablement) |
+
+Common invocations:
+
+```sh
+# Local dev against staging agent with debug logs
+bin/run -r -D -S -d -s gobo -e staging
+
+# Puma cluster (2 workers) in production env against staging
+bin/run -u -w 2 -S -d -s gobo -e staging
 ```
 
-Finally, run the test suite to verify that everything is working correctly:
+**Implicit DI enablement testing:** by default `bin/run` leaves
+`DD_DYNAMIC_INSTRUMENTATION_ENABLED` and `DD_SYMBOL_DATABASE_UPLOAD_ENABLED`
+unset, so DI enablement is driven by Remote Configuration. Pass `-i` to force
+enablement by env var, exporting both as `1`. Remote Configuration stays enabled
+(on by default in production; add `-D` for development, which also enables RC and
+telemetry).
 
-```
-$ rails test
+## Running the tests
+
+```sh
+DD_TRACER=~/dtr bundle exec rspec
 ```
 
-If the test suite passes, you’ll be ready to seed the database with sample users and run the app in a local server:
-
-```
-$ rails db:seed
-$ rails server
-```
-
-Follow the instructions in [Section 1.2.2 `rails server`](https://www.railstutorial.org/book#sec-rails_server) to view the app. You can then register a new user or log in as the sample administrative user with the email `example@railstutorial.org` and password `foobar`.
+The suite runs against whatever branch `~/dtr` is checked out on.
 
 ## DD_ENV Configuration
 
