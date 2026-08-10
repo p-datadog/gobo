@@ -44,31 +44,8 @@ microposts for the first several users, and follow relationships.
 ## Launching the app
 
 Use `bin/run` to launch the app; run `puma`, `bin/rails server`, or `unicorn`
-through it rather than on their own so the setup above happens first. See
-`bin/run --help` for the live flag list.
-
-| Flag | Meaning |
-|---|---|
-| `-r` | Rails server (default mode) |
-| `-u` | Puma server |
-| `-p PORT` | port (default 3000) |
-| `-w WORKERS` | Puma worker count (only with `-u`) |
-| `-s SERVICE` | `DD_SERVICE` |
-| `-e ENV` | `DD_ENV` |
-| `-d` | `DD_TRACE_DEBUG=1` |
-| `-D` | Development env (default is production) |
-| `-S` | Staging agent on port 28126 (default: dogfood on 18126) |
-| `-i` | Set `DD_DYNAMIC_INSTRUMENTATION_ENABLED` / `DD_SYMBOL_DATABASE_UPLOAD_ENABLED` (default: unset, RC-driven enablement) |
-
-Common invocations:
-
-```sh
-# Local dev against staging agent with debug logs
-bin/run -r -D -S -d -s gobo -e staging
-
-# Puma cluster (2 workers) in production env against staging
-bin/run -u -w 2 -S -d -s gobo -e staging
-```
+through it rather than on their own so the setup above happens first. Run
+`bin/run --help` for the flag list.
 
 **Implicit DI enablement testing:** by default `bin/run` leaves
 `DD_DYNAMIC_INSTRUMENTATION_ENABLED` and `DD_SYMBOL_DATABASE_UPLOAD_ENABLED`
