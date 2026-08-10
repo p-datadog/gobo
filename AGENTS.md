@@ -74,7 +74,7 @@ When fixing a bug, the fix must be accompanied by a test that would have caught 
 
 Run the full test suite before committing. If any tests fail for any reason — including pre-existing failures unrelated to your changes — investigate and fix them. Commit fixes for pre-existing failures as separate commits before committing your own work. Do not dismiss failures as "pre-existing" or "not my problem."
 
-Exception: documentation-only changes (CLAUDE.md, README, comments) that cannot affect test outcomes may be committed without running the full suite.
+Exception: documentation-only changes (AGENTS.md, README, comments) that cannot affect test outcomes may be committed without running the full suite.
 
 Tests for diagnostic/status pages must verify that displayed values are correct, not just that they are present. `expect(json).to include('key')` only verifies the key exists. `expect(json['key']).to eq(expected)` verifies the value is truthful. Status pages that display wrong values with confidence are worse than pages that display nothing.
 

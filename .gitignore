@@ -45,3 +45,6 @@ yarn-debug.log*
 db/test.*
 db/production.*
 /.dd-tracer
+
+# Ignore local bundler gem install.
+/vendor/bundle
