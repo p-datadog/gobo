@@ -6,7 +6,8 @@ set -eu
 script_dir="$(cd "$(dirname "$0")" && pwd)"
 
 usage() {
-    echo "Usage: $0 [-r | -u] [-p PORT] [-w WORKERS] [-s SERVICE] [-e ENV] [-d] [-D] [-S] [-i]"
+    echo "Usage: $0 [-h] [-r | -u] [-p PORT] [-w WORKERS] [-s SERVICE] [-e ENV] [-d] [-D] [-S] [-i]"
+    echo "  -h, --help    Show this help and exit"
     echo "  -r            Run Rails server in production mode"
     echo "  -u            Run Puma server in production mode"
     echo "  -p PORT       Override port number (default: 3000)"
@@ -18,7 +19,6 @@ usage() {
     echo "  -S            Use staging agent (port 28126; default: dogfood on 18126)"
     echo "                (ports duplicated from config/agent_environments.yml — keep in sync)"
     echo "  -i            Set DD_DYNAMIC_INSTRUMENTATION_ENABLED and DD_SYMBOL_DATABASE_UPLOAD_ENABLED (default: unset, RC-driven enablement)"
-    exit 1
 }
 
 port=""
@@ -31,8 +31,17 @@ agent_port=""
 explicit_di=""
 mode="rails"
 
+# Translate long options to short forms (POSIX getopts handles short only)
+for arg in "$@"; do
+    shift
+    case "$arg" in
+        --help) set -- "$@" "-h" ;;
+        *)      set -- "$@" "$arg" ;;
+    esac
+done
+
 # Parse options
-while getopts "rup:w:s:e:dDSi" opt; do
+while getopts "hrup:w:s:e:dDSi" opt; do
     case $opt in
         r)
             mode="rails"
@@ -65,8 +74,13 @@ while getopts "rup:w:s:e:dDSi" opt; do
         i)
             explicit_di="1"
             ;;
-        *)
+        h)
             usage
+            exit 0
+            ;;
+        *)
+            usage >&2
+            exit 1
             ;;
     esac
 done
