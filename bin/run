@@ -6,7 +6,7 @@ set -eu
 script_dir="$(cd "$(dirname "$0")" && pwd)"
 
 usage() {
-    echo "Usage: $0 [-h] [-r | -u] [-p PORT] [-w WORKERS] [-s SERVICE] [-e ENV] [-d] [-D] [-S] [-i]"
+    echo "Usage: $0 [-h] [-r | -u] [-p PORT] [-w WORKERS] [-s SERVICE] [-e ENV] [-d] [-D] [-S] [-i] [-V VERSION]"
     echo "  -h, --help    Show this help and exit"
     echo "  -r            Run Rails server in production mode"
     echo "  -u            Run Puma server in production mode"
@@ -19,6 +19,7 @@ usage() {
     echo "  -S            Use staging agent (port 28126; default: dogfood on 18126)"
     echo "                (ports duplicated from config/agent_environments.yml — keep in sync)"
     echo "  -i            Set DD_DYNAMIC_INSTRUMENTATION_ENABLED and DD_SYMBOL_DATABASE_UPLOAD_ENABLED (default: unset, RC-driven enablement)"
+    echo "  -V VERSION, --fake-tracer-version VERSION  Report VERSION as the tracer library version to the backend"
 }
 
 port=""
@@ -29,19 +30,22 @@ debug=""
 dev_mode=""
 agent_port=""
 explicit_di=""
+fake_tracer_version=""
 mode="rails"
 
 # Translate long options to short forms (POSIX getopts handles short only)
 for arg in "$@"; do
     shift
     case "$arg" in
-        --help) set -- "$@" "-h" ;;
-        *)      set -- "$@" "$arg" ;;
+        --help)                     set -- "$@" "-h" ;;
+        --fake-tracer-version)      set -- "$@" "-V" ;;
+        --fake-tracer-version=*)    set -- "$@" "-V" "${arg#*=}" ;;
+        *)                          set -- "$@" "$arg" ;;
     esac
 done
 
 # Parse options
-while getopts "hrup:w:s:e:dDSi" opt; do
+while getopts "hrup:w:s:e:dDSiV:" opt; do
     case $opt in
         r)
             mode="rails"
@@ -73,6 +77,9 @@ while getopts "hrup:w:s:e:dDSi" opt; do
             ;;
         i)
             explicit_di="1"
+            ;;
+        V)
+            fake_tracer_version="$OPTARG"
             ;;
         h)
             usage
@@ -181,6 +188,11 @@ fi
 # Set DD_TRACE_DEBUG if requested
 if [ -n "$debug" ]; then
     export DD_TRACE_DEBUG=1
+fi
+
+# Fake the tracer library version reported to the backend if requested
+if [ -n "$fake_tracer_version" ]; then
+    export GOBO_FAKE_TRACER_VERSION="$fake_tracer_version"
 fi
 
 # Determine the port to use for health checks

@@ -54,6 +54,15 @@ enablement by env var, exporting both as `1`. Remote Configuration stays enabled
 (on by default in production; add `-D` for development, which also enables RC and
 telemetry).
 
+**Faking the tracer version:** pass `-V VERSION` (long form
+`--fake-tracer-version VERSION`) to report `VERSION` as the tracer library
+version to the backend. It patches
+`Datadog::Core::Environment::Identity.gem_datadog_version`, so telemetry, Remote
+Configuration, process discovery, tags, and Dynamic Instrumentation all emit the
+fake version. Use it to exercise the backend and web-ui version gates documented
+in `lib/datadog_sim/languages.rb`; a fake below a gate suppresses the app's
+DI/SymDB.
+
 ## Running the tests
 
 ```sh
