@@ -1,0 +1,132 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+$LOAD_PATH.unshift File.expand_path('../lib', __dir__)
+
+# bin/set_probe
+#
+# Create, delete, or list Dynamic Instrumentation log probes through the
+# rc-api livedebugging product (the same API the DI UI uses), so the
+# multi-config / implicit-enablement end-to-end demo can be driven from the
+# CLI. See lib/di_probe_writer.rb for the routes and wire format.
+#
+# Transport (wclip cookies, CSRF on writes) is handled by DatadogSession;
+# cookies must be staged first with extract-cookies-ddog -s <site>.
+#
+# Create requires a target — there is no default. -c/--class and -m/--method
+# are both mandatory for create; omitting either is a usage error.
+#
+# Usage:
+#   bin/set_probe -c DebuggerTestController -m calculate                  # create on gobo/staging (defaults)
+#   bin/set_probe -s gobo -e staging -c DebuggerTestController -m calculate
+#   bin/set_probe -t dogfood -s gobo -e production -c C -m m --no-snapshot
+#   bin/set_probe -d <probe-id>                                           # delete
+#   bin/set_probe -L                                                      # list probes for the service
+#
+# Exit codes:
+#   0  operation succeeded
+#   1  backend returned an error (reported in the result)
+#   2  usage error (missing required create args, unknown site)
+
+require 'optparse'
+require 'agent_environments'
+require 'di_probe_writer'
+
+options = {
+  service: ENV.fetch('DD_SERVICE', 'gobo'),
+  env: ENV.fetch('DD_ENV', 'staging'),
+  site: 'staging',
+  language: 'ruby',
+  capture_snapshot: true,
+  template: '',
+  delete: nil,
+  list: false,
+}
+
+parser = OptionParser.new do |opts|
+  opts.banner = "Usage: bin/set_probe [options] -c TYPE_NAME -m METHOD"
+  opts.on('-s', '--service NAME', 'Service name (default: gobo, or DD_SERVICE)') { |v| options[:service] = v }
+  opts.on('-e', '--env ENV', 'Environment tag (default: staging, or DD_ENV)') { |v| options[:env] = v }
+  opts.on('-t', '--site SITE', "Site: #{AgentEnvironments.all.keys.join(', ')} (default: staging)") { |v| options[:site] = v }
+  opts.on('-c', '--class TYPE_NAME', 'Target class/module (required for create)') { |v| options[:type_name] = v }
+  opts.on('-m', '--method METHOD', 'Target method (required for create)') { |v| options[:method_name] = v }
+  opts.on('-l', '--language LANG', 'Tracer language (default: ruby)') { |v| options[:language] = v }
+  opts.on('--snapshot', 'Capture a snapshot (default: true)') { options[:capture_snapshot] = true }
+  opts.on('--no-snapshot', 'Do not capture a snapshot') { options[:capture_snapshot] = false }
+  opts.on('--template TPL', 'Log template (default: empty)') { |v| options[:template] = v }
+  opts.on('-d', '--delete ID', 'Delete the probe with this id') { |v| options[:delete] = v }
+  opts.on('-L', '--list', 'List probes for the service') { options[:list] = true }
+  opts.on('-h', '--help', 'Show this help') { puts opts; exit 0 }
+end
+parser.parse!(ARGV)
+
+unless AgentEnvironments.all.key?(options[:site])
+  warn "Error: --site must be one of #{AgentEnvironments.all.keys.join(', ')} (got #{options[:site].inspect})"
+  exit 2
+end
+
+site = AgentEnvironments.fetch(options[:site])
+
+writer = DIProbeWriter.new(
+  host: site[:host], cookie_label: options[:site],
+  service: options[:service], env: options[:env], language: options[:language]
+)
+
+def print_meta(writer)
+  puts "service:  #{writer.service}"
+  puts "env:      #{writer.env}"
+  puts "site:     #{writer.cookie_path}"
+  puts
+end
+
+if options[:delete]
+  result = writer.delete(options[:delete])
+  if result.ok?
+    puts "deleted probe #{result.id}"
+    exit 0
+  else
+    warn "FAIL: #{result.error}"
+    exit 1
+  end
+end
+
+if options[:list]
+  result = writer.list
+  print_meta(writer)
+  if result.ok?
+    if result.probes.empty?
+      puts "no probes for service=#{writer.service}"
+    else
+      result.probes.each do |p|
+        puts "#{p.id}  #{p.where}  lang=#{p.language} snapshot=#{p.capture_snapshot} env=#{p.env}"
+      end
+    end
+    exit 0
+  else
+    warn "FAIL: #{result.error}"
+    exit 1
+  end
+end
+
+# create
+type_name = options[:type_name]
+method_name = options[:method_name]
+if type_name.nil? || method_name.nil? || type_name.empty? || method_name.empty?
+  warn "Error: create requires -c/--class TYPE_NAME and -m/--method METHOD (no defaults)."
+  warn parser.help
+  exit 2
+end
+
+result = writer.create(
+  type_name: type_name, method_name: method_name,
+  capture_snapshot: options[:capture_snapshot], template: options[:template]
+)
+print_meta(writer)
+if result.ok?
+  puts "created probe #{result.id}"
+  puts "where:    #{type_name}##{method_name}"
+  puts "snapshot: #{options[:capture_snapshot]}"
+  exit 0
+else
+  warn "FAIL: #{result.error}"
+  exit 1
+end

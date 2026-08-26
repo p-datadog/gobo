@@ -57,19 +57,16 @@ class DatadogSession
   # POST a JSON payload to the Datadog host with the session cookies and CSRF
   # token.
   def post_json(path, payload, csrf_token:)
-    uri = URI("https://#{@host}#{path}")
-    request = Net::HTTP::Post.new(uri)
-    request['content-type'] = 'application/json'
-    request['accept'] = 'application/json'
-    request['cookie'] = cookie_header
-    request['x-csrf-token'] = csrf_token
-    request['user-agent'] = USER_AGENT
-    request.body = JSON.generate(payload)
+    send_json(Net::HTTP::Post, path, payload, csrf_token: csrf_token)
+  end
 
-    response = perform(request, uri)
-    raise_for_response(response, path) unless response.is_a?(Net::HTTPSuccess)
-
-    JSON.parse(response.body)
+  # DELETE a resource on the Datadog host with the session cookies and CSRF
+  # token. The Datadog web endpoints require a CSRF token on writes; a DELETE
+  # carries no meaningful body, but the legacy rc-api RemoveCsrfToken middleware
+  # unmarshals every non-GET request body as JSON (and 500s on an empty body),
+  # so an empty JSON object is sent with an application/json content-type.
+  def delete_json(path, csrf_token:)
+    send_json(Net::HTTP::Delete, path, {}, csrf_token: csrf_token)
   end
 
   def csrf_token
@@ -83,6 +80,23 @@ class DatadogSession
     raise "no csrf_token for #{@host} — session is not authenticated" if token.to_s.empty?
 
     token
+  end
+
+  def send_json(request_klass, path, payload, csrf_token:)
+    uri = URI("https://#{@host}#{path}")
+    request = request_klass.new(uri)
+    request['content-type'] = 'application/json'
+    request['accept'] = 'application/json'
+    request['cookie'] = cookie_header
+    request['x-csrf-token'] = csrf_token
+    request['user-agent'] = USER_AGENT
+    request.body = JSON.generate(payload)
+
+    response = perform(request, uri)
+    raise_for_response(response, path) unless response.is_a?(Net::HTTPSuccess)
+
+    body = response.body.to_s
+    body.empty? ? nil : JSON.parse(body)
   end
 
   def cookies

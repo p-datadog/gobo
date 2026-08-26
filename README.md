@@ -16,6 +16,11 @@ the [Rails Tutorial sample app](https://github.com/learnenough/rails_tutorial_sa
 - **Logs** (`/logs`) — query Datadog backend logs for the service.
 - **Code tracker** (`/code_tracker`) — DI code-tracking state.
 - **Stress** (`/stress/*`) — CPU/IO load endpoints.
+- **Set probe** (`bin/set_probe`) — create, delete, or list DI log probes via the
+  rc-api livedebugging product (the DI UI's API), so the multi-config /
+  implicit-enablement end-to-end demo can be driven from the CLI. Create
+  requires `-c TYPE_NAME` and `-m METHOD` (no defaults); `-d ID` deletes,
+  `-L` lists. Cookies must be staged first with `extract-cookies-ddog -s <site>`.
 
 ## Getting started
 

@@ -90,6 +90,31 @@ RSpec.describe DatadogSession do
     end
   end
 
+  describe '#delete_json' do
+    subject(:session) { build }
+
+    before { allow(session).to receive(:fetch_cookies).and_return([{'name' => 'dogweb', 'value' => 'x'}]) }
+
+    it 'sends a DELETE with an empty JSON body, CSRF token, and cookies' do
+      allow(session).to receive(:perform) do |request, uri|
+        expect(request).to be_a(Net::HTTP::Delete)
+        expect(request['x-csrf-token']).to eq('deadbeef')
+        expect(request['cookie']).to eq('dogweb=x')
+        expect(request['content-type']).to eq('application/json')
+        expect(JSON.parse(request.body)).to eq({})
+        expect(uri.request_uri).to eq('/api/thing/abc')
+        response(Net::HTTPNoContent, '204', body: '')
+      end
+      expect(session.delete_json('/api/thing/abc', csrf_token: 'deadbeef')).to be_nil
+    end
+
+    it 'raises on a non-success response' do
+      allow(session).to receive(:perform).and_return(response(Net::HTTPNotFound, '404', body: 'gone'))
+      expect { session.delete_json('/api/thing/abc', csrf_token: 'x') }
+        .to raise_error(/HTTP 404/)
+    end
+  end
+
   describe '#csrf_token' do
     subject(:session) { described_class.new(host: 'squirrel.datadoghq.com', cookie_label: 'dogfood') }
 
