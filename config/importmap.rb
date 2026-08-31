@@ -1,10 +1,9 @@
 # Pin npm packages by running ./bin/importmap
+# Pins resolve via Sprockets against node_modules (added to the asset path in
+# config/initializers/assets.rb and populated by `yarn install`).
 
 pin "application"
-pin "@rails/actioncable", to: "@rails--actioncable.js" # @7.2.302
-pin "@rails/activestorage", to: "@rails--activestorage.js" # @7.2.302
-pin "@rails/ujs", to: "@rails--ujs.js" # @7.1.3
-pin "bootstrap" # @5.3.8
-pin "jquery" # @3.7.1
-pin "turbolinks" # @5.2.0
-pin "@popperjs/core", to: "@popperjs--core.js" # @2.11.8
+pin "bootstrap", to: "bootstrap/dist/js/bootstrap.esm.js"
+pin "@popperjs/core", to: "@popperjs/core/lib/index.js"
+pin "@rails/ujs", to: "@rails/ujs/app/assets/javascripts/rails-ujs.esm.js"
+pin "@rails/activestorage", to: "@rails/activestorage/app/assets/javascripts/activestorage.esm.js"
