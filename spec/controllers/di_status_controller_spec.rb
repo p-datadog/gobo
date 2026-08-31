@@ -256,6 +256,24 @@ RSpec.describe DiStatusController, type: :controller do
       get :index, format: :json
       expect(JSON.parse(response.body)['active'].first).not_to have_key('capture_expressions')
     end
+
+    it 'renders the active-probe list as a Bootstrap 5 accordion' do
+      legacy = double('legacy_probe',
+        id: 'legacy', type: :log, file: 'app/x.rb', line_no: 5,
+        type_name: nil, method_name: nil, template: nil, condition: nil,
+        rate_limit: 5000, enabled?: true)
+      allow(controller).to receive(:fetch_all_installed_probes).and_return('legacy' => legacy)
+      get :index
+      expect(response).to have_http_status(:success)
+      expect(response.body).to include('class="accordion"')
+      expect(response.body).to include('class="accordion-button"')
+      expect(response.body).to include('accordion-collapse collapse show')
+      expect(response.body).to include('data-bs-parent="#probes-accordion"')
+      expect(response.body).to include('data-bs-toggle="collapse"')
+      expect(response.body).to include('badge text-bg-secondary ms-auto')
+      expect(response.body).not_to include('panel-heading')
+      expect(response.body).not_to include('data-toggle=')
+    end
   end
 
   describe 'REDAPL query execution' do
