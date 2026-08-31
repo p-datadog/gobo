@@ -357,9 +357,6 @@ GEM
     tilt (2.7.0)
     timeout (0.6.1)
     tsort (0.2.0)
-    turbolinks (5.2.1)
-      turbolinks-source (~> 5.2)
-    turbolinks-source (5.2.0)
     tzinfo (2.0.6)
       concurrent-ruby (~> 1.0)
     web-console (4.1.0)
@@ -413,7 +410,6 @@ DEPENDENCIES
   selenium-webdriver (= 3.142.7)
   spring (= 2.1.1)
   sqlite3 (~> 1.4)
-  turbolinks (~> 5.2.1)
   web-console (= 4.1.0)
   webdrivers (= 4.6.0)
   webrick

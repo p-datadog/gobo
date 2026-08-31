@@ -11,7 +11,6 @@ gem 'will_paginate',              '~> 3.3.0'
 gem 'puma',                       '~> 6'
 gem 'sass-rails',                 '~> 6.0.0'
 gem 'importmap-rails'
-gem 'turbolinks',                 '~> 5.2.1'
 gem 'jbuilder',                   '~> 2.10.0'
 gem 'bootsnap',                   '~> 1.7.2', require: false
 
