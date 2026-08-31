@@ -16,6 +16,9 @@ module Gobo
 
     require_relative '../lib/agent_environments'
 
+    # Bootstrap 5 pagination renderer for the will_paginate helper.
+    require_relative '../lib/bootstrap5_pagination_renderer'
+
     # Strip Datadog log injection prefixes ([dd.env=... ddsource=ruby]) from logs.
     require_relative '../lib/filtered_log_device'
     log_file = File.open(Rails.root.join('log', "#{Rails.env}.log"), 'a')

@@ -3,5 +3,6 @@
     <%= render @feed_items %>
   </ol>
   <%= will_paginate @feed_items,
-                    params: { controller: :static_pages, action: :home } %>
+                    params: { controller: :static_pages, action: :home },
+                    renderer: Bootstrap5PaginationRenderer %>
 <% end %>
