@@ -2,6 +2,7 @@
 //= link_directory ../stylesheets .css
 //= link_tree ../../javascript .js
 //= link jquery/dist/jquery.js
+//= link turbolinks.js
 //= link bootstrap/dist/js/bootstrap.esm.js
 //= link @popperjs/core/lib/index.js
 //= link @rails/ujs/app/assets/javascripts/rails-ujs.esm.js
