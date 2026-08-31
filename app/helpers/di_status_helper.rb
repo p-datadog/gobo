@@ -4,12 +4,12 @@ module DiStatusHelper
   # without agents, grey otherwise (DISABLED/EXPIRED/OVER_LIMIT).
   def di_probe_status_label(status)
     klass = case status
-            when 'ACTIVE' then 'label-success'
-            when 'ERROR' then 'label-danger'
-            when 'WAITING', 'NO_AGENTS' then 'label-warning'
-            else 'label-default'
+            when 'ACTIVE' then 'success'
+            when 'ERROR' then 'danger'
+            when 'WAITING', 'NO_AGENTS' then 'warning'
+            else 'secondary'
             end
-    content_tag(:span, status || 'unknown', class: "label #{klass}")
+    content_tag(:span, status || 'unknown', class: "badge text-bg-#{klass}")
   end
 
   # Renders the stored DI remote-enable toggle as a labelled badge. The backend
@@ -17,11 +17,11 @@ module DiStatusHelper
   def di_enable_state_label(enabled)
     case enabled
     when true
-      content_tag(:span, 'enabled', class: 'label label-success')
+      content_tag(:span, 'enabled', class: 'badge text-bg-success')
     when false
-      content_tag(:span, 'disabled', class: 'label label-danger')
+      content_tag(:span, 'disabled', class: 'badge text-bg-danger')
     else
-      content_tag(:span, 'not set', class: 'label label-default')
+      content_tag(:span, 'not set', class: 'badge text-bg-secondary')
     end
   end
 
