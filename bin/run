@@ -95,7 +95,6 @@ done
 # Change to app directory and install dependencies
 cd "$script_dir/.."
 bundle install
-yarn install
 
 # Set Rails environment
 if [ -n "$dev_mode" ]; then
@@ -130,12 +129,6 @@ if [ -z "$dev_mode" ]; then
   if ! ls public/assets/.sprockets-manifest-*.json >/dev/null 2>&1; then
     echo "Precompiling assets..."
     DD_TRACE_ENABLED=false bundle exec rake assets:precompile --trace
-  fi
-
-  # Compile shakapacker bundles if necessary
-  if [ ! -f "public/packs/manifest.json" ]; then
-    echo "Compiling shakapacker..."
-    DD_TRACE_ENABLED=false bundle exec rails shakapacker:compile
   fi
 fi
 
