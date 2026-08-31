@@ -8,6 +8,12 @@ Rails.application.configure do
   
   config.cache_classes = false
 
+  # Compile assets on demand so the suite does not depend on a precompile
+  # step. JavaScript is served via import maps (vendor/javascript) and CSS
+  # via Sprockets; both resolve through the asset pipeline at render time.
+  config.assets.compile = true
+  config.assets.check_precompiled_asset = false
+
   # Do not eager load code on boot. This avoids loading your whole application
   # just for the purpose of running a single test. If you are using a tool that
   # preloads Rails for running tests, you may have to set it to true.
