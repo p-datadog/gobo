@@ -5,8 +5,9 @@ Rails.application.config.assets.version = '1.0'
 
 # Add additional assets to the asset load path.
 # Rails.application.config.assets.paths << Emoji.images_path
-# Add Yarn node_modules folder to the asset load path.
-Rails.application.config.assets.paths << Rails.root.join('node_modules')
+# Bootstrap 5 SCSS source, vendored so custom.scss can @import it and use
+# its variables and classes without a JavaScript package manager.
+Rails.application.config.assets.paths << Rails.root.join('vendor/bootstrap/scss')
 
 # Precompile additional assets.
 # application.js, application.css, and all non-JS/CSS in the app/assets
