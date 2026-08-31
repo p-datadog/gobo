@@ -6,9 +6,9 @@
   Requires per-method iseq support (PR #5501).
 </p>
 
-<div class="panel panel-info">
-  <div class="panel-heading"><h4 class="panel-title">How to Test</h4></div>
-  <div class="panel-body">
+<div class="card border-info">
+  <div class="card-header"><h4 class="card-title">How to Test</h4></div>
+  <div class="card-body">
     <ol>
       <li>In Datadog, set a <strong>line probe</strong> on one of these targets:</li>
     </ol>
@@ -16,7 +16,7 @@
       Use the <strong>full absolute path</strong> below. Relative paths like <code>pathname.rb</code>
       may match vendored copies (e.g. bundler) and fail with MultiplePathsMatch.
     </p>
-    <table class="table table-condensed" style="margin-top: 5px; margin-bottom: 15px;">
+    <table class="table table-sm" style="margin-top: 5px; margin-bottom: 15px;">
       <thead><tr><th>Button</th><th>File (use this exact path)</th><th>Line</th><th>Coverage</th><th>What it does</th></tr></thead>
       <tbody>
         <% @probe_targets.each do |target| %>
@@ -27,15 +27,15 @@
             <td>
               <% case target[:coverage] %>
               <% when :full %>
-                <span class="label label-success">full</span>
+                <span class="badge text-bg-success">full</span>
               <% when :partial %>
-                <span class="label label-warning">partial</span>
+                <span class="badge text-bg-warning">partial</span>
               <% when :partial_no_line %>
-                <span class="label label-danger">partial (line not covered)</span>
+                <span class="badge text-bg-danger">partial (line not covered)</span>
               <% when :none %>
-                <span class="label label-danger">not targetable</span>
+                <span class="badge text-bg-danger">not targetable</span>
               <% else %>
-                <span class="label label-default">unknown</span>
+                <span class="badge text-bg-secondary">unknown</span>
               <% end %>
             </td>
             <td><%= target[:description] %></td>
@@ -51,7 +51,7 @@
   </div>
 </div>
 
-<div class="well">
+<div class="card card-body bg-light">
   <h4>Run the Demo</h4>
   <% @probe_targets.each_with_index do |target, i| %>
     <a href="/debugger_test/stdlib_probe_run?kind=<%= target[:kind] %>"
@@ -97,9 +97,9 @@
   });
 </script>
 
-<div class="panel panel-default">
-  <div class="panel-heading"><h4 class="panel-title">Background</h4></div>
-  <div class="panel-body">
+<div class="card">
+  <div class="card-header"><h4 class="card-title">Background</h4></div>
+  <div class="card-body">
     <p>
       Most stdlib and gem code is loaded at boot time, before DI's code tracker starts.
       The whole-file iseqs for these files are garbage collected, but per-method iseqs survive

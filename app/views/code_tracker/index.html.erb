@@ -14,14 +14,14 @@
       agent_address: @agent_address,
       agent_environment_label: @agent_environment_label %>
 
-<div class="panel panel-info">
-  <div class="panel-heading"><h4 class="panel-title">Code Tracker</h4></div>
-  <div class="panel-body">
+<div class="card border-info">
+  <div class="card-header"><h4 class="card-title">Code Tracker</h4></div>
+  <div class="card-body">
     <p><strong>Code tracking active:</strong>
       <% if @tracking_active %>
-        <span class="label label-success">Yes</span>
+        <span class="badge text-bg-success">Yes</span>
       <% else %>
-        <span class="label label-danger">No</span>
+        <span class="badge text-bg-danger">No</span>
       <% end %>
     </p>
     <% if @error %>
@@ -31,25 +31,25 @@
 </div>
 
 <% if @audit %>
-<div class="panel panel-warning">
-  <div class="panel-heading"><h4 class="panel-title">Line Probe Coverage</h4></div>
-  <div class="panel-body">
+<div class="card border-warning">
+  <div class="card-header"><h4 class="card-title">Line Probe Coverage</h4></div>
+  <div class="card-body">
     <p><strong>Loaded .rb files:</strong> <%= @audit[:loaded_rb] %></p>
     <p><strong>C extensions:</strong> <%= @audit[:c_extensions] %> (not trackable)</p>
     <p>
-      <span class="label label-success">Fully covered: <%= @audit[:fully_covered] %></span>
+      <span class="badge text-bg-success">Fully covered: <%= @audit[:fully_covered] %></span>
       &mdash; whole-file iseq, line probes work on any line
     </p>
     <p>
-      <span class="label label-warning">Partially covered: <%= @audit[:partially_covered] %></span>
+      <span class="badge text-bg-warning">Partially covered: <%= @audit[:partially_covered] %></span>
       &mdash; per-method iseqs only (<%= @audit[:total_method_iseqs] %> iseqs), line probes work within methods
     </p>
     <p>
-      <span class="label label-danger">Not covered: <%= @audit[:not_covered] %></span>
+      <span class="badge text-bg-danger">Not covered: <%= @audit[:not_covered] %></span>
       &mdash; no surviving iseqs, line probes cannot target these files
     </p>
     <% if @audit[:not_covered_by_category]&.any? || @audit[:partially_by_category]&.any? %>
-      <table class="table table-condensed table-striped" style="margin-top: 10px;">
+      <table class="table table-sm table-striped" style="margin-top: 10px;">
         <thead>
           <tr><th>Category</th><th>Partially covered</th><th>Not covered</th></tr>
         </thead>
@@ -59,7 +59,7 @@
             <% none = @audit[:not_covered_by_category][cat]&.size || 0 %>
             <% next if partial == 0 && none == 0 %>
             <tr>
-              <td><span class="label label-<%= {app: 'primary', gem: 'warning', stdlib: 'default', other: 'info'}[cat] %>"><%= cat %></span></td>
+              <td><span class="badge text-bg-<%= {app: 'primary', gem: 'warning', stdlib: 'secondary', other: 'info'}[cat] %>"><%= cat %></span></td>
               <td><%= partial %></td>
               <td><%= none %></td>
             </tr>

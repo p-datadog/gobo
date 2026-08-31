@@ -3,18 +3,18 @@
 
 <p class="text-muted">C-level only — uses <code>GC.stat</code> + <code>ObjectSpace.count_objects</code>. Safe with DI probes on hot methods.</p>
 
-<div class="panel panel-default">
-  <div class="panel-heading"><h4 class="panel-title">Process</h4></div>
-  <div class="panel-body" style="padding: 10px 15px;">
+<div class="card">
+  <div class="card-header"><h4 class="card-title">Process</h4></div>
+  <div class="card-body" style="padding: 10px 15px;">
     <p><strong>RSS:</strong> <%= @stats[:rss_mb] %> MB | <strong>Heap live slots:</strong> <%= number_with_delimiter(@stats[:heap_live_slots]) %> | <strong>Free slots:</strong> <%= number_with_delimiter(@stats[:heap_free_slots]) %></p>
   </div>
 </div>
 
 <div class="row">
   <div class="col-md-6">
-    <div class="panel panel-default">
-      <div class="panel-heading"><h4 class="panel-title">GC</h4></div>
-      <div class="panel-body text-center">
+    <div class="card">
+      <div class="card-header"><h4 class="card-title">GC</h4></div>
+      <div class="card-body text-center">
         <p><strong>Total:</strong> <%= @stats[:gc_count] %> (<%= @stats[:major_gc_count] %> major / <%= @stats[:minor_gc_count] %> minor)</p>
         <p><strong>Allocated:</strong> <%= number_with_delimiter(@stats[:total_allocated_objects]) %> | <strong>Freed:</strong> <%= number_with_delimiter(@stats[:total_freed_objects]) %></p>
         <p><strong>malloc_increase:</strong> <%= number_with_delimiter(@stats[:malloc_increase_bytes]) %> | <strong>oldmalloc_increase:</strong> <%= number_with_delimiter(@stats[:oldmalloc_increase_bytes]) %></p>
@@ -22,14 +22,14 @@
     </div>
   </div>
   <div class="col-md-6">
-    <div class="panel panel-default">
-      <div class="panel-heading"><h4 class="panel-title">Objects by Type</h4></div>
-      <table class="table table-condensed">
-        <thead><tr><th>Type</th><th class="text-right">Count</th></tr></thead>
+    <div class="card">
+      <div class="card-header"><h4 class="card-title">Objects by Type</h4></div>
+      <table class="table table-sm">
+        <thead><tr><th>Type</th><th class="text-end">Count</th></tr></thead>
         <tbody>
           <% @stats[:count_objects].sort_by { |_k, v| -v }.each do |type, count| %>
             <% next if count == 0 %>
-            <tr><td><code><%= type %></code></td><td class="text-right"><%= number_with_delimiter(count) %></td></tr>
+            <tr><td><code><%= type %></code></td><td class="text-end"><%= number_with_delimiter(count) %></td></tr>
           <% end %>
         </tbody>
       </table>
@@ -37,7 +37,7 @@
   </div>
 </div>
 
-<div class="well">
+<div class="card card-body bg-light">
   <button id="btn-gc" class="btn btn-warning">Force GC (3x full)</button>
   <button id="btn-trim" class="btn btn-info" style="margin-left: 10px;">malloc_trim</button>
   <div id="action-result" style="margin-top: 15px;"></div>

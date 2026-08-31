@@ -1,9 +1,9 @@
 <% provide(:title, 'Probe Instructions') %>
 <h1>Probe Instructions <small><%= link_to "JSON", probe_instructions_path(format: :json) %></small></h1>
 
-<dl class="dl-horizontal">
-  <dt>Service:</dt><dd><code><%= @service %></code></dd>
-  <dt>Env:</dt><dd><code><%= @env %></code></dd>
+<dl class="row">
+  <dt class="col-sm-3">Service:</dt><dd class="col-sm-9"><code><%= @service %></code></dd>
+  <dt class="col-sm-3">Env:</dt><dd class="col-sm-9"><code><%= @env %></code></dd>
 </dl>
 
 <p>
@@ -12,21 +12,21 @@
 </p>
 
 <% @targets.each do |target| %>
-  <div class="panel panel-default">
-    <div class="panel-heading">
-      <h4 class="panel-title">
+  <div class="card">
+    <div class="card-header">
+      <h4 class="card-title">
         <%= target[:label] %>: <code><%= target[:class_name] %>#<%= target[:method_name] %></code>
       </h4>
     </div>
-    <div class="panel-body">
-      <dl class="dl-horizontal">
-        <dt>Class:</dt><dd><code><%= target[:class_name] %></code></dd>
-        <dt>Method:</dt><dd><code><%= target[:method_name] %></code></dd>
-        <dt>File:</dt><dd><code><%= target[:file] %></code></dd>
-        <dt>Line:</dt><dd><%= target[:line] %></dd>
+    <div class="card-body">
+      <dl class="row">
+        <dt class="col-sm-3">Class:</dt><dd class="col-sm-9"><code><%= target[:class_name] %></code></dd>
+        <dt class="col-sm-3">Method:</dt><dd class="col-sm-9"><code><%= target[:method_name] %></code></dd>
+        <dt class="col-sm-3">File:</dt><dd class="col-sm-9"><code><%= target[:file] %></code></dd>
+        <dt class="col-sm-3">Line:</dt><dd class="col-sm-9"><%= target[:line] %></dd>
       </dl>
 
-      <table class="table table-condensed table-bordered">
+      <table class="table table-sm table-bordered">
         <thead>
           <tr><th>Parameter</th><th>Type</th><th>Kind</th></tr>
         </thead>

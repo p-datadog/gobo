@@ -27,8 +27,8 @@
         <%= form_with(url: debugger_test_calculate_path, method: :get, local: true, html: { id: 'fibonacci-form-sidebar' }) do |f| %>
           <%= f.label :fibonacci_n, "Fibonacci N (36 ≈ 1 second)" %>
           <%= f.number_field :fibonacci_n, class: 'form-control', value: 36, min: 0, max: 40 %>
-          <%= f.submit "Calculate fib(n)", class: "btn btn-success btn-block", style: "margin-top: 10px;" %>
-          <%= f.submit "Test circuit breaker", formaction: debugger_test_circuit_breaker_path, class: "btn btn-info btn-block", style: "margin-top: 10px;" %>
+          <%= f.submit "Calculate fib(n)", class: "btn btn-success w-100", style: "margin-top: 10px;" %>
+          <%= f.submit "Test circuit breaker", formaction: debugger_test_circuit_breaker_path, class: "btn btn-info w-100", style: "margin-top: 10px;" %>
         <% end %>
       </section>
     </aside>
@@ -45,12 +45,12 @@
     <%= f.label :password %>
     <%= f.password_field :password, class: 'form-control', placeholder: 'password' %>
 
-    <%= f.label :remember_me, class: "checkbox inline" do %>
-      <%= f.check_box :remember_me %>
-      <span>Remember me on this computer</span>
-    <% end %>
+    <div class="form-check mb-3">
+      <%= f.check_box :remember_me, class: "form-check-input" %>
+      <%= f.label :remember_me, "Remember me on this computer", class: "form-check-label" %>
+    </div>
 
-    <%= f.submit "Log in", class: "btn btn-primary btn-lg btn-block" %>
+    <%= f.submit "Log in", class: "btn btn-primary btn-lg w-100" %>
   <% end %>
 
   <p style="margin-top: 20px;">New user? <%= link_to "Sign up now!", signup_path %></p>
@@ -64,8 +64,8 @@
     <%= form_with(url: debugger_test_calculate_path, method: :get, local: true, html: { id: 'fibonacci-form-main' }) do |f| %>
       <%= f.label :fibonacci_n, "Fibonacci N (36 ≈ 1 second)" %>
       <%= f.number_field :fibonacci_n, class: 'form-control', value: 36, min: 0, max: 40 %>
-      <%= f.submit "Calculate fib(n)", class: "btn btn-success btn-lg btn-block", style: "margin-top: 10px;" %>
-      <%= f.submit "Test circuit breaker", formaction: debugger_test_circuit_breaker_path, class: "btn btn-info btn-lg btn-block", style: "margin-top: 10px;" %>
+      <%= f.submit "Calculate fib(n)", class: "btn btn-success btn-lg w-100", style: "margin-top: 10px;" %>
+      <%= f.submit "Test circuit breaker", formaction: debugger_test_circuit_breaker_path, class: "btn btn-info btn-lg w-100", style: "margin-top: 10px;" %>
     <% end %>
   </div>
 

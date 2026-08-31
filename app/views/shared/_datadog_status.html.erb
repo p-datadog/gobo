@@ -1,6 +1,6 @@
-<div class="panel panel-info">
-  <div class="panel-heading"><h4 class="panel-title">Status</h4></div>
-  <div class="panel-body">
+<div class="card border-info">
+  <div class="card-header"><h4 class="card-title">Status</h4></div>
+  <div class="card-body">
     <div class="row">
       <div class="col-md-3">
         <strong>DD_SERVICE:</strong>
@@ -31,13 +31,13 @@
         <% if agent_address %>
           <code><%= agent_address %></code>
           <% if local_assigns[:agent_environment_label].present? %>
-            <span class="label label-default"><%= agent_environment_label %></span>
+            <span class="badge text-bg-secondary"><%= agent_environment_label %></span>
           <% end %>
           <% if local_assigns[:agent_operational] %>
             <% if agent_operational.operational? %>
-              <span class="label label-success">operational</span>
+              <span class="badge text-bg-success">operational</span>
             <% else %>
-              <span class="label label-danger" title="<%= agent_operational.error %>">not operational</span>
+              <span class="badge text-bg-danger" title="<%= agent_operational.error %>">not operational</span>
             <% end %>
           <% end %>
         <% else %>

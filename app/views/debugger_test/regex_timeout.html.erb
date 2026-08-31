@@ -9,9 +9,9 @@
   (<code>Evaluator::MATCHES_TIMEOUT_SECONDS</code>).
 </p>
 
-<div class="panel panel-info">
-  <div class="panel-heading"><h4 class="panel-title">How to Test</h4></div>
-  <div class="panel-body">
+<div class="card border-info">
+  <div class="card-header"><h4 class="card-title">How to Test</h4></div>
+  <div class="card-body">
     <ol>
       <li>
         In Datadog, set a <strong>method probe</strong> on
@@ -39,17 +39,17 @@
   </div>
 </div>
 
-<div class="panel panel-default">
-  <div class="panel-heading"><h4 class="panel-title">Probe Target</h4></div>
-  <div class="panel-body">
-    <dl class="dl-horizontal">
-      <dt>Class:</dt><dd><code><%= @target[:class_name] %></code></dd>
-      <dt>Method:</dt><dd><code><%= @target[:method_name] %></code></dd>
-      <dt>File:</dt><dd><code><%= @target[:file] %></code></dd>
-      <dt>Line:</dt><dd><%= @target[:line] %></dd>
+<div class="card">
+  <div class="card-header"><h4 class="card-title">Probe Target</h4></div>
+  <div class="card-body">
+    <dl class="row">
+      <dt class="col-sm-3">Class:</dt><dd class="col-sm-9"><code><%= @target[:class_name] %></code></dd>
+      <dt class="col-sm-3">Method:</dt><dd class="col-sm-9"><code><%= @target[:method_name] %></code></dd>
+      <dt class="col-sm-3">File:</dt><dd class="col-sm-9"><code><%= @target[:file] %></code></dd>
+      <dt class="col-sm-3">Line:</dt><dd class="col-sm-9"><%= @target[:line] %></dd>
     </dl>
 
-    <table class="table table-condensed table-bordered">
+    <table class="table table-sm table-bordered">
       <thead>
         <tr><th>Input</th><th>Bytes</th><th>Haystack</th></tr>
       </thead>
@@ -66,7 +66,7 @@
   </div>
 </div>
 
-<div class="well">
+<div class="card card-body bg-light">
   <h4>Run the Demo</h4>
   <p class="text-muted" style="margin-bottom: 15px;">
     Calls <code><%= @target[:class_name] %>#<%= @target[:method_name] %></code>
@@ -110,9 +110,9 @@
   });
 </script>
 
-<div class="panel panel-default">
-  <div class="panel-heading"><h4 class="panel-title">Background</h4></div>
-  <div class="panel-body">
+<div class="card">
+  <div class="card-header"><h4 class="card-title">Background</h4></div>
+  <div class="card-body">
     <p>
       Regular expressions in DI probe conditions and capture expressions are
       customer input. A catastrophic-backtracking pattern such as

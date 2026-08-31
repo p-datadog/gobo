@@ -5,9 +5,9 @@
   Demonstrates how Ruby DI handles probes that capture binary data.
 </p>
 
-<div class="panel panel-info">
-  <div class="panel-heading"><h4 class="panel-title">How to Test</h4></div>
-  <div class="panel-body">
+<div class="card border-info">
+  <div class="card-header"><h4 class="card-title">How to Test</h4></div>
+  <div class="card-body">
     <ol>
       <li>In Datadog, set a <strong>method probe</strong> on <code>BinaryDataModel#process</code></li>
       <li>Wait for the probe to appear as active on <%= link_to "DI Status", di_status_path %></li>
@@ -19,7 +19,7 @@
   </div>
 </div>
 
-<div class="well">
+<div class="card card-body bg-light">
   <h4>Run the Demo</h4>
   <p class="text-muted" style="margin-bottom: 15px;">
     All three cases use <code>BinaryDataModel#process</code> with a probe on it.
@@ -66,9 +66,9 @@
   });
 </script>
 
-<div class="panel panel-default">
-  <div class="panel-heading"><h4 class="panel-title">Background</h4></div>
-  <div class="panel-body">
+<div class="card">
+  <div class="card-header"><h4 class="card-title">Background</h4></div>
+  <div class="card-body">
     <p>
       When a DI probe fires on a method, it captures a <strong>snapshot</strong> of local variables
       and arguments. That snapshot is serialized to JSON and sent to Datadog.

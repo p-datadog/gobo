@@ -9,9 +9,9 @@
 <% if @service %>
   <% encoded_service = ERB::Util.url_encode(@service) %>
   <% symdb_base = AgentEnvironments.symdb_api_url('staging') %>
-  <div class="panel panel-info">
-    <div class="panel-heading"><h4 class="panel-title">Staging API queries</h4></div>
-    <div class="panel-body">
+  <div class="card border-info">
+    <div class="card-header"><h4 class="card-title">Staging API queries</h4></div>
+    <div class="card-body">
       <ul style="margin-bottom: 0;">
         <li>
           <%= link_to "Service metadata",
@@ -45,32 +45,32 @@
       agent_address: @agent_address,
       agent_environment_label: @agent_environment_label %>
 
-<div class="panel panel-info">
-  <div class="panel-heading"><h4 class="panel-title">Symbol Database</h4></div>
-  <div class="panel-body">
+<div class="card border-info">
+  <div class="card-header"><h4 class="card-title">Symbol Database</h4></div>
+  <div class="card-body">
     <p>
       <strong>Configuration:</strong>
       <% if @symdb_enabled %>
-        <span class="label label-success">Enabled</span>
+        <span class="badge text-bg-success">Enabled</span>
       <% else %>
-        <span class="label label-danger">Disabled</span>
+        <span class="badge text-bg-danger">Disabled</span>
       <% end %>
     </p>
     <p>
       <strong>Component:</strong>
       <% case @component_status %>
       <% when :active %>
-        <span class="label label-success">Active</span>
+        <span class="badge text-bg-success">Active</span>
       <% when :not_created %>
-        <span class="label label-warning">Not created</span>
+        <span class="badge text-bg-warning">Not created</span>
         <span class="text-muted">&mdash; preconditions not met (check enabled, Ruby version, remote config)</span>
       <% when :shutdown %>
-        <span class="label label-danger">Shutdown</span>
+        <span class="badge text-bg-danger">Shutdown</span>
       <% when :no_datadog %>
-        <span class="label label-default">N/A</span>
+        <span class="badge text-bg-secondary">N/A</span>
         <span class="text-muted">&mdash; Datadog::SymbolDatabase not loaded</span>
       <% when :error %>
-        <span class="label label-danger">Error</span>
+        <span class="badge text-bg-danger">Error</span>
         <span class="text-muted">&mdash; could not read component status (check logs)</span>
       <% end %>
     </p>
@@ -80,14 +80,14 @@
         <span class="text-muted">Unknown (older tracer without diagnostic accessors)</span>
       <% elsif @upload_info[:rc_requested_at] %>
         <% delta = @upload_info[:rc_requested_at] - Process.clock_gettime(Process::CLOCK_MONOTONIC, :float_second) %>
-        <span class="label label-success">Yes</span>
+        <span class="badge text-bg-success">Yes</span>
         <% if delta > 0 %>
           <span class="text-muted">&mdash; firing in <%= delta.round(1) %>s (debounce window)</span>
         <% else %>
           <span class="text-muted">&mdash; triggered <%= distance_of_time_in_words(-delta) %> ago</span>
         <% end %>
       <% else %>
-        <span class="label label-default">No</span>
+        <span class="badge text-bg-secondary">No</span>
       <% end %>
     </p>
     <p>
@@ -95,7 +95,7 @@
       <% if @upload_info.nil? %>
         <span class="text-muted">Unknown (older tracer without diagnostic accessors)</span>
       <% elsif @upload_info[:upload_in_progress] %>
-        <span class="label label-info">In progress</span>
+        <span class="badge text-bg-info">In progress</span>
       <% elsif @upload_info[:last_upload_time] %>
         <% ago = Time.now - @upload_info[:last_upload_time] %>
         <code><%= @upload_info[:last_upload_time].strftime('%Y-%m-%d %H:%M:%S') %></code>
@@ -109,11 +109,11 @@
   </div>
 </div>
 
-<div class="panel panel-info">
-  <div class="panel-heading">
-    <h4 class="panel-title">Hot-Load Runtime Classes (PR #5697)</h4>
+<div class="card border-info">
+  <div class="card-header">
+    <h4 class="card-title">Hot-Load Runtime Classes (PR #5697)</h4>
   </div>
-  <div class="panel-body">
+  <div class="card-body">
     <p>
       Define a class at runtime by loading
       <code>lib/hot_load_runtime/hot_load_&lt;N&gt;.rb</code>.
@@ -151,9 +151,9 @@
 </p>
 
 <% @sample_classes.each do |group| %>
-  <div class="panel panel-default">
-    <div class="panel-heading">
-      <h4 class="panel-title"><code><%= group[:file] %></code></h4>
+  <div class="card">
+    <div class="card-header">
+      <h4 class="card-title"><code><%= group[:file] %></code></h4>
     </div>
     <table class="table table-striped">
       <thead>
@@ -166,7 +166,7 @@
       <tbody>
         <% group[:entries].each do |entry| %>
           <tr>
-            <td><span class="label label-<%= entry[:type] == :CLASS ? 'primary' : 'info' %>"><%= entry[:type] %></span></td>
+            <td><span class="badge text-bg-<%= entry[:type] == :CLASS ? 'primary' : 'info' %>"><%= entry[:type] %></span></td>
             <td><code><%= entry[:name] %></code></td>
             <td><%= entry[:description] %></td>
           </tr>
@@ -176,9 +176,9 @@
   </div>
 <% end %>
 
-<div class="panel panel-warning">
-  <div class="panel-heading"><h4 class="panel-title">Scope Hierarchy</h4></div>
-  <div class="panel-body">
+<div class="card border-warning">
+  <div class="card-header"><h4 class="card-title">Scope Hierarchy</h4></div>
+  <div class="card-body">
     <p>Ruby uploads use <strong>FILE</strong> as the root scope (one per source file), with CLASS and MODULE scopes nested inside:</p>
     <pre>FILE (/app/app/models/symdb_samples/basic_class.rb)
   file_hash in language_specifics

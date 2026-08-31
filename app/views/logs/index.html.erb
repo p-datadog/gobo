@@ -25,14 +25,14 @@
   <%= f.submit "Search", class: "btn btn-primary" %>
 <% end %>
 
-<dl class="dl-horizontal">
-  <dt>Service:</dt><dd><code><%= @service %></code></dd>
-  <dt>Env:</dt><dd><code><%= @env %></code></dd>
-  <dt>Query:</dt><dd><code><%= @query %></code></dd>
-  <dt>Window:</dt><dd><%= @window_minutes %> min</dd>
-  <dt>Limit:</dt><dd><%= @limit %></dd>
+<dl class="row">
+  <dt class="col-sm-3">Service:</dt><dd class="col-sm-9"><code><%= @service %></code></dd>
+  <dt class="col-sm-3">Env:</dt><dd class="col-sm-9"><code><%= @env %></code></dd>
+  <dt class="col-sm-3">Query:</dt><dd class="col-sm-9"><code><%= @query %></code></dd>
+  <dt class="col-sm-3">Window:</dt><dd class="col-sm-9"><%= @window_minutes %> min</dd>
+  <dt class="col-sm-3">Limit:</dt><dd class="col-sm-9"><%= @limit %></dd>
   <% if @result&.hit_count %>
-    <dt>Total matches:</dt><dd><%= @result.hit_count %></dd>
+    <dt class="col-sm-3">Total matches:</dt><dd class="col-sm-9"><%= @result.hit_count %></dd>
   <% end %>
 </dl>
 
@@ -45,7 +45,7 @@
   <% if @result.events.empty? %>
     <p class="text-muted">No log events matched.</p>
   <% else %>
-    <table class="table table-condensed">
+    <table class="table table-sm">
       <thead>
         <tr><th>Timestamp</th><th>Status</th><th>Service</th><th>Message</th></tr>
       </thead>

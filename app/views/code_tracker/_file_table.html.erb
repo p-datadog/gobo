@@ -1,4 +1,4 @@
-<table class="table table-condensed table-striped" id="registry-table">
+<table class="table table-sm table-striped" id="registry-table">
   <thead>
     <tr>
       <th>Category</th>
@@ -12,20 +12,20 @@
         <td>
           <% case entry[:category] %>
           <% when :app %>
-            <span class="label label-primary">app</span>
+            <span class="badge text-bg-primary">app</span>
           <% when :gem %>
-            <span class="label label-warning">gem</span>
+            <span class="badge text-bg-warning">gem</span>
           <% when :stdlib %>
-            <span class="label label-default">stdlib</span>
+            <span class="badge text-bg-secondary">stdlib</span>
           <% else %>
-            <span class="label label-info">other</span>
+            <span class="badge text-bg-info">other</span>
           <% end %>
         </td>
         <td>
           <% if entry[:coverage] == :full %>
-            <span class="label label-success">full</span>
+            <span class="badge text-bg-success">full</span>
           <% else %>
-            <span class="label label-warning">partial (<%= entry[:iseq_count] %> iseqs)</span>
+            <span class="badge text-bg-warning">partial (<%= entry[:iseq_count] %> iseqs)</span>
           <% end %>
         </td>
         <td>

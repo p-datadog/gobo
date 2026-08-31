@@ -6,9 +6,9 @@
   which retrieves exception messages without invoking customer-defined <code>message</code> methods.
 </p>
 
-<div class="panel panel-info">
-  <div class="panel-heading"><h4 class="panel-title">How to Test</h4></div>
-  <div class="panel-body">
+<div class="card border-info">
+  <div class="card-header"><h4 class="card-title">How to Test</h4></div>
+  <div class="card-body">
     <ol>
       <li>
         In Datadog, set a <strong>method probe</strong> on <code>ExceptionDemo#raise_exception</code>
@@ -19,7 +19,7 @@
       <li>
         In Datadog, open the snapshot for each invocation and check the
         <strong>Return &rarr; throwable</strong> field:
-        <table class="table table-condensed" style="margin-top: 10px; margin-bottom: 10px;">
+        <table class="table table-sm" style="margin-top: 10px; margin-bottom: 10px;">
           <thead><tr><th>Button</th><th>Expected throwable.type</th><th>Expected throwable.message</th></tr></thead>
           <tbody>
             <tr>
@@ -57,7 +57,7 @@
   </div>
 </div>
 
-<div class="well">
+<div class="card card-body bg-light">
   <h4>Run the Demo</h4>
   <p class="text-muted" style="margin-bottom: 15px;">
     Each button calls <code>ExceptionDemo#raise_exception</code> with a different kind.
@@ -111,9 +111,9 @@
   });
 </script>
 
-<div class="panel panel-default">
-  <div class="panel-heading"><h4 class="panel-title">Background</h4></div>
-  <div class="panel-body">
+<div class="card">
+  <div class="card-header"><h4 class="card-title">Background</h4></div>
+  <div class="card-body">
     <p>
       DI must never invoke customer code during instrumentation. Exception messages
       are useful to report, but Ruby's <code>Exception#message</code> can be overridden
