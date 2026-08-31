@@ -6,6 +6,7 @@
 - Runtime references to any web resources outside the application is prohibited.
 - All Ruby dependencies must be installed using bundler. Using Ruby
 dependencies outside of stdlib that are provided by the system is prohibited.
+- Using Debian packages for JS is prohibited.
 
 ## Commit Every Change
 
