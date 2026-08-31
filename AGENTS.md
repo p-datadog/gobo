@@ -4,6 +4,9 @@
 
 - Vendoring code is prohibited.
 - Runtime references to any web resources outside the application is prohibited.
+- Using ruby or javascript library code (besides standard library)
+from anywhere outside this application,
+including system and debian packages, is prohibited.
 
 ## Commit Every Change
 
