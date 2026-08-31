@@ -1,5 +1,10 @@
 # Development Guidelines for Claude
 
+## Principles
+
+- Vendoring code is prohibited.
+- Runtime references to any web resources outside the application is prohibited.
+
 ## Commit Every Change
 
 Commit after every logical change in the same response that makes the change — don't accumulate uncommitted work. If specs pass, commit. Do not wait for the user to ask. A change without a commit in the same response is a violation of this rule.
