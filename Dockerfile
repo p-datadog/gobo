@@ -9,12 +9,17 @@ ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && \
     apt-get upgrade -y && \
     apt-get install -y --no-install-recommends \
-      build-essential tzdata git curl \
+      build-essential nodejs yarnpkg tzdata git curl \
       ruby ruby-bundler ruby-dev libsqlite3-dev libyaml-dev && \
     apt-get -y clean && \
     rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app/
+
+RUN ln -s yarnpkg /usr/bin/yarn
+
+COPY package.json yarn.lock ./
+RUN yarn install --frozen-lockfile && yarn cache clean
 
 COPY Gemfile .
 COPY Gemfile.lock .
@@ -40,7 +45,8 @@ COPY . .
 RUN bundle install
 
 # assets:precompile compiles the SCSS (Sprockets + sassc). JavaScript is
-# served via import maps from vendor/javascript, so no JS build step runs.
+# served via import maps from yarn-installed node_modules, so no JS build
+# step runs.
 RUN DD_TRACE_ENABLED=false rake assets:precompile --trace
 
 # https://stackoverflow.com/questions/29187296/rails-production-how-to-set-secret-key-base

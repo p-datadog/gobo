@@ -95,6 +95,7 @@ done
 # Change to app directory and install dependencies
 cd "$script_dir/.."
 bundle install
+yarn install
 
 # Set Rails environment
 if [ -n "$dev_mode" ]; then

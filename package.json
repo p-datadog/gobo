@@ -1,0 +1,12 @@
+{
+  "name": "sample_app",
+  "private": true,
+  "dependencies": {
+    "@popperjs/core": "^2.11.8",
+    "@rails/activestorage": "^7.2.0",
+    "@rails/ujs": "^7.1.0",
+    "bootstrap": "5.3.8",
+    "jquery": "3.7.1"
+  },
+  "version": "0.1.0"
+}

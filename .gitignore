@@ -41,3 +41,8 @@ db/production.*
 
 # Ignore local bundler gem install.
 /vendor/bundle
+
+/node_modules
+/yarn-error.log
+yarn-debug.log*
+.yarn-integrity
