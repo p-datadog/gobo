@@ -31,7 +31,7 @@ module Stress
       private
 
       def run_loop
-        Thread.current.name = 'symdb-extract-loop' rescue nil
+        Thread.current.name = 'symdb-extract-loop'
         logger = Datadog.logger
         settings = Datadog.configuration
         extractor = Datadog::SymbolDatabase::Extractor.new(logger: logger, settings: settings)
@@ -41,7 +41,7 @@ module Stress
           begin
             extractor.extract_all
           rescue => e
-            warn "[symdb-loop pid=#{Process.pid}] error: #{e.class}: #{e.message}"
+            warn "[symdb-loop pid=#{Process.pid}] error: #{e.class}: #{e}"
           end
           elapsed_ms = ((Process.clock_gettime(Process::CLOCK_MONOTONIC) - t0) * 1000).round
           @iter_count += 1
