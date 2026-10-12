@@ -14,7 +14,7 @@ module DatadogSim
   #   2. Local repo auto-detect: runs `git remote get-url origin` and
   #      `git rev-parse HEAD` in the given working directory.
   #   3. Environment variables: DD_GIT_REPOSITORY_URL, DD_GIT_COMMIT_SHA.
-  #   4. Nothing — git metadata simply won't be sent.
+  #   4. Nothing - git metadata simply won't be sent.
   class GitMetadata
     GITHUB_API_HOST = 'api.github.com'
 
@@ -48,7 +48,7 @@ module DatadogSim
       { repository_url: canonical, commit_sha: sha }
     end
 
-    # Use `gh api` (GitHub CLI) — authenticated, avoids rate limits.
+    # Use `gh api` (GitHub CLI) - authenticated, avoids rate limits.
     def self.from_gh_cli(owner, repo, branch)
       out, _err, status = Open3.capture3(
         'gh', 'api', "repos/#{owner}/#{repo}/commits/#{branch}", '--jq', '.sha'
@@ -89,7 +89,7 @@ module DatadogSim
     end
 
     # Parse any GitHub URL and extract owner/repo.
-    # Accepts repo URLs, PR URLs, issue URLs, file paths — anything within the repo:
+    # Accepts repo URLs, PR URLs, issue URLs, file paths - anything within the repo:
     #   https://github.com/owner/repo
     #   https://github.com/owner/repo/pull/5431
     #   https://github.com/owner/repo/blob/main/README.md

@@ -4,7 +4,7 @@
 # to verify the hot-load hook captures runtime-defined classes and uploads
 # them on a subsequent extraction.
 #
-# Always on — gobo only exists to be poked at. UI buttons that hit these
+# Always on - gobo only exists to be poked at. UI buttons that hit these
 # endpoints live on the /symdb page. bin/symdb-hot-load-test is the
 # scripted orchestrator that exercises the same endpoints headlessly.
 
@@ -31,7 +31,7 @@ Rails.application.config.after_initialize do
       # Load a real file under lib/hot_load_runtime/ so the resulting class
       # has a non-(eval) source_location. The extractor filters out (eval)
       # paths (extractor.rb:212), so eval-defined classes would never reach
-      # the upload — we want a real file path for the hot-load buffer to
+      # the upload - we want a real file path for the hot-load buffer to
       # produce a non-empty extraction.
       path = Rails.root.join('lib/hot_load_runtime', "hot_load_#{n}.rb")
       unless File.exist?(path)

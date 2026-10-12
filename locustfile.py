@@ -1,6 +1,6 @@
 from locust import HttpUser, task, between
 
-# requests.Session has no default timeout — it must be passed per-request.
+# requests.Session has no default timeout - it must be passed per-request.
 # self.client.timeout is ignored; only the timeout= kwarg works.
 # https://docs.locust.io/en/stable/api.html
 # https://github.com/orgs/locustio/discussions/3046

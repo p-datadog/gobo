@@ -40,7 +40,7 @@ module SymdbSamples
       "[#{options[:level] || 'info'}] #{message}"
     end
 
-    # Block parameter — should be skipped by extractor (not an ARG symbol)
+    # Block parameter - should be skipped by extractor (not an ARG symbol)
     def transform(value, &block)
       block ? block.call(value) : value
     end

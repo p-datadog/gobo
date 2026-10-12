@@ -6,7 +6,7 @@
 module SymdbSamples
   module Metaprogramming
     class DynamicMethods
-      # define_method with a block — no args
+      # define_method with a block - no args
       [:foo, :bar, :baz].each do |name|
         define_method(name) do
           "#{name} result"
@@ -23,7 +23,7 @@ module SymdbSamples
         "#{name}=#{value}"
       end
 
-      # Regular method alongside dynamic ones — for comparison
+      # Regular method alongside dynamic ones - for comparison
       def regular_method(arg)
         arg.to_s
       end

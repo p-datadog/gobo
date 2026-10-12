@@ -1,7 +1,7 @@
 # Test scaffolding: route Datadog.logger to stdout with PID-prefixed lines so
 # we can attribute symdb / RC events to each Puma worker (and the parent).
 # Gated on SYMDB_FORK_TEST=1 so it does not affect normal runs.
-# Local-only — not intended for commit.
+# Local-only - not intended for commit.
 
 if ENV['SYMDB_FORK_TEST'] == '1'
   require 'logger'

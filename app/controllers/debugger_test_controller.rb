@@ -155,7 +155,7 @@ class DebuggerTestController < ApplicationController
   def binary_data_param
     # Pass a real binary string (all 256 byte values) as a method argument.
     # The custom serializer condition checks value.metadata[:trigger_json_error]
-    # on the BinaryDataModel instance, not on the data argument — so DI
+    # on the BinaryDataModel instance, not on the data argument - so DI
     # serializes the binary string argument natively without error.
     binary = (0..255).map { |b| b.chr(Encoding::ASCII_8BIT) }.join
 

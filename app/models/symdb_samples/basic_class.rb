@@ -23,7 +23,7 @@ module SymdbSamples
       verbose ? "BasicClass(#{@name}, count=#{@@instance_count})" : @name
     end
 
-    # Class method (not uploaded by default — requires upload_class_methods: true)
+    # Class method (not uploaded by default - requires upload_class_methods: true)
     def self.instance_count
       @@instance_count
     end
@@ -45,7 +45,7 @@ module SymdbSamples
     end
   end
 
-  # Exercises: Empty class — no methods, no constants, no class variables.
+  # Exercises: Empty class - no methods, no constants, no class variables.
   # Expected: extractor returns nil (no source_location).
   class EmptyClass
   end
@@ -59,7 +59,7 @@ module SymdbSamples
   end
 
   # Exercises: Class with only class variables (no methods).
-  # Expected: extractor returns nil — class variables have no source_location and
+  # Expected: extractor returns nil - class variables have no source_location and
   # const_source_location only fires for non-class-value constants.
   class ClassVariablesOnlyClass
     @@counter = 0

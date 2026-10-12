@@ -1,12 +1,12 @@
 # frozen_string_literal: true
 
-# Exercises: include, prepend, extend — modules mixed into classes.
+# Exercises: include, prepend, extend - modules mixed into classes.
 # Expected:
 #   Mixins::MixinUser: included_modules includes Serializable and Auditable
 #                      prepended_modules includes Timestamped
 module SymdbSamples
   module Mixins
-    # A module to be included — adds instance methods
+    # A module to be included - adds instance methods
     module Serializable
       def to_json_str
         instance_variables.each_with_object({}) { |var, h|
@@ -19,7 +19,7 @@ module SymdbSamples
       end
     end
 
-    # A module to be included — adds instance methods
+    # A module to be included - adds instance methods
     module Auditable
       def audit_log
         "#{self.class.name} accessed at #{Time.now}"
@@ -30,7 +30,7 @@ module SymdbSamples
       end
     end
 
-    # A module to be prepended — wraps existing methods
+    # A module to be prepended - wraps existing methods
     module Timestamped
       def initialize(*)
         super
@@ -42,7 +42,7 @@ module SymdbSamples
       end
     end
 
-    # A module to be extended — adds class-level methods
+    # A module to be extended - adds class-level methods
     module ClassFinder
       def model_name
         name.split('::').last

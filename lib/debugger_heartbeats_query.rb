@@ -10,7 +10,7 @@ require_relative 'datadog_session'
 #
 # (debugger-edge-api -> debugger-api Java -> Cassandra, populated by
 # debugger-heartbeat-listener from DI heartbeats.) One heartbeat row per tracer
-# runtime — e.g. one per Puma cluster worker. hostname is commonly absent here,
+# runtime - e.g. one per Puma cluster worker. hostname is commonly absent here,
 # which surfaces as "HOSTNAME NOT DETECTED" in the UI.
 #
 # Transport (wclip cookies, HTTP) is handled by DatadogSession.

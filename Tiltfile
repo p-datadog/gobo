@@ -1,4 +1,4 @@
-# Gobo Tiltfile — deploy to devkube
+# Gobo Tiltfile - deploy to devkube
 #
 # Usage: tilt up (or tiltup gobo)
 #

@@ -7,15 +7,15 @@
 # For the backend to recognise this client as an alive DI-enabled tracer and
 # begin delivering configs, ALL of the following must hold:
 #
-# 1. CAPABILITIES (REQUIRED — non-obvious)
+# 1. CAPABILITIES (REQUIRED - non-obvious)
 #    The `client.capabilities` field must be a non-empty Base64 bitmask.
 #    An empty string or Base64("\x00") causes the backend to return
-#    `"targets": {}` on every poll — no configs are ever delivered.
+#    `"targets": {}` on every poll - no configs are ever delivered.
 #    Must include APM_TRACING bits (12, 13, 14, 29) and bit 38
 #    (APM_TRACING_ENABLE_DYNAMIC_INSTRUMENTATION) so the backend delivers
 #    implicit DI enablement signals. See CAPABILITIES constant.
 #
-# 2. TRACER VERSION (REQUIRED — must be valid semver above minimum)
+# 2. TRACER VERSION (REQUIRED - must be valid semver above minimum)
 #    `client_tracer.tracer_version` is parsed by TracerVersionChecker.
 #    An invalid version like "1.x.x" is rejected and the heartbeat is discarded.
 #    Minimums by language for DI:
@@ -29,14 +29,14 @@
 #    Must declare LIVE_DEBUGGING and/or LIVE_DEBUGGING_SYMBOL_DB.
 #    APM_TRACING is also included to match a real tracer.
 #
-# 4. TUF BOOTSTRAP (REQUIRED — must complete before configs arrive)
+# 4. TUF BOOTSTRAP (REQUIRED - must complete before configs arrive)
 #    The agent uses TUF (The Update Framework). On first connect the agent
 #    returns a `roots` array. The client must ACCUMULATE root_version
 #    (root_version += roots.size) across polls until roots stop arriving.
 #    Using assignment (root_version = roots.size) resets it on each poll
 #    and loops forever in the bootstrap phase.
 #
-# 5. STATE ADVANCEMENT (REQUIRED — backend won't send new configs without it)
+# 5. STATE ADVANCEMENT (REQUIRED - backend won't send new configs without it)
 #    targets_version and backend_client_state (opaque_backend_state) must be
 #    extracted from the decoded `targets` field and sent back on the next
 #    request. Without this the backend resends the same targets repeatedly.
@@ -141,11 +141,11 @@ module DatadogSim
       end
       return if body.empty?
 
-      # Requirement #4: TUF bootstrap — accumulate root_version.
+      # Requirement #4: TUF bootstrap - accumulate root_version.
       # Agent returns 'roots' array while our root_version is behind.
       # IMPORTANT: use += not = (assignment would reset to 1 on the next batch,
-      # causing an infinite bootstrap loop: 1 batch of 15 roots → version=15,
-      # then 1 more root → version=1 again instead of 16).
+      # causing an infinite bootstrap loop: 1 batch of 15 roots -> version=15,
+      # then 1 more root -> version=1 again instead of 16).
       roots = body['roots']
       if roots.is_a?(Array) && roots.size > 0
         @root_version += roots.size

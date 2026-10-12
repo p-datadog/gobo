@@ -160,7 +160,7 @@ class DiStatusController < ApplicationController
 
   # Reads cookies fresh from wclip and queries the APM_TRACING remote-config
   # debugger_configs endpoint for the DI remote-enablement state stored for this
-  # service+env — the state that decides whether RC turns DI on when the tracer
+  # service+env - the state that decides whether RC turns DI on when the tracer
   # reports :can_enable_remotely.
   def fetch_remote_enablement(label, session)
     host = AgentEnvironments.fetch(label)[:host]
@@ -181,7 +181,7 @@ class DiStatusController < ApplicationController
 
   # Reads cookies fresh from wclip and queries the debugger edge-api heartbeats
   # endpoints. This is the source of the DI service page's instance-coverage
-  # panel ("N instances active") — one row per tracer runtime (e.g. per Puma
+  # panel ("N instances active") - one row per tracer runtime (e.g. per Puma
   # worker).
   def fetch_service_heartbeats(label, session)
     host = AgentEnvironments.fetch(label)[:host]

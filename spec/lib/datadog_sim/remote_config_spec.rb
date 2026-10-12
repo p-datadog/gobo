@@ -79,7 +79,7 @@ RSpec.describe DatadogSim::RemoteConfig do
     end
 
     it 'does not call on_config when client_configs is absent (backend not targeting this instance yet)' do
-      # Normal state before backend selects this instance — client_configs is nil
+      # Normal state before backend selects this instance - client_configs is nil
       response_body = { roots: ['eyJ...'] }.to_json
       allow(mock_http).to receive(:request)
         .and_return(instance_double(Net::HTTPResponse, code: '200', body: response_body))
@@ -91,8 +91,8 @@ RSpec.describe DatadogSim::RemoteConfig do
     it 'accumulates root_version across multiple polls (TUF bootstrap phase)' do
       # The agent sends roots in batches. root_version must be incremented
       # (not replaced) on each response so we converge to the latest version.
-      # e.g. poll 1 returns 15 roots → root_version 1+15=16
-      #      poll 2 returns 1 root  → root_version 16+1=17  (not 1!)
+      # e.g. poll 1 returns 15 roots -> root_version 1+15=16
+      #      poll 2 returns 1 root  -> root_version 16+1=17  (not 1!)
       first_response = { roots: Array.new(15, 'eyJhIjoxfQ==') }.to_json
       second_response = { roots: ['eyJiIjoyfQ=='] }.to_json
 
@@ -103,8 +103,8 @@ RSpec.describe DatadogSim::RemoteConfig do
           instance_double(Net::HTTPResponse, code: '200', body: '{}'),
         )
 
-      rc.poll  # gets 15 roots, root_version → 1+15=16
-      rc.poll  # gets 1 root,  root_version → 16+1=17
+      rc.poll  # gets 15 roots, root_version -> 1+15=16
+      rc.poll  # gets 1 root,  root_version -> 16+1=17
 
       expect(mock_http).to receive(:request) do |req|
         body = JSON.parse(req.body)

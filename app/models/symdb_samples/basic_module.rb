@@ -16,13 +16,13 @@ module SymdbSamples
     end
   end
 
-  # Exercises: Empty module — no methods, no constants.
+  # Exercises: Empty module - no methods, no constants.
   # Expected: extractor returns nil (no source_location, no const_source_location fallback).
   module EmptyModule
   end
 
   # Exercises: Module with only an included block (concern-style).
-  # No direct `def` methods — only a ClassMethods submodule and `included` block.
+  # No direct `def` methods - only a ClassMethods submodule and `included` block.
   # Expected: MODULE scope found via const_source_location fallback (ClassMethods is a constant).
   module ConcernLikeModule
     def self.included(base)

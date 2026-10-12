@@ -1,5 +1,5 @@
 #!/usr/bin/env ruby
-# bin/stress — extraction stress test orchestrator
+# bin/stress - extraction stress test orchestrator
 #
 # Boots puma, runs concurrent HTTP load against the /stress/* endpoints,
 # samples CPU/RSS, prints a per-scenario report comparing baseline (extractor off)

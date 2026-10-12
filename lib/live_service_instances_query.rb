@@ -3,7 +3,7 @@ require_relative 'datadog_session'
 # Reproduces the APM-domain "live-service-instances" lookup
 # (GET /api/unstable/live-service-instances?service_name=&service_env=). That
 # endpoint is a Go service in the APM domain, backed by a join of
-# instrumentation telemetry and REDAPL — it is NOT the source of the DI service
+# instrumentation telemetry and REDAPL - it is NOT the source of the DI service
 # page's instance-coverage panel (see DebuggerHeartbeatsQuery for that). A
 # service with working DI heartbeats can still be absent here when its APM
 # instrumentation telemetry is not landing in the org.

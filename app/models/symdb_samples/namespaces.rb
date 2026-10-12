@@ -44,7 +44,7 @@ module SymdbSamples
       end
     end
 
-    # Namespace-only module (no methods) — found via const_source_location on Ruby 2.7+.
+    # Namespace-only module (no methods) - found via const_source_location on Ruby 2.7+.
     module Outer2
       class Nested
         def hello

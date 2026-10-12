@@ -67,7 +67,7 @@ module DatadogSim
     def run
       log "Starting simulation (language=#{@config[:rc_language]}, service=#{@config[:service]}, env=#{@config[:env]})"
       # Reporting tracer_version so it's obvious from the startup output which
-      # version the simulator is claiming — the UI's enablement-eligibility
+      # version the simulator is claiming - the UI's enablement-eligibility
       # floor (web-ui constants.ts) and the backend's TracerVersionChecker.kt
       # floor are both gated on this value. See lib/datadog_sim/languages.rb
       # header for the per-language floors and the cross-check rule.
@@ -81,7 +81,7 @@ module DatadogSim
       log "Shutting down."
     end
 
-    # Single iteration — useful for testing.
+    # Single iteration - useful for testing.
     def startup
       @telemetry&.send_app_started && log("Telemetry: app-started sent")
       @traces&.send_trace && log("Traces: initial trace sent")

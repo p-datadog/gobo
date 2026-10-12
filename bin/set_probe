@@ -12,7 +12,7 @@ $LOAD_PATH.unshift File.expand_path('../lib', __dir__)
 # Transport (wclip cookies, CSRF on writes) is handled by DatadogSession;
 # cookies must be staged first with extract-cookies-ddog -s <site>.
 #
-# Create requires a target — there is no default. -c/--class and -m/--method
+# Create requires a target - there is no default. -c/--class and -m/--method
 # are both mandatory for create; omitting either is a usage error.
 #
 # Usage:

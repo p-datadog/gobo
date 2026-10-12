@@ -8,7 +8,7 @@ require 'set'
 # self-prunes across restarts without a separate cleanup step.
 #
 # runtime_id is Datadog::Core::Environment::Identity.id, which is regenerated
-# per process after fork — the same value the tracer reports in DI heartbeats
+# per process after fork - the same value the tracer reports in DI heartbeats
 # and APM instance telemetry.
 class RuntimeIdRegistry
   def initialize(dir, process_checker: nil)
