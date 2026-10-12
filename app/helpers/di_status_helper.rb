@@ -53,13 +53,13 @@ module DiStatusHelper
       "Dynamic instrumentation is not running. It can be turned on by Remote " \
         "Configuration; until it starts, the tracer receives no probes."
     when :error
-      "Dynamic instrumentation status could not be determined — an error occurred " \
+      "Dynamic instrumentation status could not be determined - an error occurred " \
         "while checking it (see the error above)."
     else
       if unavailable_reason.present?
         "Dynamic instrumentation is not available in this environment: #{unavailable_reason}."
       else
-        "Dynamic instrumentation is not available in this environment — the installed " \
+        "Dynamic instrumentation is not available in this environment - the installed " \
           "tracer does not support it or it is unsupported here."
       end
     end
