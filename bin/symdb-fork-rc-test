@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 # Orchestrate one run of the symdb fork RC distribution test.
 # - Launches gobo with Puma -w 8 (preload_app! is the default in config/puma.rb).
 # - Warms each worker so its lazy RC poller boots (Remote::Tie.boot fires on first Rack req).
@@ -28,11 +28,11 @@ echo "[runner] log:     $LOG"
 echo "[runner] service: $SERVICE"
 echo "[runner] agent:   dogfood (port 18126)"
 
-cd "$(dirname "$0")/.."
+cd "$(dirname "$0")/.." || exit 1
 
 export SYMDB_FORK_TEST=1
-export PORT=$PORT
-export WEB_CONCURRENCY=$WORKERS
+export PORT="$PORT"
+export WEB_CONCURRENCY="$WORKERS"
 
 # bin/run defaults to dogfood agent; production env. DI/SymDB env vars are unset
 # by default, so -i sets DD_DYNAMIC_INSTRUMENTATION_ENABLED + DD_SYMBOL_DATABASE_UPLOAD_ENABLED.
@@ -66,8 +66,8 @@ for i in $(seq 1 120); do
 done
 
 echo "[runner] warm-up: ${WARMUP_RPS} req/s for ${WARMUP_SECONDS}s = $((WARMUP_RPS*WARMUP_SECONDS)) requests"
-end=$((SECONDS + WARMUP_SECONDS))
-while [ "$SECONDS" -lt "$end" ]; do
+end=$(($(date +%s) + WARMUP_SECONDS))
+while [ "$(date +%s)" -lt "$end" ]; do
   for _ in $(seq 1 "$WARMUP_RPS"); do
     curl -s -o /dev/null --max-time 1 "http://localhost:$PORT/" &
   done
