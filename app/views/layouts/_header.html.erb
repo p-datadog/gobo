@@ -33,7 +33,7 @@
           </a>
           <ul class="dropdown-menu">
             <li><%= link_to "Full Stats", memory_path, class: "dropdown-item", title: "Measured heap breakdown via ObjectSpace (slower)" %></li>
-            <li><%= link_to "Fast Stats", memory_fast_path, class: "dropdown-item", title: "C-level only — GC.stat + count_objects (safe with DI probes)" %></li>
+            <li><%= link_to "Fast Stats", memory_fast_path, class: "dropdown-item", title: "C-level only &#8212; GC.stat + count_objects (safe with DI probes)".html_safe %></li>
           </ul>
         </li>
         <% if logged_in? %>

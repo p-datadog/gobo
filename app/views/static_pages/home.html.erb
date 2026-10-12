@@ -1,9 +1,9 @@
 <p>
-  <%= link_to "Probe instructions — set method probes on the positional- and keyword-argument demo methods", probe_instructions_path %>
+  <%= link_to "Probe instructions &#8212; set method probes on the positional- and keyword-argument demo methods".html_safe, probe_instructions_path %>
 </p>
 
 <p>
-  <%= link_to "Logs — query Datadog backend logs for this service", logs_path %>
+  <%= link_to "Logs &#8212; query Datadog backend logs for this service".html_safe, logs_path %>
 </p>
 
 <% if logged_in? %>
@@ -25,7 +25,7 @@
           if execution time in DI (including serialization) exceeds the circuit breaker threshold.
         </p>
         <%= form_with(url: debugger_test_calculate_path, method: :get, local: true, html: { id: 'fibonacci-form-sidebar' }) do |f| %>
-          <%= f.label :fibonacci_n, "Fibonacci N (36 ≈ 1 second)" %>
+          <%= f.label :fibonacci_n, "Fibonacci N (36 &#8776; 1 second)".html_safe %>
           <%= f.number_field :fibonacci_n, class: 'form-control', value: 36, min: 0, max: 40 %>
           <%= f.submit "Calculate fib(n)", class: "btn btn-success w-100", style: "margin-top: 10px;" %>
           <%= f.submit "Test circuit breaker", formaction: debugger_test_circuit_breaker_path, class: "btn btn-info w-100", style: "margin-top: 10px;" %>
@@ -62,7 +62,7 @@
       if execution time in DI (including serialization) exceeds the circuit breaker threshold.
     </p>
     <%= form_with(url: debugger_test_calculate_path, method: :get, local: true, html: { id: 'fibonacci-form-main' }) do |f| %>
-      <%= f.label :fibonacci_n, "Fibonacci N (36 ≈ 1 second)" %>
+      <%= f.label :fibonacci_n, "Fibonacci N (36 &#8776; 1 second)".html_safe %>
       <%= f.number_field :fibonacci_n, class: 'form-control', value: 36, min: 0, max: 40 %>
       <%= f.submit "Calculate fib(n)", class: "btn btn-success btn-lg w-100", style: "margin-top: 10px;" %>
       <%= f.submit "Test circuit breaker", formaction: debugger_test_circuit_breaker_path, class: "btn btn-info btn-lg w-100", style: "margin-top: 10px;" %>

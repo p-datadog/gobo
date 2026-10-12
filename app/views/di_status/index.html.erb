@@ -23,24 +23,24 @@
     <strong>DI Enabled:</strong>
     <% case @di_enabled %>
     <% when :enabled_explicitly %>
-      <span class="text-success"><strong>✓ Yes — explicitly enabled</strong></span>
+      <span class="text-success"><strong>&#10003; Yes &#8212; explicitly enabled</strong></span>
       <span class="text-muted">(DD_DYNAMIC_INSTRUMENTATION_ENABLED=true)</span>
     <% when :enabled_implicitly %>
-      <span class="text-success"><strong>✓ Yes — enabled remotely</strong></span>
+      <span class="text-success"><strong>&#10003; Yes &#8212; enabled remotely</strong></span>
       <span class="text-muted">(turned on by Remote Configuration)</span>
     <% when :disabled_explicitly %>
-      <span class="text-danger"><strong>✗ No — explicitly disabled</strong></span>
+      <span class="text-danger"><strong>&#10007; No &#8212; explicitly disabled</strong></span>
       <span class="text-muted">(DD_DYNAMIC_INSTRUMENTATION_ENABLED=false; blocks remote enablement)</span>
     <% when :explicitly_enabled_rc_disabled %>
-      <span class="text-danger"><strong>✗ No — disabled by Remote Configuration</strong></span>
+      <span class="text-danger"><strong>&#10007; No &#8212; disabled by Remote Configuration</strong></span>
       <span class="text-muted">(DD_DYNAMIC_INSTRUMENTATION_ENABLED=true, but RC turned DI off)</span>
     <% when :can_enable_remotely %>
-      <span class="text-warning"><strong>✗ No — can be enabled remotely</strong></span>
+      <span class="text-warning"><strong>&#10007; No &#8212; can be enabled remotely</strong></span>
     <% when :error %>
-      <span class="text-danger"><strong>✗ Unknown — status check failed</strong></span>
+      <span class="text-danger"><strong>&#10007; Unknown &#8212; status check failed</strong></span>
       <span class="text-muted">(an error occurred while checking DI status; see below)</span>
     <% else %>
-      <span class="text-muted"><strong>✗ No — unavailable</strong></span>
+      <span class="text-muted"><strong>&#10007; No &#8212; unavailable</strong></span>
       <% if @di_unavailable_reason.present? %>
         <span class="text-muted">(<%= @di_unavailable_reason %>)</span>
       <% else %>

@@ -86,13 +86,13 @@ RSpec.describe DiStatusController, type: :controller do
     render_views
 
     {
-      enabled_explicitly: 'Yes — explicitly enabled',
-      enabled_implicitly: 'Yes — enabled remotely',
-      disabled_explicitly: 'No — explicitly disabled',
-      explicitly_enabled_rc_disabled: 'No — disabled by Remote Configuration',
-      can_enable_remotely: 'No — can be enabled remotely',
-      unavailable: 'No — unavailable',
-      error: 'Unknown — status check failed',
+      enabled_explicitly: '&#10003; Yes &#8212; explicitly enabled',
+      enabled_implicitly: '&#10003; Yes &#8212; enabled remotely',
+      disabled_explicitly: '&#10007; No &#8212; explicitly disabled',
+      explicitly_enabled_rc_disabled: '&#10007; No &#8212; disabled by Remote Configuration',
+      can_enable_remotely: '&#10007; No &#8212; can be enabled remotely',
+      unavailable: '&#10007; No &#8212; unavailable',
+      error: '&#10007; Unknown &#8212; status check failed',
     }.each do |state, text|
       it "shows '#{text}' for #{state}" do
         allow(controller).to receive(:fetch_di_enabled_status).and_return(state)

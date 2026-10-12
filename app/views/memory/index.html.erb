@@ -15,7 +15,7 @@
     <p style="margin: 0 0 8px;">
       <strong>RSS</strong> <span id="rss-mb"><%= @stats[:rss_mb] %></span> MB
       = <strong>Ruby heap</strong> <span id="heap-mb"><%= heap_mb %></span> MB (<span id="heap-pct"><%= heap_pct %></span>%)
-      + <strong>Off-heap</strong> <span id="frag-gap"><%= gap.round(1) %></span> MB (<span id="gap-pct"><%= gap_pct %></span>% — fragmentation, stacks, mmap)
+      + <strong>Off-heap</strong> <span id="frag-gap"><%= gap.round(1) %></span> MB (<span id="gap-pct"><%= gap_pct %></span>% &#8212; fragmentation, stacks, mmap)
     </p>
     <div class="progress" style="margin: 0; height: 22px;">
       <div class="progress-bar bg-success" id="bar-heap" style="width: <%= heap_pct %>%; line-height: 22px; font-size: 12px;">

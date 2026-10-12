@@ -1,7 +1,7 @@
 <% provide(:title, 'Memory (Fast)') %>
 <h1>Memory Stats (Fast) <small><%= link_to "JSON", memory_fast_path(format: :json) %> | <%= link_to "Full View", memory_path %></small></h1>
 
-<p class="text-muted">C-level only — uses <code>GC.stat</code> + <code>ObjectSpace.count_objects</code>. Safe with DI probes on hot methods.</p>
+<p class="text-muted">C-level only &#8212; uses <code>GC.stat</code> + <code>ObjectSpace.count_objects</code>. Safe with DI probes on hot methods.</p>
 
 <div class="card">
   <div class="card-header"><h4 class="card-title">Process</h4></div>

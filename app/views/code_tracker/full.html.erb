@@ -1,7 +1,7 @@
 <% provide(:title, 'Code Tracker - Full List') %>
-<h1>Code Tracker — Full List (<%= @entries.size %> files) <small><%= link_to "JSON", code_tracker_full_path(format: :json) %></small></h1>
+<h1>Code Tracker &#8212; Full List (<%= @entries.size %> files) <small><%= link_to "JSON", code_tracker_full_path(format: :json) %></small></h1>
 
-<p><%= link_to "← Back to summary", code_tracker_path %></p>
+<p><%= link_to "&#8592; Back to summary".html_safe, code_tracker_path %></p>
 
 <div class="form-group">
   <input type="text" id="path-filter" class="form-control" placeholder="Filter by path...">
