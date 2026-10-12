@@ -3,7 +3,7 @@
 ## Principles
 
 - Vendoring code is prohibited.
-- Runtime references to any web resources outside the application is
+- Runtime references to any web resources outside the application are
   prohibited.
 - All Ruby dependencies must be installed using bundler. Using Ruby
   dependencies outside of stdlib that are provided by the system is prohibited.
