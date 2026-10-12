@@ -47,4 +47,5 @@ Rails.application.routes.draw do
   get '/stress/cpu1s', to: 'stress#cpu1s'
   get '/stress/mix2s', to: 'stress#mix2s'
   get '/stress/io2s', to: 'stress#io2s'
+  get '/stress/threads', to: 'thread_stress#index', as: 'stress_threads'
 end
