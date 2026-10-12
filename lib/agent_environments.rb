@@ -23,7 +23,9 @@ module AgentEnvironments
       all.fetch(label) { raise ArgumentError, "Unknown agent environment: #{label.inspect}" }
     end
 
-    def label_for(port)
+    # Returns the environment label matching the given agent port, nil when no
+    # environment matches.
+    def label_by_port(port)
       port = port&.to_i
       all.each { |label, attrs| return label if attrs[:agent_port] == port }
       nil

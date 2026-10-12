@@ -31,7 +31,7 @@ class ApplicationController < ActionController::Base
     def fetch_agent_environment_label
       return nil unless defined?(Datadog)
 
-      AgentEnvironments.label_for(Datadog.configuration.agent.port)
+      AgentEnvironments.label_by_port(Datadog.configuration.agent.port)
     rescue => e
       Rails.logger.error "Error fetching agent environment label: #{e.class}: #{e}"
       nil

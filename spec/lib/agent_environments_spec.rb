@@ -31,22 +31,22 @@ RSpec.describe AgentEnvironments do
     end
   end
 
-  describe '.label_for' do
+  describe '.label_by_port' do
     it 'returns the label for a known port' do
-      expect(described_class.label_for(28126)).to eq('staging')
-      expect(described_class.label_for(18126)).to eq('dogfood')
+      expect(described_class.label_by_port(28126)).to eq('staging')
+      expect(described_class.label_by_port(18126)).to eq('dogfood')
     end
 
     it 'accepts string ports' do
-      expect(described_class.label_for('28126')).to eq('staging')
+      expect(described_class.label_by_port('28126')).to eq('staging')
     end
 
     it 'returns nil for an unknown port' do
-      expect(described_class.label_for(8126)).to be_nil
+      expect(described_class.label_by_port(8126)).to be_nil
     end
 
     it 'returns nil for nil' do
-      expect(described_class.label_for(nil)).to be_nil
+      expect(described_class.label_by_port(nil)).to be_nil
     end
   end
 
