@@ -20,6 +20,14 @@
   <%= link_to "Fast Stats", memory_fast_path, class: "list-group-item list-group-item-action" %>
 </div>
 
+<h5 style="margin-top: 15px;">Stress</h5>
+<div class="list-group">
+  <%= link_to "Simple", '/stress/simple', class: "list-group-item list-group-item-action" %>
+  <%= link_to "CPU 1s", '/stress/cpu1s', class: "list-group-item list-group-item-action" %>
+  <%= link_to "Mix 2s", '/stress/mix2s', class: "list-group-item list-group-item-action" %>
+  <%= link_to "IO 2s", '/stress/io2s', class: "list-group-item list-group-item-action" %>
+</div>
+
 <% if logged_in? %>
   <h5 style="margin-top: 15px;">Account</h5>
   <div class="list-group">
