@@ -8,13 +8,18 @@
 dependencies outside of stdlib that are provided by the system is prohibited.
 - Using Debian packages for JS is prohibited.
 
-## Commit Every Change
+## Workflow
 
-Commit after every logical change in the same response that makes the change — don't accumulate uncommitted work. If specs pass, commit. Do not wait for the user to ask. A change without a commit in the same response is a violation of this rule.
+- Use worktree for every change.
+- Commit after every logical change.
+- Commits must explicitly stage the files into the change set.
+Change set to be committed must be verified before each commit.
+- Gemfile.lock may not be committed except by explicit user direction,
+and offering to commit it is prohibited.
 
 ## Running Commands
 
-Always prefix Ruby/Rails commands with `bundle exec`. Never run `ruby`, `rails`, `rake`, `rspec`, or other gem-provided executables without `bundle exec`.
+- All Ruby commands must be prefixed with `bundle exec`.
 
 ## Scripts
 
@@ -24,21 +29,7 @@ Shell scripts must be POSIX-compatible (`#!/bin/sh`). No bashisms — no `[[ ]]`
 
 ## Exception Reporting
 
-When logging exceptions, always use the pattern `#{e.class}: #{e}` to include both the exception class and message.
-
-**Required pattern:**
-```ruby
-rescue => e
-  Rails.logger.error "Error fetching data: #{e.class}: #{e}"
-end
-```
-
-**Do not use:**
-```ruby
-rescue => e
-  Rails.logger.error "Error fetching data: #{e.message}"
-end
-```
+- Always use the pattern `#{e.class}: #{e}` to include both the exception class and message.
 
 ## UI Usability
 
